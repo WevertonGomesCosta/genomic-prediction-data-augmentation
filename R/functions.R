@@ -16,6 +16,214 @@ build_global_G <- function(M) {
   list(p = p, Z = Z, G = G, denom = denom)
 }
 
+prepare_data_objects <- function(
+  data_file = "data/dados_gblup.csv",
+  output_file = "output/01_data_objects.rds",
+  audit_file = "results/01_data_audit.csv"
+) {
+  if (file.exists(output_file)) {
+    cat("Core prerequisite 1/3: loading existing data objects.\n")
+    return(readRDS(output_file))
+  }
+
+  cat("Core prerequisite 1/3: creating data objects.\n")
+  assert_file(data_file)
+
+  df_R <- read.csv(data_file, check.names = FALSE)
+  stopifnot(nrow(df_R) > 1)
+  stopifnot(sum(colnames(df_R) == "yield") == 1)
+  stopifnot(sum(duplicated(colnames(df_R))) == 0)
+
+  marker_names <- setdiff(colnames(df_R), "yield")
+  pattern_snp <- "^Gm[0-9]{2}_[0-9]+_[ACGT]_[ACGT]$"
+  stopifnot(all(grepl(pattern_snp, marker_names)))
+
+  is_numeric <- vapply(
+    df_R[, marker_names, drop = FALSE],
+    function(x) is.numeric(x) || is.integer(x),
+    logical(1)
+  )
+  stopifnot(all(is_numeric))
+
+  valid_code <- vapply(
+    df_R[, marker_names, drop = FALSE],
+    function(x) all(is.na(x) | x %in% c(0, 1, 2)),
+    logical(1)
+  )
+  stopifnot(all(valid_code))
+
+  M <- as.matrix(df_R[, marker_names, drop = FALSE])
+  storage.mode(M) <- "numeric"
+  y <- as.numeric(df_R$yield)
+
+  stopifnot(!anyNA(M))
+  stopifnot(!anyNA(y))
+  stopifnot(all(vapply(
+    seq_len(ncol(M)),
+    function(j) length(unique(M[, j])) > 1,
+    logical(1)
+  )))
+  stopifnot(sum(duplicated(df_R)) == 0)
+  stopifnot(sum(duplicated(as.data.frame(M))) == 0)
+
+  data_objects <- list(
+    df_R = df_R,
+    y = y,
+    M = M,
+    n = nrow(M),
+    m = ncol(M),
+    marker_names = marker_names
+  )
+
+  stopifnot(data_objects$n == 1379)
+  stopifnot(data_objects$m == 4325)
+
+  dir.create(dirname(output_file), showWarnings = FALSE, recursive = TRUE)
+  dir.create(dirname(audit_file), showWarnings = FALSE, recursive = TRUE)
+  saveRDS(data_objects, output_file)
+
+  audit <- data.frame(
+    individuos = nrow(M),
+    snps = ncol(M),
+    yield_na = sum(is.na(y)),
+    snp_na = sum(is.na(M)),
+    duplicate_rows = sum(duplicated(df_R)),
+    duplicate_genomic_profiles = sum(duplicated(as.data.frame(M)))
+  )
+  write.csv(audit, audit_file, row.names = FALSE)
+
+  data_objects
+}
+
+prepare_nested_splits <- function(
+  data_objects,
+  output_file = "output/02_splits_mestre_30rep.rds",
+  summary_file = "results/02_splits_summary.csv",
+  prop_validation = 0.20,
+  proportions = c(0.25, 0.50, 0.75, 1.00),
+  n_rep = 30
+) {
+  if (file.exists(output_file)) {
+    cat("Core prerequisite 2/3: loading existing nested splits.\n")
+    return(readRDS(output_file))
+  }
+
+  cat("Core prerequisite 2/3: creating nested splits.\n")
+  n <- data_objects$n
+  seeds_rep <- 101 * seq_len(n_rep)
+  n_validation <- round(n * prop_validation)
+
+  splits_mestre <- setNames(
+    lapply(proportions, function(x) vector("list", n_rep)),
+    as.character(proportions)
+  )
+
+  for (v in seq_len(n_rep)) {
+    set.seed(seeds_rep[v])
+
+    valid <- sort(sample(seq_len(n), n_validation, replace = FALSE))
+    pool <- setdiff(seq_len(n), valid)
+    perm <- sample(pool, length(pool), replace = FALSE)
+
+    sizes <- c(
+      floor(0.25 * length(pool)),
+      floor(0.50 * length(pool)),
+      floor(0.75 * length(pool)),
+      length(pool)
+    )
+
+    for (i in seq_along(proportions)) {
+      prop <- proportions[i]
+      train <- sort(perm[seq_len(sizes[i])])
+      splits_mestre[[as.character(prop)]][[v]] <- list(
+        treino = train,
+        valid = valid,
+        pool = sort(pool),
+        seed = seeds_rep[v]
+      )
+    }
+  }
+
+  for (v in seq_len(n_rep)) {
+    t25 <- splits_mestre[["0.25"]][[v]]$treino
+    t50 <- splits_mestre[["0.5"]][[v]]$treino
+    t75 <- splits_mestre[["0.75"]][[v]]$treino
+    t100 <- splits_mestre[["1"]][[v]]$treino
+    valid <- splits_mestre[["1"]][[v]]$valid
+
+    stopifnot(all(t25 %in% t50))
+    stopifnot(all(t50 %in% t75))
+    stopifnot(all(t75 %in% t100))
+    stopifnot(length(intersect(t100, valid)) == 0)
+    stopifnot(length(valid) == 276)
+    stopifnot(length(t25) == 275)
+    stopifnot(length(t50) == 551)
+    stopifnot(length(t75) == 827)
+    stopifnot(length(t100) == 1103)
+  }
+
+  dir.create(dirname(output_file), showWarnings = FALSE, recursive = TRUE)
+  dir.create(dirname(summary_file), showWarnings = FALSE, recursive = TRUE)
+  saveRDS(splits_mestre, output_file)
+
+  summary_splits <- do.call(rbind, lapply(seq_len(n_rep), function(v) {
+    do.call(rbind, lapply(proportions, function(p) {
+      s <- splits_mestre[[as.character(p)]][[v]]
+      data.frame(
+        repeticao = v,
+        proporcao_pool = p,
+        n_treino = length(s$treino),
+        n_validacao = length(s$valid),
+        n_pool = length(s$pool),
+        seed = s$seed
+      )
+    }))
+  }))
+  write.csv(summary_splits, summary_file, row.names = FALSE)
+
+  splits_mestre
+}
+
+prepare_genomic_objects <- function(
+  data_objects,
+  output_file = "output/03_genomic_objects.rds"
+) {
+  if (file.exists(output_file)) {
+    cat("Core prerequisite 3/3: loading existing genomic objects.\n")
+    return(readRDS(output_file))
+  }
+
+  cat("Core prerequisite 3/3: creating the global genomic matrix.\n")
+  gobj <- build_global_G(data_objects$M)
+
+  stopifnot(max(abs(gobj$G - t(gobj$G))) < 1e-10)
+  stopifnot(all(is.finite(gobj$G)))
+  stopifnot(nrow(gobj$G) == 1379)
+  stopifnot(ncol(gobj$G) == 1379)
+
+  dir.create(dirname(output_file), showWarnings = FALSE, recursive = TRUE)
+  saveRDS(gobj, output_file)
+  gobj
+}
+
+ensure_core_objects <- function(
+  data_file = "data/dados_gblup.csv"
+) {
+  dir.create("output", showWarnings = FALSE, recursive = TRUE)
+  dir.create("results", showWarnings = FALSE, recursive = TRUE)
+
+  obj <- prepare_data_objects(data_file = data_file)
+  splits_mestre <- prepare_nested_splits(data_objects = obj)
+  gobj <- prepare_genomic_objects(data_objects = obj)
+
+  cat("Core prerequisites ready.\n")
+  list(
+    obj = obj,
+    splits_mestre = splits_mestre,
+    gobj = gobj
+  )
+}
+
 prediction_metrics <- function(observed, predicted) {
   stopifnot(length(observed) == length(predicted))
   stopifnot(!anyNA(predicted), all(is.finite(predicted)))
@@ -133,9 +341,11 @@ fit_gblup_da <- function(y, M, G, Z, p, denom,
 
   pred <- fit$yHat[valid_index]
   metrics <- prediction_metrics(y[valid_index], pred)
-  cbind(metrics,
-        media_lambda = mean(mix$lambda),
-        sd_lambda = sd(mix$lambda))
+  cbind(
+    metrics,
+    media_lambda = mean(mix$lambda),
+    sd_lambda = sd(mix$lambda)
+  )
 }
 
 tost_nb <- function(d, delta = 0.05, alpha = 0.05,
