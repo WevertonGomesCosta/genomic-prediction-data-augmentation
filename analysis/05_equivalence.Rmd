@@ -1,0 +1,78 @@
+---
+title: "5. Equivalência com T100"
+author: "Weverton Gomes da Costa"
+date: "`r Sys.Date()`"
+site: workflowr::wflow_site
+output:
+  workflowr::wflow_html:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    code_download: true
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  cache = FALSE,
+  fig.align = "center",
+  out.width = "100%"
+)
+source("R/functions.R")
+dir.create("output", showWarnings = FALSE, recursive = TRUE)
+dir.create("output/checkpoints", showWarnings = FALSE, recursive = TRUE)
+dir.create("results", showWarnings = FALSE, recursive = TRUE)
+```
+
+## Contrato estatístico
+
+A margem primária é `delta = 0.05`. Como as 30 repetições reutilizam indivíduos
+da mesma população, o TOST utiliza o erro-padrão corrigido de Nadeau–Bengio.
+
+```{r equivalence}
+assert_file("results/04_paired_differences_vs_T100.csv")
+diferencas <- read.csv("results/04_paired_differences_vs_T100.csv")
+
+DELTA <- 0.05
+ALPHA <- 0.05
+
+primary <- do.call(rbind, lapply(c(0.25, 0.50, 0.75), function(prop) {
+  d <- diferencas$delta_cor_vs_100[diferencas$proporcao_pool == prop]
+  cbind(
+    data.frame(proporcao_pool = prop),
+    tost_nb(d, delta = DELTA, alpha = ALPHA,
+            n_resamples = 30, n_train = 1103, n_test = 276)
+  )
+}))
+write.csv(primary, "results/05_equivalence_primary.csv", row.names = FALSE)
+primary
+```
+
+## Sensibilidade ao `n_train` efetivo
+
+```{r nb-effective}
+n_eff <- c("0.25" = 275, "0.5" = 551, "0.75" = 827)
+
+effective <- do.call(rbind, lapply(c(0.25, 0.50, 0.75), function(prop) {
+  d <- diferencas$delta_cor_vs_100[diferencas$proporcao_pool == prop]
+  cbind(
+    data.frame(
+      proporcao_pool = prop,
+      n_train_efetivo = unname(n_eff[as.character(prop)])
+    ),
+    tost_nb(
+      d, delta = DELTA, alpha = ALPHA, n_resamples = 30,
+      n_train = unname(n_eff[as.character(prop)]), n_test = 276
+    )
+  )
+}))
+write.csv(effective, "results/05_equivalence_NB_effective_ntrain.csv", row.names = FALSE)
+effective
+```
+
+A análise aprovada identifica T75 (827 indivíduos reais) como a menor amostra
+equivalente a T100 sem Data Augmentation.
