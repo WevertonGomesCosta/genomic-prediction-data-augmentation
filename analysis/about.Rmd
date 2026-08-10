@@ -1,0 +1,40 @@
+---
+title: "About"
+author: "Weverton Gomes da Costa"
+date: "`r Sys.Date()`"
+site: workflowr::wflow_site
+output:
+  workflowr::wflow_html:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    code_download: true
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  cache = FALSE,
+  fig.align = "center",
+  out.width = "100%"
+)
+source("R/functions.R")
+dir.create("output", showWarnings = FALSE, recursive = TRUE)
+dir.create("output/checkpoints", showWarnings = FALSE, recursive = TRUE)
+dir.create("results", showWarnings = FALSE, recursive = TRUE)
+```
+
+## Project
+
+Reproducible workflow for genomic prediction with reduced real sample sizes and
+mixup-based Data Augmentation in the SoyNAM dataset.
+
+## Contact
+
+Weverton Gomes da Costa  
+Department of Statistics, Federal University of Viçosa  
+weverton.costa@ufv.br
