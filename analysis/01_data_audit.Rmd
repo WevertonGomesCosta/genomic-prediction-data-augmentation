@@ -1,0 +1,99 @@
+---
+title: "1. Auditoria dos dados"
+author: "Weverton Gomes da Costa"
+date: "`r Sys.Date()`"
+site: workflowr::wflow_site
+output:
+  workflowr::wflow_html:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    code_download: true
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  cache = FALSE,
+  fig.align = "center",
+  out.width = "100%"
+)
+source("R/functions.R")
+dir.create("output", showWarnings = FALSE, recursive = TRUE)
+dir.create("output/checkpoints", showWarnings = FALSE, recursive = TRUE)
+dir.create("results", showWarnings = FALSE, recursive = TRUE)
+```
+
+## Objetivo
+
+Auditar o arquivo analítico antes de qualquer modelagem e salvar os objetos
+básicos para reutilização nas etapas posteriores.
+
+```{r data-audit}
+DATA_FILE <- "data/dados_gblup.csv"
+assert_file(DATA_FILE)
+
+df_R <- read.csv(DATA_FILE, check.names = FALSE)
+stopifnot(nrow(df_R) > 1)
+stopifnot(sum(colnames(df_R) == "yield") == 1)
+stopifnot(sum(duplicated(colnames(df_R))) == 0)
+
+marker_names <- setdiff(colnames(df_R), "yield")
+pattern_snp <- "^Gm[0-9]{2}_[0-9]+_[ACGT]_[ACGT]$"
+stopifnot(all(grepl(pattern_snp, marker_names)))
+
+is_numeric <- vapply(df_R[, marker_names, drop = FALSE],
+                     function(x) is.numeric(x) || is.integer(x),
+                     logical(1))
+stopifnot(all(is_numeric))
+
+valid_code <- vapply(
+  df_R[, marker_names, drop = FALSE],
+  function(x) all(is.na(x) | x %in% c(0, 1, 2)),
+  logical(1)
+)
+stopifnot(all(valid_code))
+
+M <- as.matrix(df_R[, marker_names, drop = FALSE])
+storage.mode(M) <- "numeric"
+y <- as.numeric(df_R$yield)
+
+stopifnot(!anyNA(M))
+stopifnot(!anyNA(y))
+stopifnot(all(vapply(seq_len(ncol(M)),
+                     function(j) length(unique(M[, j])) > 1,
+                     logical(1))))
+stopifnot(sum(duplicated(df_R)) == 0)
+stopifnot(sum(duplicated(as.data.frame(M))) == 0)
+
+data_objects <- list(
+  df_R = df_R,
+  y = y,
+  M = M,
+  n = nrow(M),
+  m = ncol(M),
+  marker_names = marker_names
+)
+
+saveRDS(data_objects, "output/01_data_objects.rds")
+
+audit <- data.frame(
+  individuos = nrow(M),
+  snps = ncol(M),
+  yield_na = sum(is.na(y)),
+  snp_na = sum(is.na(M)),
+  duplicate_rows = sum(duplicated(df_R)),
+  duplicate_genomic_profiles = sum(duplicated(as.data.frame(M)))
+)
+write.csv(audit, "results/01_data_audit.csv", row.names = FALSE)
+audit
+```
+
+## Contrato validado
+
+O pipeline espera 1.379 indivíduos, uma coluna `yield` e 4.325 SNPs codificados
+como 0/1/2. Nenhum filtro é repetido dentro das repetições de validação.
