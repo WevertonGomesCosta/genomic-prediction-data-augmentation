@@ -1,0 +1,33 @@
+---
+title: "License"
+author: "Weverton Gomes da Costa"
+date: "`r Sys.Date()`"
+site: workflowr::wflow_site
+output:
+  workflowr::wflow_html:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    code_download: true
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  cache = FALSE,
+  fig.align = "center",
+  out.width = "100%"
+)
+source("R/functions.R")
+dir.create("output", showWarnings = FALSE, recursive = TRUE)
+dir.create("output/checkpoints", showWarnings = FALSE, recursive = TRUE)
+dir.create("results", showWarnings = FALSE, recursive = TRUE)
+```
+
+This repository is intended for reproducible scientific research. A formal
+software/data license should be selected before public release, considering the
+license terms of the original SoyNAM data source.
