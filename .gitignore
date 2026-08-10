@@ -1,0 +1,31 @@
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+.Renviron
+
+# Local renv library/caches
+renv/library/
+renv/staging/
+renv/python/
+
+# Heavy/generated intermediate artifacts
+output/*
+!output/.gitkeep
+!output/checkpoints/
+output/checkpoints/*
+!output/checkpoints/.gitkeep
+
+# workflowr / R Markdown generated temporary files
+*_cache/
+*_files/
+analysis/figure/
+.quarto/
+
+# BGLR temporary chain files
+*.dat
+*.bin
+
+# OS/editor
+.DS_Store
+Thumbs.db
