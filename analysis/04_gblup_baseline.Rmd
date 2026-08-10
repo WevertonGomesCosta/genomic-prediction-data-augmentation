@@ -1,0 +1,151 @@
+---
+title: "4. Baseline GBLUP — dados reais"
+author: "Weverton Gomes da Costa"
+date: "`r Sys.Date()`"
+site: workflowr::wflow_site
+output:
+  workflowr::wflow_html:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    code_download: true
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  cache = FALSE,
+  fig.align = "center",
+  out.width = "100%"
+)
+source("R/functions.R")
+dir.create("output", showWarnings = FALSE, recursive = TRUE)
+dir.create("output/checkpoints", showWarnings = FALSE, recursive = TRUE)
+dir.create("results", showWarnings = FALSE, recursive = TRUE)
+```
+
+## Objetivo
+
+Estimar a learning curve real em 25%, 50%, 75% e 100% do pool, utilizando a
+mesma validação dentro de cada repetição.
+
+Os resultados aprovados das 30 repetições são versionados em
+`results/04_baseline_results.csv`. Assim, a página não refaz os 120 modelos
+quando o arquivo final já existe.
+
+```{r baseline-load-or-run}
+FINAL_FILE <- "results/04_baseline_results.csv"
+CHECKPOINT <- "output/checkpoints/04_baseline_progress.csv"
+
+if (file.exists(FINAL_FILE) && nrow(read.csv(FINAL_FILE)) == 120) {
+  resultados_baseline <- read.csv(FINAL_FILE)
+  cat("Resultados finais existentes carregados; nenhum modelo foi reajustado.\n")
+} else {
+  assert_file("output/01_data_objects.rds")
+  assert_file("output/02_splits_mestre_30rep.rds")
+  assert_file("output/03_genomic_objects.rds")
+
+  obj <- readRDS("output/01_data_objects.rds")
+  splits_mestre <- readRDS("output/02_splits_mestre_30rep.rds")
+  gobj <- readRDS("output/03_genomic_objects.rds")
+
+  N_ITER <- 10000
+  BURN_IN <- 5000
+  props <- c(0.25, 0.50, 0.75, 1.00)
+
+  if (file.exists(CHECKPOINT)) {
+    resultados_baseline <- read.csv(CHECKPOINT)
+  } else {
+    resultados_baseline <- data.frame()
+  }
+
+  for (v in seq_len(30)) {
+    for (i in seq_along(props)) {
+      prop <- props[i]
+
+      already <- nrow(resultados_baseline) > 0 &&
+        any(resultados_baseline$repeticao == v &
+              resultados_baseline$proporcao_pool == prop)
+      if (already) next
+
+      s <- splits_mestre[[as.character(prop)]][[v]]
+      met <- fit_gblup(
+        y = obj$y,
+        G = gobj$G,
+        train_index = s$treino,
+        valid_index = s$valid,
+        nIter = N_ITER,
+        burnIn = BURN_IN,
+        seed = 50000 + v * 100 + i
+      )
+
+      row <- cbind(
+        data.frame(
+          repeticao = v,
+          proporcao_pool = prop,
+          n_treino = length(s$treino),
+          n_validacao = length(s$valid)
+        ),
+        met
+      )
+      resultados_baseline <- rbind(resultados_baseline, row)
+      write.csv(resultados_baseline, CHECKPOINT, row.names = FALSE)
+    }
+  }
+
+  stopifnot(nrow(resultados_baseline) == 120)
+  write.csv(resultados_baseline, FINAL_FILE, row.names = FALSE)
+}
+
+stopifnot(nrow(resultados_baseline) == 120)
+```
+
+## Learning curve
+
+```{r baseline-summary}
+resumo <- aggregate(
+  cbind(correlacao, RMSE, MAE, slope_calibracao) ~ proporcao_pool + n_treino,
+  data = resultados_baseline,
+  FUN = function(x) c(media = mean(x), sd = sd(x))
+)
+resumo
+
+means <- aggregate(correlacao ~ proporcao_pool, resultados_baseline, mean)
+plot(
+  means$proporcao_pool * 100,
+  means$correlacao,
+  type = "b",
+  pch = 19,
+  xlab = "Proporção do pool real (%)",
+  ylab = "Correlação preditiva média"
+)
+```
+
+## Diferenças pareadas contra T100
+
+```{r paired-differences}
+diff_rows <- list()
+k <- 0L
+for (v in seq_len(30)) {
+  d <- resultados_baseline[resultados_baseline$repeticao == v, ]
+  ref <- d[d$proporcao_pool == 1, ]
+  for (prop in c(0.25, 0.50, 0.75)) {
+    p <- d[d$proporcao_pool == prop, ]
+    k <- k + 1L
+    diff_rows[[k]] <- data.frame(
+      repeticao = v,
+      proporcao_pool = prop,
+      delta_cor_vs_100 = p$correlacao - ref$correlacao,
+      delta_RMSE_vs_100 = p$RMSE - ref$RMSE,
+      delta_MAE_vs_100 = p$MAE - ref$MAE
+    )
+  }
+}
+diferencas <- do.call(rbind, diff_rows)
+write.csv(diferencas, "results/04_paired_differences_vs_T100.csv", row.names = FALSE)
+aggregate(delta_cor_vs_100 ~ proporcao_pool, diferencas, function(x) c(mean=mean(x), sd=sd(x)))
+```
