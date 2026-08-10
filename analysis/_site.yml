@@ -1,0 +1,37 @@
+name: "genomic-prediction-data-augmentation"
+output_dir: "../docs"
+
+navbar:
+  title: "Genomic prediction + DA"
+  left:
+    - text: "Home"
+      href: index.html
+    - text: "1. Data audit"
+      href: 01_data_audit.html
+    - text: "2. Sampling"
+      href: 02_sampling_splits.html
+    - text: "3. Genomic matrix"
+      href: 03_genomic_matrix_diagnostics.html
+    - text: "4. GBLUP baseline"
+      href: 04_gblup_baseline.html
+    - text: "5. Equivalence"
+      href: 05_equivalence.html
+    - text: "6. Data augmentation"
+      href: 06_data_augmentation.html
+    - text: "About"
+      href: about.html
+  right:
+    - icon: fa-github
+      text: "Source"
+      href: https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation
+
+output:
+  workflowr::wflow_html:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    code_download: true
+    code_folding: show
+    theme: cosmo
+    highlight: textmate
+    df_print: paged
