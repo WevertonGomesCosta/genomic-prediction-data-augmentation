@@ -71,16 +71,27 @@ The evaluated mixup rules are:
 5. `analysis/05_equivalence.Rmd`
 6. `analysis/06_data_augmentation.Rmd`
 
-## Why the pipeline is modular
+## Modular execution and persistence
 
-Every stage saves the objects needed by the next stage.
+Approved lightweight results are versioned in `results/`, including the 120
+real-only baseline fits and the equivalence analyses. Therefore these models do
+not need to be refitted in a normal clone of the repository.
 
-The heavy baseline and Data Augmentation modules also write a checkpoint after
-each completed fit. If an execution is interrupted, rerunning the `.Rmd`
-continues from the remaining fits rather than starting again.
+The large intermediate objects are local and are stored in `output/`, which is
+ignored by Git. The Data Augmentation module is self-bootstrapping: before the
+360 DA fits it checks whether the following objects exist:
 
-Approved lightweight results are versioned in `results/`. Large intermediate
-objects are kept in `output/` and ignored by Git.
+- `output/01_data_objects.rds`;
+- `output/02_splits_mestre_30rep.rds`;
+- `output/03_genomic_objects.rds`.
+
+If any of them is absent, it rebuilds only these lightweight prerequisites from
+`data/dados_gblup.csv`. It does not rerun the 120-fit baseline or the genomic
+relationship diagnostic page.
+
+The heavy Data Augmentation module writes a checkpoint after each completed
+fit. If execution is interrupted, rerunning the same `.Rmd` continues from the
+remaining fits.
 
 ## Setup
 
@@ -99,7 +110,26 @@ renv::init()
 renv::snapshot()
 ```
 
-## Build one stage only
+Place the analytical dataset at:
+
+```text
+data/dados_gblup.csv
+```
+
+## Continue directly with Data Augmentation
+
+After the dataset is present, the definitive DA stage can be executed directly:
+
+```r
+workflowr::wflow_build(
+  "analysis/06_data_augmentation.Rmd"
+)
+```
+
+On the first run in a new clone, the three lightweight prerequisite objects are
+created automatically. On later runs they are loaded from `output/`.
+
+Build another individual stage with the same pattern, for example:
 
 ```r
 workflowr::wflow_build("analysis/05_equivalence.Rmd")
