@@ -1,0 +1,217 @@
+---
+title: "6. Data Augmentation — completar T100"
+author: "Weverton Gomes da Costa"
+date: "`r Sys.Date()`"
+site: workflowr::wflow_site
+output:
+  workflowr::wflow_html:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    code_download: true
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  cache = FALSE,
+  fig.align = "center",
+  out.width = "100%"
+)
+source("R/functions.R")
+dir.create("output", showWarnings = FALSE, recursive = TRUE)
+dir.create("output/checkpoints", showWarnings = FALSE, recursive = TRUE)
+dir.create("results", showWarnings = FALSE, recursive = TRUE)
+```
+
+## Objetivo
+
+Partir de uma amostra real aleatória e gerar exatamente o número de
+pseudoindivíduos necessário para completar o treinamento até T100:
+
+\[
+n_{syn}=1103-n_{real}.
+\]
+
+Nenhum ranking fenotípico é usado.
+
+| cenário | reais | sintéticos | total |
+|---|---:|---:|---:|
+| 25% + DA | 275 | 828 | 1103 |
+| 50% + DA | 551 | 552 | 1103 |
+| 75% + DA | 827 | 276 | 1103 |
+
+## Configurações
+
+- `lambda = 0.5`;
+- `lambda ~ Beta(0.1, 0.1)`;
+- `lambda ~ Beta(0.2, 0.2)`;
+- `lambda ~ Beta(0.4, 0.4)`.
+
+A etapa possui checkpoint por ajuste. Uma interrupção retoma apenas os modelos
+ainda ausentes.
+
+```{r da-run}
+FINAL_FILE <- "results/06_da_results.csv"
+CHECKPOINT <- "output/checkpoints/06_da_progress.csv"
+
+configs <- data.frame(
+  config_mistura = c(
+    "lambda_fixo_0.5",
+    "beta_alpha_0.1",
+    "beta_alpha_0.2",
+    "beta_alpha_0.4"
+  ),
+  type = c("fixed", "beta", "beta", "beta"),
+  alpha = c(NA, 0.10, 0.20, 0.40),
+  stringsAsFactors = FALSE
+)
+
+if (file.exists(FINAL_FILE) && nrow(read.csv(FINAL_FILE)) == 360) {
+  resultados_da <- read.csv(FINAL_FILE)
+  cat("Resultados finais do DA carregados; nenhum ajuste foi repetido.\n")
+} else {
+  assert_file("output/01_data_objects.rds")
+  assert_file("output/02_splits_mestre_30rep.rds")
+  assert_file("output/03_genomic_objects.rds")
+
+  obj <- readRDS("output/01_data_objects.rds")
+  splits_mestre <- readRDS("output/02_splits_mestre_30rep.rds")
+  gobj <- readRDS("output/03_genomic_objects.rds")
+
+  N_T100 <- 1103
+  props <- c(0.25, 0.50, 0.75)
+  N_ITER <- 10000
+  BURN_IN <- 5000
+
+  if (file.exists(CHECKPOINT)) {
+    resultados_da <- read.csv(CHECKPOINT)
+  } else {
+    resultados_da <- data.frame()
+  }
+
+  for (ci in seq_len(nrow(configs))) {
+    for (prop in props) {
+      for (v in seq_len(30)) {
+        key_done <- nrow(resultados_da) > 0 &&
+          any(resultados_da$config_mistura == configs$config_mistura[ci] &
+                resultados_da$proporcao_pool == prop &
+                resultados_da$repeticao == v)
+        if (key_done) next
+
+        s <- splits_mestre[[as.character(prop)]][[v]]
+        n_real <- length(s$treino)
+        n_syn <- N_T100 - n_real
+
+        stopifnot(n_syn > 0, n_real + n_syn == N_T100)
+
+        met <- fit_gblup_da(
+          y = obj$y,
+          M = obj$M,
+          G = gobj$G,
+          Z = gobj$Z,
+          p = gobj$p,
+          denom = gobj$denom,
+          train_index = s$treino,
+          valid_index = s$valid,
+          n_synthetic = n_syn,
+          type = configs$type[ci],
+          alpha = configs$alpha[ci],
+          nIter = N_ITER,
+          burnIn = BURN_IN,
+          seed_da = 200000 + ci * 10000 + as.integer(prop * 100) * 100 + v,
+          seed_bglr = 260000 + ci * 10000 + as.integer(prop * 100) * 100 + v
+        )
+
+        row <- cbind(
+          data.frame(
+            config_mistura = configs$config_mistura[ci],
+            tipo_mistura = configs$type[ci],
+            alpha = configs$alpha[ci],
+            repeticao = v,
+            proporcao_pool = prop,
+            n_real = n_real,
+            n_syn = n_syn,
+            n_total_treino = n_real + n_syn
+          ),
+          met
+        )
+
+        resultados_da <- rbind(resultados_da, row)
+        write.csv(resultados_da, CHECKPOINT, row.names = FALSE)
+      }
+    }
+  }
+
+  stopifnot(nrow(resultados_da) == 360)
+  write.csv(resultados_da, FINAL_FILE, row.names = FALSE)
+}
+
+stopifnot(nrow(resultados_da) == 360)
+```
+
+## DA versus mesmo tamanho real
+
+```{r da-vs-real}
+assert_file("results/04_baseline_results.csv")
+baseline <- read.csv("results/04_baseline_results.csv")
+
+cmp <- merge(
+  resultados_da,
+  baseline[, c("repeticao","proporcao_pool","correlacao","RMSE","MAE")],
+  by = c("repeticao","proporcao_pool"),
+  suffixes = c("_da","_real")
+)
+
+cmp$delta_cor_da_menos_real <- cmp$correlacao_da - cmp$correlacao_real
+cmp$delta_RMSE_da_menos_real <- cmp$RMSE_da - cmp$RMSE_real
+cmp$delta_MAE_da_menos_real <- cmp$MAE_da - cmp$MAE_real
+
+write.csv(cmp, "results/06_da_vs_same_real.csv", row.names = FALSE)
+
+aggregate(
+  delta_cor_da_menos_real ~ config_mistura + proporcao_pool,
+  cmp,
+  mean
+)
+```
+
+## DA versus T100
+
+```{r da-vs-t100}
+b100 <- baseline[baseline$proporcao_pool == 1,
+                 c("repeticao","correlacao")]
+names(b100)[2] <- "cor_T100"
+
+cmp100 <- merge(resultados_da, b100, by = "repeticao")
+cmp100$delta_cor_vs_100 <- cmp100$correlacao - cmp100$cor_T100
+
+eq_da <- do.call(rbind, lapply(split(
+  cmp100,
+  interaction(cmp100$config_mistura, cmp100$proporcao_pool, drop = TRUE)
+), function(d) {
+  cbind(
+    data.frame(
+      config_mistura = d$config_mistura[1],
+      proporcao_pool = d$proporcao_pool[1],
+      n_real = d$n_real[1],
+      n_syn = d$n_syn[1]
+    ),
+    tost_nb(
+      d$delta_cor_vs_100,
+      delta = 0.05,
+      alpha = 0.05,
+      n_resamples = 30,
+      n_train = 1103,
+      n_test = 276
+    )
+  )
+}))
+
+write.csv(eq_da, "results/06_da_equivalence_vs_T100.csv", row.names = FALSE)
+eq_da[order(eq_da$n_real, -eq_da$media_delta_cor), ]
+```
