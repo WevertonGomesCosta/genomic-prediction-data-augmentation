@@ -1,0 +1,54 @@
+---
+title: "Genomic Prediction with Data Augmentation"
+author:
+  - Costa, W. G.
+date: "`r Sys.Date()`"
+site: workflowr::wflow_site
+output:
+  workflowr::wflow_html:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    code_download: true
+---
+
+# Projeto
+
+Este projeto avalia se uma amostra aleatória reduzida de indivíduos reais pode
+atingir capacidade preditiva equivalente ao conjunto completo de treinamento
+(T100), e se Data Augmentation via mixup permite reduzir adicionalmente o
+número de indivíduos reais necessários.
+
+## Contrato metodológico
+
+- 1.379 indivíduos genotipados;
+- 4.325 SNPs;
+- validação externa: 276 indivíduos;
+- T100: 1.103 indivíduos;
+- 30 repetições;
+- T25 = 275;
+- T50 = 551;
+- T75 = 827;
+- T100 = 1.103;
+- G global;
+- GBLUP via BGLR/RKHS;
+- 10.000 iterações, burn-in 5.000;
+- margem de equivalência `delta = 0.05`;
+- TOST com correção de Nadeau–Bengio;
+- DA sem ranking fenotípico;
+- `n_syn = 1103 - n_real`.
+
+## Etapas
+
+1. [Auditoria dos dados](01_data_audit.html)
+2. [Amostragem e splits aninhados](02_sampling_splits.html)
+3. [Matriz genômica e diagnóstico](03_genomic_matrix_diagnostics.html)
+4. [Baseline GBLUP](04_gblup_baseline.html)
+5. [Equivalência com T100](05_equivalence.html)
+6. [Data Augmentation](06_data_augmentation.html)
+
+## Execução modular
+
+Cada etapa salva os objetos necessários para a etapa seguinte. Os ajustes
+pesados possuem checkpoints, de modo que uma execução interrompida não precisa
+recomeçar do primeiro modelo.
