@@ -24,6 +24,7 @@ knitr::opts_chunk$set(
   out.width = "100%"
 )
 dir.create("output/checkpoints", showWarnings = FALSE, recursive = TRUE)
+dir.create("output/figures", showWarnings = FALSE, recursive = TRUE)
 dir.create("results", showWarnings = FALSE, recursive = TRUE)
 ```
 
@@ -302,15 +303,105 @@ knitr::kable(
 )
 ```
 
-```{r curva-aprendizado, fig.height=4.5}
-plot(
-  resumo_baseline$proporcao_pool * 100,
-  resumo_baseline$correlacao,
-  type = "b",
-  pch = 19,
-  xlab = "Proporção do pool real (%)",
-  ylab = "Correlação preditiva média",
-  main = "Curva de aprendizado do GBLUP"
+A figura mantém a informação das 30 repetições. Cada linha fina representa uma
+repetição completa de T25 a T100. A linha destacada mostra a correlação média e
+a faixa representa média ± 1 desvio-padrão em cada tamanho de treinamento.
+
+```{r curva-aprendizado, fig.height=5.5, fig.width=8.5, fig.cap="Curva de aprendizado do GBLUP nas 30 repetições, com média e faixa de ±1 desvio-padrão."}
+if (!requireNamespace("ggplot2", quietly = TRUE)) {
+  stop("Instale o pacote ggplot2 para gerar as figuras do tutorial.")
+}
+
+if (!requireNamespace("ggthemes", quietly = TRUE)) {
+  stop("Instale o pacote ggthemes para usar o padrão gráfico GDocs.")
+}
+
+baseline_plot <- baseline
+baseline_plot$Proporcao_percentual <- baseline_plot$proporcao_pool * 100
+
+resumo_plot <- resumo_baseline
+resumo_plot$Proporcao_percentual <- resumo_plot$proporcao_pool * 100
+resumo_plot$Limite_inferior <-
+  resumo_plot$correlacao - resumo_plot$sd_correlacao
+resumo_plot$Limite_superior <-
+  resumo_plot$correlacao + resumo_plot$sd_correlacao
+
+cor_media <- ggthemes::gdocs_pal()(1)
+
+figura_learning_curve <- ggplot2::ggplot(
+  baseline_plot,
+  ggplot2::aes(
+    x = Proporcao_percentual,
+    y = correlacao,
+    group = repeticao
+  )
+) +
+  ggplot2::geom_line(
+    color = "grey65",
+    alpha = 0.45,
+    linewidth = 0.45
+  ) +
+  ggplot2::geom_point(
+    color = "grey65",
+    alpha = 0.45,
+    size = 1.2
+  ) +
+  ggplot2::geom_ribbon(
+    data = resumo_plot,
+    ggplot2::aes(
+      x = Proporcao_percentual,
+      ymin = Limite_inferior,
+      ymax = Limite_superior
+    ),
+    inherit.aes = FALSE,
+    fill = cor_media,
+    alpha = 0.15
+  ) +
+  ggplot2::geom_line(
+    data = resumo_plot,
+    ggplot2::aes(
+      x = Proporcao_percentual,
+      y = correlacao
+    ),
+    inherit.aes = FALSE,
+    color = cor_media,
+    linewidth = 1.15
+  ) +
+  ggplot2::geom_point(
+    data = resumo_plot,
+    ggplot2::aes(
+      x = Proporcao_percentual,
+      y = correlacao
+    ),
+    inherit.aes = FALSE,
+    color = cor_media,
+    size = 3
+  ) +
+  ggplot2::scale_x_continuous(
+    breaks = c(25, 50, 75, 100),
+    labels = c("25%", "50%", "75%", "100%")
+  ) +
+  ggplot2::labs(
+    title = "Curva de aprendizado do GBLUP",
+    x = "Proporção do pool real usada no treinamento",
+    y = "Correlação preditiva"
+  ) +
+  ggthemes::theme_gdocs() +
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(
+      face = "bold",
+      hjust = 0.5
+    )
+  )
+
+figura_learning_curve
+
+ggplot2::ggsave(
+  filename = "output/figures/04_curva_aprendizado_gblup.png",
+  plot = figura_learning_curve,
+  width = 8.5,
+  height = 5.5,
+  dpi = 300
 )
 ```
 
