@@ -29,10 +29,11 @@ dir.create("results", showWarnings = FALSE, recursive = TRUE)
 
 ## 1. Objetivo
 
-Antes de testar Data Augmentation, precisamos descobrir quanto dado real já é
-necessário para obter boa predição.
+Antes de testar Data Augmentation, precisamos descobrir como o desempenho do
+GBLUP muda quando aumentamos a quantidade de indivíduos reais usados no
+treinamento.
 
-Em cada uma das 30 repetições ajustamos o mesmo GBLUP usando:
+Em cada uma das 30 repetições ajustamos o mesmo modelo usando:
 
 - T25 = 275 indivíduos reais;
 - T50 = 551 indivíduos reais;
@@ -41,6 +42,12 @@ Em cada uma das 30 repetições ajustamos o mesmo GBLUP usando:
 
 A validação contém sempre 276 indivíduos e é exatamente a mesma para os quatro
 tamanhos de treinamento dentro de cada repetição.
+
+Esta etapa responde apenas à pergunta:
+
+> Como a capacidade preditiva muda quando aumentamos o tamanho da amostra real?
+
+A comparação formal de T25, T50 e T75 com T100 será feita somente na Etapa 5.
 
 ## 2. Como o GBLUP é avaliado
 
@@ -260,8 +267,8 @@ stopifnot(!anyNA(baseline[, c("correlacao", "RMSE", "MAE", "slope_calibracao")])
 
 ## 6. Curva de aprendizado
 
-Calculamos a média e o desvio-padrão das quatro métricas para cada tamanho de
-treinamento.
+Calculamos a média das quatro métricas e o desvio-padrão da correlação para cada
+tamanho de treinamento.
 
 ```{r resumo-baseline}
 resumo_baseline <- aggregate(
@@ -311,61 +318,5 @@ A correlação média aumenta de aproximadamente 0,53 em T25 para 0,67 em T100.
 O ganho, porém, fica progressivamente menor à medida que mais indivíduos são
 adicionados.
 
-## 7. Diferenças pareadas em relação a T100
-
-Como T25, T50, T75 e T100 usam a mesma validação dentro de uma repetição,
-podemos comparar diretamente cada amostra reduzida com T100 na mesma
-repetição.
-
-```{r diferencas-pareadas}
-t100 <- baseline[
-  baseline$proporcao_pool == 1,
-  c(
-    "repeticao",
-    "correlacao",
-    "RMSE",
-    "MAE"
-  )
-]
-
-names(t100)[-1] <- c(
-  "correlacao_T100",
-  "RMSE_T100",
-  "MAE_T100"
-)
-
-diferencas <- merge(
-  baseline[baseline$proporcao_pool < 1, ],
-  t100,
-  by = "repeticao"
-)
-
-diferencas$delta_cor_vs_T100 <-
-  diferencas$correlacao -
-  diferencas$correlacao_T100
-
-diferencas$delta_RMSE_vs_T100 <-
-  diferencas$RMSE -
-  diferencas$RMSE_T100
-
-diferencas$delta_MAE_vs_T100 <-
-  diferencas$MAE -
-  diferencas$MAE_T100
-
-aggregate(
-  cbind(
-    delta_cor_vs_T100,
-    delta_RMSE_vs_T100,
-    delta_MAE_vs_T100
-  ) ~ proporcao_pool,
-  data = diferencas,
-  FUN = mean
-) |>
-  knitr::kable(
-    digits = 4,
-    caption = "Diferença média das amostras reduzidas em relação a T100"
-  )
-```
-
-A próxima etapa usa essas diferenças pareadas para responder formalmente se
-alguma amostra menor pode ser considerada equivalente a T100.
+Na próxima etapa, T25, T50 e T75 serão comparados formalmente com T100 usando as
+diferenças pareadas das mesmas 30 repetições.
