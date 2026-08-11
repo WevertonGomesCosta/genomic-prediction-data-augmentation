@@ -1,7 +1,0 @@
-Audited local checkpoint used to create results/06_da_summary.csv
-
-File: 06_da_progress.csv
-Rows: 360
-SHA-256: 4d4fbcc2aa06a5cca5053311658de0c4cdeeec3f0544e539792f9442e50021d7
-
-The complete checkpoint is generated locally by analysis/06_data_augmentation.Rmd and is not required to render the tutorial. The hash allows the audited 360-fit source file to be verified later.
