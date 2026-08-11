@@ -88,19 +88,20 @@ Valores pequenos de `alpha` concentram mais probabilidade perto de 0 e 1.
 
 ## 4. Resultados pesados e reprodução
 
-Os 360 modelos já foram executados e auditados. Para manter o site leve, a
-execução pesada fica desligada por padrão e a página utiliza o resumo final
-aprovado em `results/06_da_summary.csv`.
+Os 360 ajustes já foram executados e auditados. O resultado primário completo
+está versionado em `results/06_da_results.csv`.
 
-O código completo continua visível. Para reproduzir todos os modelos do zero,
-altere `RUN_MODELS` para `TRUE` depois de executar as Etapas 1, 2 e 3.
+Isso permite reconstruir todas as tabelas desta página sem repetir a modelagem
+pesada. O código completo dos 360 ajustes continua visível. Para reproduzir os
+modelos do zero, altere `RUN_MODELS` para `TRUE` depois de executar as Etapas 1,
+2 e 3.
 
 ```{r configuracao-execucao}
 RUN_MODELS <- FALSE
 
 CHECKPOINT <- "output/checkpoints/06_da_progress.csv"
 RAW_DA_FILE <- "results/06_da_results.csv"
-SUMMARY_FILE <- "results/06_da_summary.csv"
+BASELINE_FILE <- "results/04_baseline_results.csv"
 ```
 
 ## 5. Configurações avaliadas
@@ -136,9 +137,9 @@ knitr::kable(
 
 ## 6. Código completo do Data Augmentation
 
-O bloco abaixo mostra explicitamente o procedimento usado em cada uma das 360
-combinações. Não há função auxiliar escondendo a geração dos pseudoindivíduos
-ou a expansão da matriz genômica.
+O bloco abaixo mostra explicitamente o procedimento usado em cada um dos 360
+ajustes. Não há função auxiliar escondendo a geração dos pseudoindivíduos ou a
+expansão da matriz genômica.
 
 ```{r executar-data-augmentation}
 if (RUN_MODELS) {
@@ -477,22 +478,116 @@ if (RUN_MODELS) {
 }
 ```
 
-## 7. Resumo final aprovado
+## 7. Carregando e auditando os 360 resultados
 
-O arquivo abaixo contém o resumo dos 360 ajustes auditados. As diferenças
-`DA - real` usam o baseline da mesma proporção. As diferenças contra T100 usam
-o benchmark real de 1.103 indivíduos.
+A partir daqui não usamos tabelas-resumo previamente calculadas. O próprio
+resultado primário dos 360 ajustes é lido e todas as estatísticas seguintes são
+reconstruídas nesta página.
 
-```{r carregar-resumo-final}
-if (!file.exists(SUMMARY_FILE)) {
-  stop("Arquivo ausente: results/06_da_summary.csv")
+```{r carregar-resultados-da}
+if (!file.exists(RAW_DA_FILE)) {
+  stop("Arquivo ausente: results/06_da_results.csv")
 }
 
-resumo_da <- read.csv(
-  SUMMARY_FILE
+resultados_da <- read.csv(
+  RAW_DA_FILE
 )
 
-stopifnot(nrow(resumo_da) == 12)
+chaves_da <- paste(
+  resultados_da$config_mistura,
+  resultados_da$proporcao_pool,
+  resultados_da$repeticao,
+  sep = "__"
+)
+
+stopifnot(nrow(resultados_da) == 360)
+stopifnot(anyDuplicated(chaves_da) == 0)
+stopifnot(all(resultados_da$repeticao %in% 1:30))
+stopifnot(all(resultados_da$n_total_treino == 1103))
+stopifnot(all(resultados_da$n_real + resultados_da$n_syn == 1103))
+stopifnot(
+  !anyNA(
+    resultados_da[
+      ,
+      c(
+        "correlacao",
+        "RMSE",
+        "MAE",
+        "slope_calibracao"
+      )
+    ]
+  )
+)
+
+contagem_cenarios <- aggregate(
+  repeticao ~ config_mistura + proporcao_pool,
+  data = resultados_da,
+  FUN = length
+)
+
+stopifnot(all(contagem_cenarios$repeticao == 30))
+```
+
+Cada combinação de regra de mistura e tamanho real possui exatamente 30
+repetições.
+
+## 8. Resumo dos 12 cenários de Data Augmentation
+
+Agora calculamos médias e desvios-padrão diretamente dos 360 resultados.
+
+```{r resumo-da}
+variaveis_grupo <- c(
+  "config_mistura",
+  "proporcao_pool",
+  "n_real",
+  "n_syn"
+)
+
+resumo_media <- aggregate(
+  cbind(
+    correlacao,
+    RMSE,
+    MAE,
+    slope_calibracao,
+    media_lambda,
+    sd_lambda
+  ) ~ config_mistura + proporcao_pool + n_real + n_syn,
+  data = resultados_da,
+  FUN = mean
+)
+
+names(resumo_media)[5:10] <- c(
+  "mean_cor",
+  "mean_RMSE",
+  "mean_MAE",
+  "mean_slope",
+  "mean_lambda",
+  "mean_sd_lambda"
+)
+
+resumo_sd <- aggregate(
+  cbind(
+    correlacao,
+    RMSE,
+    MAE,
+    slope_calibracao
+  ) ~ config_mistura + proporcao_pool + n_real + n_syn,
+  data = resultados_da,
+  FUN = sd
+)
+
+names(resumo_sd)[5:8] <- c(
+  "sd_cor",
+  "sd_RMSE",
+  "sd_MAE",
+  "sd_slope"
+)
+
+resumo_da <- merge(
+  resumo_media,
+  resumo_sd,
+  by = variaveis_grupo
+)
 
 resumo_exibicao <- resumo_da[
   order(
@@ -507,8 +602,7 @@ resumo_exibicao <- resumo_da[
     "sd_cor",
     "mean_RMSE",
     "mean_MAE",
-    "mean_slope",
-    "delta_cor_vs_same_real"
+    "mean_slope"
   )
 ]
 
@@ -519,84 +613,270 @@ knitr::kable(
 )
 ```
 
-Para T25 e T50, a configuração `Beta(0.2, 0.2)` apresentou a maior correlação
-média entre as regras de DA. Para T75, `lambda = 0.5` apresentou o melhor
-resultado. Entretanto, em todos os casos a correlação média permaneceu abaixo
-do baseline real correspondente.
+Para T25 e T50, `Beta(0.2, 0.2)` apresentou a maior correlação média entre as
+regras de DA. Para T75, `lambda = 0.5` apresentou o melhor resultado.
 
-## 8. DA versus o mesmo tamanho real
+## 9. DA versus o mesmo conjunto real
 
-Esta é a comparação que identifica se o Mixup acrescentou informação útil além
-da amostra real já disponível.
+Uma melhora atribuível ao Data Augmentation deve aparecer quando comparamos DA
+com o GBLUP que usa exatamente a mesma quantidade de indivíduos reais.
+
+Por isso juntamos cada resultado de DA ao baseline da mesma repetição e da mesma
+proporção de treinamento.
 
 ```{r da-vs-real}
-comparacao_real <- resumo_da[
-  ,
+if (!file.exists(BASELINE_FILE)) {
+  stop("Arquivo ausente: results/04_baseline_results.csv")
+}
+
+baseline <- read.csv(
+  BASELINE_FILE
+)
+
+stopifnot(nrow(baseline) == 120)
+
+baseline_reduzido <- baseline[
+  baseline$proporcao_pool < 1,
   c(
-    "config_mistura",
+    "repeticao",
     "proporcao_pool",
-    "n_real",
-    "mean_cor",
-    "delta_cor_vs_same_real"
+    "correlacao",
+    "RMSE",
+    "MAE"
   )
 ]
 
+names(baseline_reduzido)[3:5] <- c(
+  "correlacao_real",
+  "RMSE_real",
+  "MAE_real"
+)
+
+comparacao_real <- merge(
+  resultados_da,
+  baseline_reduzido,
+  by = c(
+    "repeticao",
+    "proporcao_pool"
+  )
+)
+
+stopifnot(nrow(comparacao_real) == 360)
+
+comparacao_real$delta_cor_DA_real <-
+  comparacao_real$correlacao -
+  comparacao_real$correlacao_real
+
+comparacao_real$delta_RMSE_DA_real <-
+  comparacao_real$RMSE -
+  comparacao_real$RMSE_real
+
+comparacao_real$delta_MAE_DA_real <-
+  comparacao_real$MAE -
+  comparacao_real$MAE_real
+
+resumo_da_vs_real <- aggregate(
+  cbind(
+    delta_cor_DA_real,
+    delta_RMSE_DA_real,
+    delta_MAE_DA_real
+  ) ~ config_mistura + proporcao_pool + n_real,
+  data = comparacao_real,
+  FUN = mean
+)
+
 knitr::kable(
-  comparacao_real[
+  resumo_da_vs_real[
     order(
-      comparacao_real$proporcao_pool,
-      -comparacao_real$mean_cor
+      resumo_da_vs_real$proporcao_pool,
+      -resumo_da_vs_real$delta_cor_DA_real
     ),
   ],
   digits = 4,
-  caption = "Mudança de correlação causada pelo DA em relação ao mesmo tamanho real"
+  caption = "Data Augmentation versus o mesmo tamanho de amostra real"
 )
 ```
 
-Todos os valores médios de `delta_cor_vs_same_real` são negativos. Portanto,
-nenhuma das quatro regras de Mixup melhorou, em média, o GBLUP ajustado com o
-mesmo conjunto de indivíduos reais.
+Valores positivos em `delta_cor_DA_real` indicariam ganho de correlação com DA.
+Valores negativos em `delta_RMSE_DA_real` ou `delta_MAE_DA_real` indicariam
+redução do erro.
 
-## 9. Equivalência com T100
+Nas 12 combinações, a diferença média de correlação é negativa. Portanto,
+nenhuma regra de Mixup melhorou em média o GBLUP correspondente usando somente
+os mesmos indivíduos reais.
 
-Aplicamos a mesma lógica de equivalência da Etapa 5. O interesse agora é saber
-se T25 + DA ou T50 + DA conseguem entrar completamente na margem de ±0,05 em
-relação a T100.
+## 10. DA versus T100
 
-Os intervalos abaixo são os intervalos de 90% com correção de Nadeau-Bengio da
-execução final auditada.
+A pergunta principal do projeto exige uma segunda comparação: uma amostra
+reduzida completada com pseudoindivíduos consegue atingir desempenho
+praticamente equivalente ao T100 real?
+
+Para isso, cada ajuste de DA é comparado com o T100 da mesma repetição.
+
+```{r preparar-da-vs-t100}
+t100 <- baseline[
+  baseline$proporcao_pool == 1,
+  c(
+    "repeticao",
+    "correlacao",
+    "RMSE",
+    "MAE"
+  )
+]
+
+names(t100)[2:4] <- c(
+  "correlacao_T100",
+  "RMSE_T100",
+  "MAE_T100"
+)
+
+comparacao_t100 <- merge(
+  resultados_da,
+  t100,
+  by = "repeticao"
+)
+
+stopifnot(nrow(comparacao_t100) == 360)
+
+comparacao_t100$delta_cor_vs_T100 <-
+  comparacao_t100$correlacao -
+  comparacao_t100$correlacao_T100
+
+comparacao_t100$delta_RMSE_vs_T100 <-
+  comparacao_t100$RMSE -
+  comparacao_t100$RMSE_T100
+
+comparacao_t100$delta_MAE_vs_T100 <-
+  comparacao_t100$MAE -
+  comparacao_t100$MAE_T100
+```
+
+## 11. TOST com correção de Nadeau-Bengio
+
+Usamos a mesma definição da Etapa 5:
+
+\[
+\delta=0.05.
+\]
+
+A diferença é considerada praticamente equivalente a T100 quando o intervalo
+de 90% permanece completamente dentro de `[-0.05, +0.05]` e os dois testes
+unilaterais do TOST são significativos.
+
+Como os 30 holdouts reutilizam indivíduos da mesma população, aplicamos
+novamente:
+
+\[
+SE_{NB}=
+\sqrt{
+\left(
+\frac{1}{R}+
+\frac{n_{test}}{n_{train}}
+\right)s_d^2
+}.
+\]
+
+Aqui `n_train = 1103`, pois todos os cenários de DA possuem 1.103 observações de
+treinamento ao somar indivíduos reais e pseudoindivíduos.
 
 ```{r equivalencia-da}
-equivalencia_da <- resumo_da[
-  ,
-  c(
-    "config_mistura",
-    "n_real",
-    "n_syn",
-    "delta_cor_vs_T100_mean",
-    "ic90_inf",
-    "ic90_sup",
-    "equivalente_T100"
-  )
-]
+DELTA <- 0.05
+ALPHA <- 0.05
+R <- 30
+N_TEST <- 276
+N_TRAIN <- 1103
+
+resultado_equivalencia_da <- data.frame()
+
+for (config in configs$config_mistura) {
+  for (proporcao in c(0.25, 0.50, 0.75)) {
+
+    grupo <- comparacao_t100[
+      comparacao_t100$config_mistura == config &
+      comparacao_t100$proporcao_pool == proporcao,
+    ]
+
+    d <- grupo$delta_cor_vs_T100
+
+    stopifnot(length(d) == 30)
+
+    media_d <- mean(d)
+    sd_d <- sd(d)
+
+    fator_NB <-
+      1 / R +
+      N_TEST / N_TRAIN
+
+    se_NB <- sqrt(
+      fator_NB * sd_d^2
+    )
+
+    gl <- length(d) - 1
+
+    p_inferior <- 1 - pt(
+      (media_d + DELTA) / se_NB,
+      df = gl
+    )
+
+    p_superior <- pt(
+      (media_d - DELTA) / se_NB,
+      df = gl
+    )
+
+    t_critico <- qt(
+      1 - ALPHA,
+      df = gl
+    )
+
+    ic90_inf <- media_d - t_critico * se_NB
+    ic90_sup <- media_d + t_critico * se_NB
+
+    p_TOST <- max(
+      p_inferior,
+      p_superior
+    )
+
+    equivalente <-
+      p_inferior < ALPHA &&
+      p_superior < ALPHA &&
+      ic90_inf > -DELTA &&
+      ic90_sup < DELTA
+
+    resultado_equivalencia_da <- rbind(
+      resultado_equivalencia_da,
+      data.frame(
+        Configuracao = config,
+        Proporcao = proporcao,
+        N_real = unique(grupo$n_real),
+        N_sintetico = unique(grupo$n_syn),
+        Delta_cor_media = media_d,
+        SE_NB = se_NB,
+        IC90_inf = ic90_inf,
+        IC90_sup = ic90_sup,
+        p_TOST = p_TOST,
+        Equivalente = equivalente
+      )
+    )
+  }
+}
 
 knitr::kable(
-  equivalencia_da[
+  resultado_equivalencia_da[
     order(
-      equivalencia_da$n_real,
-      -equivalencia_da$delta_cor_vs_T100_mean
+      resultado_equivalencia_da$N_real,
+      -resultado_equivalencia_da$Delta_cor_media
     ),
   ],
   digits = 4,
-  caption = "Equivalência das estratégias de DA com T100"
+  caption = "Equivalência das estratégias de Data Augmentation com T100"
 )
 ```
 
-Nenhuma estratégia com 275 ou 551 indivíduos reais foi equivalente a T100.
-Algumas estratégias T75 + DA permaneceram dentro da margem, mas T75 já era
+Nenhuma estratégia com 275 ou 551 indivíduos reais é equivalente a T100.
+Algumas estratégias T75 + DA permanecem dentro da margem, mas T75 já era
 equivalente sem Data Augmentation.
 
-## 10. Conclusão final
+## 12. Conclusão final
 
 Sem DA, o menor conjunto equivalente a T100 foi:
 
@@ -604,8 +884,8 @@ Sem DA, o menor conjunto equivalente a T100 foi:
 827\text{ indivíduos reais}.
 \]
 
-Com as quatro regras de Mixup avaliadas, o menor conjunto real que permaneceu
-na região de equivalência também foi T75. Portanto:
+Com as quatro regras de Mixup avaliadas, T25 e T50 continuaram fora da região de
+equivalência. Portanto:
 
 \[
 \boxed{\text{redução adicional atribuível ao DA}=0}.
