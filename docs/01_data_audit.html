@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Weverton Gomes da Costa" />
+
+<meta name="date" content="2026-08-11" />
+
+<title>1. Auditoria dos dados</title>
+
+<script src="site_libs/header-attrs-2.30/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<script src="site_libs/navigation-1.1/sourceembed.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet" />
+<script src="site_libs/pagedtable-1.1/js/pagedtable.js"></script>
+<link href="site_libs/font-awesome-6.5.2/css/all.min.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet" />
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/main/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+<style type="text/css">
+#rmd-source-code {
+  display: none;
+}
+</style>
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Genomic prediction + DA</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="01_data_audit.html">1. Dados</a>
+</li>
+<li>
+  <a href="02_sampling_splits.html">2. Amostragem</a>
+</li>
+<li>
+  <a href="03_genomic_matrix.html">3. Matriz G</a>
+</li>
+<li>
+  <a href="04_gblup_baseline.html">4. GBLUP</a>
+</li>
+<li>
+  <a href="05_equivalence.html">5. Equivalência</a>
+</li>
+<li>
+  <a href="06_data_augmentation.html">6. Data Augmentation</a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation">
+    <span class="fa fa-github"></span>
+     
+    Source
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+<li role="separator" class="divider"></li>
+<li><a id="rmd-download-source" href="#">Download Rmd</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">1. Auditoria dos dados</h1>
+<h4 class="author">Weverton Gomes da Costa</h4>
+<h4 class="date">2026-08-11</h4>
+
+</div>
+
+
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+workflowr <span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span>
+</button>
+</p>
+<div id="workflowr-report" class="collapse">
+<ul class="nav nav-tabs">
+<li class="active">
+<a data-toggle="tab" href="#summary">Summary</a>
+</li>
+<li>
+<a data-toggle="tab" href="#checks"> Checks <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span>
+</a>
+</li>
+<li>
+<a data-toggle="tab" href="#versions">Past versions</a>
+</li>
+</ul>
+<div class="tab-content">
+<div id="summary" class="tab-pane fade in active">
+<p>
+<strong>Last updated:</strong> 2026-08-11
+</p>
+<p>
+<strong>Checks:</strong> <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 7
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> 0
+</p>
+<p>
+<strong>Knit directory:</strong>
+<code>genomic-prediction-data-augmentation/</code> <span
+class="glyphicon glyphicon-question-sign" aria-hidden="true"
+title="This is the local directory in which the code in this file was executed.">
+</span>
+</p>
+<p>
+This reproducible <a href="https://rmarkdown.rstudio.com">R Markdown</a>
+analysis was created with <a
+  href="https://github.com/workflowr/workflowr">workflowr</a> (version
+1.7.2). The <em>Checks</em> tab describes the reproducibility checks
+that were applied when the results were created. The <em>Past
+versions</em> tab lists the development history.
+</p>
+<hr>
+</div>
+<div id="checks" class="tab-pane fade">
+<div id="workflowr-checks" class="panel-group">
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguptodate">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>R Markdown file:</strong> up-to-date
+</a>
+</p>
+</div>
+<div id="strongRMarkdownfilestronguptodate"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great! Since the R Markdown file has been committed to the Git
+repository, you know the exact version of the code that produced these
+results.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongEnvironmentstrongempty">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Environment:</strong> empty </a>
+</p>
+</div>
+<div id="strongEnvironmentstrongempty" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! The global environment was empty. Objects defined in the
+global environment can affect the analysis in your R Markdown file in
+unknown ways. For reproduciblity it’s best to always run the code in an
+empty environment.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSeedstrongcodesetseed20260810code">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Seed:</strong>
+<code>set.seed(20260810)</code> </a>
+</p>
+</div>
+<div id="strongSeedstrongcodesetseed20260810code"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The command <code>set.seed(20260810)</code> was run prior to running
+the code in the R Markdown file. Setting a seed ensures that any results
+that rely on randomness, e.g. subsampling or permutations, are
+reproducible.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSessioninformationstrongrecorded">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Session information:</strong>
+recorded </a>
+</p>
+</div>
+<div id="strongSessioninformationstrongrecorded"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Recording the operating system, R version, and package
+versions is critical for reproducibility.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongnone">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Cache:</strong> none </a>
+</p>
+</div>
+<div id="strongCachestrongnone" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Nice! There were no cached chunks for this analysis, so you can be
+confident that you successfully produced the results during this
+run.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongFilepathsstrongrelative">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>File paths:</strong> relative </a>
+</p>
+</div>
+<div id="strongFilepathsstrongrelative" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Using relative paths to the files within your workflowr
+project makes it easier to run your code on other machines.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomWevertonGomesCostagenomicpredictiondataaugmentationtree94cb60b8fceb4c7967187316b02d81f136d801c1targetblank94cb60ba">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Repository version:</strong>
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/tree/94cb60b8fceb4c7967187316b02d81f136d801c1" target="_blank">94cb60b</a>
+</a>
+</p>
+</div>
+<div
+id="strongRepositoryversionstrongahrefhttpsgithubcomWevertonGomesCostagenomicpredictiondataaugmentationtree94cb60b8fceb4c7967187316b02d81f136d801c1targetblank94cb60ba"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>
+Great! You are using Git for version control. Tracking code development
+and connecting the code version to the results is critical for
+reproducibility.
+</p>
+<p>
+The results in this page were generated with repository version
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/tree/94cb60b8fceb4c7967187316b02d81f136d801c1" target="_blank">94cb60b</a>.
+See the <em>Past versions</em> tab to see a history of the changes made
+to the R Markdown and HTML files.
+</p>
+<p>
+Note that you need to be careful to ensure that all relevant files for
+the analysis have been committed to Git prior to generating the results
+(you can use <code>wflow_publish</code> or
+<code>wflow_git_commit</code>). workflowr only checks the R Markdown
+file, but you know if there are other scripts or data files that it
+depends on. Below is the status of the Git repository when the results
+were generated:
+</p>
+<pre><code>
+Ignored files:
+    Ignored:    .Rproj.user/
+    Ignored:    ETA_1_varU.dat
+    Ignored:    data/dados_gblup.csv
+    Ignored:    mu.dat
+    Ignored:    output/01_data_objects.rds
+    Ignored:    output/02_splits_mestre_30rep.rds
+    Ignored:    output/03_genomic_objects.rds
+    Ignored:    output/checkpoints/06_da_progress.csv
+    Ignored:    varE.dat
+
+Untracked files:
+    Untracked:  results/01_data_audit.csv
+    Untracked:  results/02_splits_summary.csv
+    Untracked:  results/06_da_equivalence_vs_T100.csv
+    Untracked:  results/06_da_results.csv
+    Untracked:  results/06_da_vs_same_real.csv
+
+</code></pre>
+<p>
+Note that any generated files, e.g. HTML, png, CSS, etc., are not
+included in this status report because it is ok for generated content to
+have uncommitted changes.
+</p>
+</div>
+</div>
+</div>
+</div>
+<hr>
+</div>
+<div id="versions" class="tab-pane fade">
+<p>
+These are the previous versions of the repository in which changes were
+made to the R Markdown (<code>analysis/01_data_audit.Rmd</code>) and
+HTML (<code>docs/01_data_audit.html</code>) files. If you’ve configured
+a remote Git repository (see <code>?wflow_git_remote</code>), click on
+the hyperlinks in the table below to view the files as they were in that
+past version.
+</p>
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+File
+</th>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+<th>
+Message
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/blob/2f4d2fd8427d79e25ccbe799586d80ca6e290adf/analysis/01_data_audit.Rmd" target="_blank">2f4d2fd</a>
+</td>
+<td>
+Weverton Gomes da Costa
+</td>
+<td>
+2026-08-11
+</td>
+<td>
+Rewrite data audit as explicit tutorial module
+</td>
+</tr>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/blob/c1d600d5ac7201851a856fca911e98710da1d5c4/analysis/01_data_audit.Rmd" target="_blank">c1d600d</a>
+</td>
+<td>
+Weverton Gomes da Costa
+</td>
+<td>
+2026-08-10
+</td>
+<td>
+Add stage 1 data audit
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr>
+</div>
+</div>
+</div>
+<div id="objetivo" class="section level2">
+<h2>1. Objetivo</h2>
+<p>Antes de ajustar qualquer modelo de predição genômica, precisamos
+conhecer o arquivo analítico e verificar se sua estrutura corresponde ao
+que será usado no restante do tutorial.</p>
+<p>Neste conjunto de dados:</p>
+<ul>
+<li>cada <strong>linha</strong> representa um indivíduo;</li>
+<li>a coluna <code>yield</code> contém o fenótipo de produtividade;</li>
+<li>as demais colunas representam SNPs;</li>
+<li>cada SNP é codificado como <code>0</code>, <code>1</code> ou
+<code>2</code>, correspondendo ao número de cópias do alelo contado
+naquele marcador.</li>
+</ul>
+<p>A auditoria não modifica os dados. Ela apenas verifica a estrutura do
+arquivo e salva os objetos que serão usados na próxima etapa.</p>
+</div>
+<div id="leitura-do-arquivo" class="section level2">
+<h2>2. Leitura do arquivo</h2>
+<p>O arquivo analítico deve estar em
+<code>data/dados_gblup.csv</code>.</p>
+<pre class="r"><code>DATA_FILE &lt;- &quot;data/dados_gblup.csv&quot;
+
+if (!file.exists(DATA_FILE)) {
+  stop(
+    &quot;Arquivo não encontrado: &quot;, DATA_FILE,
+    &quot;. Coloque dados_gblup.csv dentro da pasta data/.&quot;
+  )
+}
+
+dados &lt;- read.csv(
+  DATA_FILE,
+  check.names = FALSE
+)
+
+dim(dados)</code></pre>
+<pre><code>[1] 1379 4326</code></pre>
+<p>O projeto validado possui 1.379 indivíduos e 4.326 colunas: uma
+coluna fenotípica e 4.325 SNPs.</p>
+</div>
+<div id="identificação-do-fenótipo-e-dos-snps" class="section level2">
+<h2>3. Identificação do fenótipo e dos SNPs</h2>
+<p>Primeiro separamos o nome da característica fenotípica dos nomes dos
+marcadores.</p>
+<pre class="r"><code>if (sum(names(dados) == &quot;yield&quot;) != 1) {
+  stop(&quot;O arquivo deve possuir exatamente uma coluna chamada yield.&quot;)
+}
+
+if (anyDuplicated(names(dados)) &gt; 0) {
+  stop(&quot;Existem nomes de colunas duplicados.&quot;)
+}
+
+marker_names &lt;- setdiff(
+  names(dados),
+  &quot;yield&quot;
+)
+
+length(marker_names)</code></pre>
+<pre><code>[1] 4325</code></pre>
+<p>Os nomes dos SNPs seguem o padrão adotado no arquivo analítico, por
+exemplo <code>Gm01_..._A_G</code>.</p>
+<pre class="r"><code>pattern_snp &lt;- &quot;^Gm[0-9]{2}_[0-9]+_[ACGT]_[ACGT]$&quot;
+
+if (!all(grepl(pattern_snp, marker_names))) {
+  stop(&quot;Há marcadores com nomes fora do padrão esperado.&quot;)
+}</code></pre>
+</div>
+<div id="construção-da-matriz-de-marcadores-e-do-vetor-fenotípico"
+class="section level2">
+<h2>4. Construção da matriz de marcadores e do vetor fenotípico</h2>
+<p>A matriz <code>M</code> contém apenas os SNPs. O vetor <code>y</code>
+contém a produtividade.</p>
+<pre class="r"><code>M &lt;- as.matrix(
+  dados[, marker_names, drop = FALSE]
+)
+
+storage.mode(M) &lt;- &quot;numeric&quot;
+
+y &lt;- as.numeric(
+  dados$yield
+)
+
+dim(M)</code></pre>
+<pre><code>[1] 1379 4325</code></pre>
+<pre class="r"><code>length(y)</code></pre>
+<pre><code>[1] 1379</code></pre>
+</div>
+<div id="valores-ausentes-e-codificação-dos-snps"
+class="section level2">
+<h2>5. Valores ausentes e codificação dos SNPs</h2>
+<p>Os modelos deste tutorial utilizam o arquivo analítico já filtrado.
+Por isso, não esperamos valores ausentes nos SNPs nem no fenótipo.</p>
+<p>Também verificamos se todos os genótipos estão codificados como
+<code>0</code>, <code>1</code> ou <code>2</code>.</p>
+<pre class="r"><code>auditoria_valores &lt;- data.frame(
+  Verificacao = c(
+    &quot;Fenótipos ausentes&quot;,
+    &quot;Genótipos ausentes&quot;,
+    &quot;Valores SNP fora de 0/1/2&quot;
+  ),
+  Valor = c(
+    sum(is.na(y)),
+    sum(is.na(M)),
+    sum(!(M %in% c(0, 1, 2)))
+  )
+)
+
+knitr::kable(
+  auditoria_valores,
+  caption = &quot;Verificações básicas do arquivo analítico&quot;
+)</code></pre>
+<table>
+<caption>Verificações básicas do arquivo analítico</caption>
+<thead>
+<tr class="header">
+<th align="left">Verificacao</th>
+<th align="right">Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Fenótipos ausentes</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">Genótipos ausentes</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">Valores SNP fora de 0/1/2</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>if (anyNA(y)) stop(&quot;Existem fenótipos ausentes no arquivo analítico.&quot;)
+if (anyNA(M)) stop(&quot;Existem SNPs ausentes no arquivo analítico.&quot;)
+if (!all(M %in% c(0, 1, 2))) stop(&quot;Os SNPs devem estar codificados como 0, 1 ou 2.&quot;)</code></pre>
+</div>
+<div id="marcadores-sem-variação-e-registros-duplicados"
+class="section level2">
+<h2>6. Marcadores sem variação e registros duplicados</h2>
+<p>Um marcador monomórfico apresenta o mesmo valor para todos os
+indivíduos e não contribui para diferenciar geneticamente a população.
+Também verificamos se há linhas ou perfis genômicos exatamente
+duplicados.</p>
+<pre class="r"><code>n_classes &lt;- integer(ncol(M))
+
+for (j in seq_len(ncol(M))) {
+  n_classes[j] &lt;- length(
+    unique(M[, j])
+  )
+}
+
+n_monomorficos &lt;- sum(n_classes &lt;= 1)
+n_linhas_duplicadas &lt;- sum(duplicated(dados))
+n_perfis_duplicados &lt;- sum(
+  duplicated(
+    as.data.frame(M)
+  )
+)
+
+auditoria_estrutura &lt;- data.frame(
+  Verificacao = c(
+    &quot;Indivíduos&quot;,
+    &quot;SNPs&quot;,
+    &quot;Marcadores monomórficos&quot;,
+    &quot;Linhas duplicadas&quot;,
+    &quot;Perfis genômicos duplicados&quot;
+  ),
+  Valor = c(
+    nrow(M),
+    ncol(M),
+    n_monomorficos,
+    n_linhas_duplicadas,
+    n_perfis_duplicados
+  )
+)
+
+knitr::kable(
+  auditoria_estrutura,
+  caption = &quot;Estrutura validada dos dados&quot;
+)</code></pre>
+<table>
+<caption>Estrutura validada dos dados</caption>
+<thead>
+<tr class="header">
+<th align="left">Verificacao</th>
+<th align="right">Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Indivíduos</td>
+<td align="right">1379</td>
+</tr>
+<tr class="even">
+<td align="left">SNPs</td>
+<td align="right">4325</td>
+</tr>
+<tr class="odd">
+<td align="left">Marcadores monomórficos</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">Linhas duplicadas</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">Perfis genômicos duplicados</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>stopifnot(nrow(M) == 1379)
+stopifnot(ncol(M) == 4325)
+stopifnot(n_monomorficos == 0)
+stopifnot(n_linhas_duplicadas == 0)
+stopifnot(n_perfis_duplicados == 0)</code></pre>
+</div>
+<div id="resumo-do-fenótipo" class="section level2">
+<h2>7. Resumo do fenótipo</h2>
+<p>O resumo abaixo permite conhecer a escala da produtividade antes da
+modelagem.</p>
+<pre class="r"><code>resumo_yield &lt;- data.frame(
+  N = length(y),
+  Media = mean(y),
+  Desvio_padrao = sd(y),
+  Minimo = min(y),
+  Q1 = unname(quantile(y, 0.25)),
+  Mediana = median(y),
+  Q3 = unname(quantile(y, 0.75)),
+  Maximo = max(y)
+)
+
+knitr::kable(
+  resumo_yield,
+  digits = 2,
+  caption = &quot;Resumo da produtividade&quot;
+)</code></pre>
+<table>
+<caption>Resumo da produtividade</caption>
+<thead>
+<tr class="header">
+<th align="right">N</th>
+<th align="right">Media</th>
+<th align="right">Desvio_padrao</th>
+<th align="right">Minimo</th>
+<th align="right">Q1</th>
+<th align="right">Mediana</th>
+<th align="right">Q3</th>
+<th align="right">Maximo</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1379</td>
+<td align="right">2780.96</td>
+<td align="right">614.62</td>
+<td align="right">670</td>
+<td align="right">2405.5</td>
+<td align="right">2816</td>
+<td align="right">3208</td>
+<td align="right">4978</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>hist(
+  y,
+  breaks = 30,
+  xlab = &quot;Produtividade (yield)&quot;,
+  main = &quot;Distribuição da produtividade&quot;
+)</code></pre>
+<p><img src="figure/01_data_audit.Rmd/histograma-yield-1.png" width="100%" style="display: block; margin: auto;" /></p>
+</div>
+<div id="objeto-salvo-para-a-próxima-etapa" class="section level2">
+<h2>8. Objeto salvo para a próxima etapa</h2>
+<p>Não precisamos reler e reorganizar o CSV em todos os módulos.
+Salvamos apenas o objeto já auditado em
+<code>output/01_data_objects.rds</code>.</p>
+<pre class="r"><code>data_objects &lt;- list(
+  y = y,
+  M = M,
+  n = nrow(M),
+  m = ncol(M),
+  marker_names = marker_names
+)
+
+saveRDS(
+  data_objects,
+  &quot;output/01_data_objects.rds&quot;
+)</code></pre>
+<p>Na próxima etapa, esse objeto será usado para separar aleatoriamente
+os indivíduos de treinamento e validação.</p>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 4.5.1 (2025-06-13 ucrt)
+Platform: x86_64-w64-mingw32/x64
+Running under: Windows 11 x64 (build 26200)
+
+Matrix products: default
+  LAPACK version 3.12.1
+
+locale:
+[1] LC_COLLATE=Portuguese_Brazil.utf8  LC_CTYPE=Portuguese_Brazil.utf8   
+[3] LC_MONETARY=Portuguese_Brazil.utf8 LC_NUMERIC=C                      
+[5] LC_TIME=Portuguese_Brazil.utf8    
+
+time zone: America/Sao_Paulo
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+loaded via a namespace (and not attached):
+ [1] vctrs_0.7.1       cli_3.6.5         knitr_1.50        rlang_1.1.7      
+ [5] xfun_0.54         stringi_1.8.7     otel_0.2.0        promises_1.5.0   
+ [9] jsonlite_2.0.0    workflowr_1.7.2   glue_1.8.0        rprojroot_2.1.1  
+[13] git2r_0.36.2      htmltools_0.5.9   httpuv_1.6.16     sass_0.4.10      
+[17] rmarkdown_2.30    evaluate_1.0.5    jquerylib_0.1.4   tibble_3.3.1     
+[21] fastmap_1.2.0     yaml_2.3.12       lifecycle_1.0.5   whisker_0.4.1    
+[25] stringr_1.6.0     compiler_4.5.1    fs_1.6.6          Rcpp_1.1.1       
+[29] pkgconfig_2.0.3   rstudioapi_0.17.1 later_1.4.4       digest_0.6.39    
+[33] R6_2.6.1          pillar_1.11.1     magrittr_2.0.4    bslib_0.9.0      
+[37] tools_4.5.1       cachem_1.1.0     </code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIjEuIEF1ZGl0b3JpYSBkb3MgZGFkb3MiDQphdXRob3I6ICJXZXZlcnRvbiBHb21lcyBkYSBDb3N0YSINCmRhdGU6ICJgciBTeXMuRGF0ZSgpYCINCnNpdGU6IHdvcmtmbG93cjo6d2Zsb3dfc2l0ZQ0Kb3V0cHV0Og0KICB3b3JrZmxvd3I6OndmbG93X2h0bWw6DQogICAgdG9jOiB0cnVlDQogICAgdG9jX2RlcHRoOiAzDQogICAgdG9jX2Zsb2F0OiB0cnVlDQogICAgY29kZV9kb3dubG9hZDogdHJ1ZQ0KICAgIGNvZGVfZm9sZGluZzogc2hvdw0KZWRpdG9yX29wdGlvbnM6DQogIGNodW5rX291dHB1dF90eXBlOiBjb25zb2xlDQotLS0NCg0KYGBge3Igc2V0dXAsIGluY2x1ZGU9RkFMU0V9DQprbml0cjo6b3B0c19jaHVuayRzZXQoDQogIGVjaG8gPSBUUlVFLA0KICB3YXJuaW5nID0gRkFMU0UsDQogIG1lc3NhZ2UgPSBGQUxTRSwNCiAgY2FjaGUgPSBGQUxTRSwNCiAgZmlnLmFsaWduID0gImNlbnRlciIsDQogIG91dC53aWR0aCA9ICIxMDAlIg0KKQ0KZGlyLmNyZWF0ZSgib3V0cHV0Iiwgc2hvd1dhcm5pbmdzID0gRkFMU0UsIHJlY3Vyc2l2ZSA9IFRSVUUpDQpgYGANCg0KIyMgMS4gT2JqZXRpdm8NCg0KQW50ZXMgZGUgYWp1c3RhciBxdWFscXVlciBtb2RlbG8gZGUgcHJlZGnDp8OjbyBnZW7DtG1pY2EsIHByZWNpc2Ftb3MgY29uaGVjZXIgbw0KYXJxdWl2byBhbmFsw610aWNvIGUgdmVyaWZpY2FyIHNlIHN1YSBlc3RydXR1cmEgY29ycmVzcG9uZGUgYW8gcXVlIHNlcsOhIHVzYWRvIG5vDQpyZXN0YW50ZSBkbyB0dXRvcmlhbC4NCg0KTmVzdGUgY29uanVudG8gZGUgZGFkb3M6DQoNCi0gY2FkYSAqKmxpbmhhKiogcmVwcmVzZW50YSB1bSBpbmRpdsOtZHVvOw0KLSBhIGNvbHVuYSBgeWllbGRgIGNvbnTDqW0gbyBmZW7Ds3RpcG8gZGUgcHJvZHV0aXZpZGFkZTsNCi0gYXMgZGVtYWlzIGNvbHVuYXMgcmVwcmVzZW50YW0gU05QczsNCi0gY2FkYSBTTlAgw6kgY29kaWZpY2FkbyBjb21vIGAwYCwgYDFgIG91IGAyYCwgY29ycmVzcG9uZGVuZG8gYW8gbsO6bWVybyBkZSBjw7NwaWFzDQpkbyBhbGVsbyBjb250YWRvIG5hcXVlbGUgbWFyY2Fkb3IuDQoNCkEgYXVkaXRvcmlhIG7Do28gbW9kaWZpY2Egb3MgZGFkb3MuIEVsYSBhcGVuYXMgdmVyaWZpY2EgYSBlc3RydXR1cmEgZG8gYXJxdWl2byBlDQpzYWx2YSBvcyBvYmpldG9zIHF1ZSBzZXLDo28gdXNhZG9zIG5hIHByw7N4aW1hIGV0YXBhLg0KDQojIyAyLiBMZWl0dXJhIGRvIGFycXVpdm8NCg0KTyBhcnF1aXZvIGFuYWzDrXRpY28gZGV2ZSBlc3RhciBlbSBgZGF0YS9kYWRvc19nYmx1cC5jc3ZgLg0KDQpgYGB7ciBsZWl0dXJhLWRhZG9zfQ0KREFUQV9GSUxFIDwtICJkYXRhL2RhZG9zX2dibHVwLmNzdiINCg0KaWYgKCFmaWxlLmV4aXN0cyhEQVRBX0ZJTEUpKSB7DQogIHN0b3AoDQogICAgIkFycXVpdm8gbsOjbyBlbmNvbnRyYWRvOiAiLCBEQVRBX0ZJTEUsDQogICAgIi4gQ29sb3F1ZSBkYWRvc19nYmx1cC5jc3YgZGVudHJvIGRhIHBhc3RhIGRhdGEvLiINCiAgKQ0KfQ0KDQpkYWRvcyA8LSByZWFkLmNzdigNCiAgREFUQV9GSUxFLA0KICBjaGVjay5uYW1lcyA9IEZBTFNFDQopDQoNCmRpbShkYWRvcykNCmBgYA0KDQpPIHByb2pldG8gdmFsaWRhZG8gcG9zc3VpIDEuMzc5IGluZGl2w61kdW9zIGUgNC4zMjYgY29sdW5hczogdW1hIGNvbHVuYQ0KZmVub3TDrXBpY2EgZSA0LjMyNSBTTlBzLg0KDQojIyAzLiBJZGVudGlmaWNhw6fDo28gZG8gZmVuw7N0aXBvIGUgZG9zIFNOUHMNCg0KUHJpbWVpcm8gc2VwYXJhbW9zIG8gbm9tZSBkYSBjYXJhY3RlcsOtc3RpY2EgZmVub3TDrXBpY2EgZG9zIG5vbWVzIGRvcw0KbWFyY2Fkb3Jlcy4NCg0KYGBge3IgaWRlbnRpZmljYXItY29sdW5hc30NCmlmIChzdW0obmFtZXMoZGFkb3MpID09ICJ5aWVsZCIpICE9IDEpIHsNCiAgc3RvcCgiTyBhcnF1aXZvIGRldmUgcG9zc3VpciBleGF0YW1lbnRlIHVtYSBjb2x1bmEgY2hhbWFkYSB5aWVsZC4iKQ0KfQ0KDQppZiAoYW55RHVwbGljYXRlZChuYW1lcyhkYWRvcykpID4gMCkgew0KICBzdG9wKCJFeGlzdGVtIG5vbWVzIGRlIGNvbHVuYXMgZHVwbGljYWRvcy4iKQ0KfQ0KDQptYXJrZXJfbmFtZXMgPC0gc2V0ZGlmZigNCiAgbmFtZXMoZGFkb3MpLA0KICAieWllbGQiDQopDQoNCmxlbmd0aChtYXJrZXJfbmFtZXMpDQpgYGANCg0KT3Mgbm9tZXMgZG9zIFNOUHMgc2VndWVtIG8gcGFkcsOjbyBhZG90YWRvIG5vIGFycXVpdm8gYW5hbMOtdGljbywgcG9yIGV4ZW1wbG8NCmBHbTAxXy4uLl9BX0dgLg0KDQpgYGB7ciBjb25mZXJpci1ub21lcy1zbnB9DQpwYXR0ZXJuX3NucCA8LSAiXkdtWzAtOV17Mn1fWzAtOV0rX1tBQ0dUXV9bQUNHVF0kIg0KDQppZiAoIWFsbChncmVwbChwYXR0ZXJuX3NucCwgbWFya2VyX25hbWVzKSkpIHsNCiAgc3RvcCgiSMOhIG1hcmNhZG9yZXMgY29tIG5vbWVzIGZvcmEgZG8gcGFkcsOjbyBlc3BlcmFkby4iKQ0KfQ0KYGBgDQoNCiMjIDQuIENvbnN0cnXDp8OjbyBkYSBtYXRyaXogZGUgbWFyY2Fkb3JlcyBlIGRvIHZldG9yIGZlbm90w61waWNvDQoNCkEgbWF0cml6IGBNYCBjb250w6ltIGFwZW5hcyBvcyBTTlBzLiBPIHZldG9yIGB5YCBjb250w6ltIGEgcHJvZHV0aXZpZGFkZS4NCg0KYGBge3IgY29uc3RydWlyLW9iamV0b3N9DQpNIDwtIGFzLm1hdHJpeCgNCiAgZGFkb3NbLCBtYXJrZXJfbmFtZXMsIGRyb3AgPSBGQUxTRV0NCikNCg0Kc3RvcmFnZS5tb2RlKE0pIDwtICJudW1lcmljIg0KDQp5IDwtIGFzLm51bWVyaWMoDQogIGRhZG9zJHlpZWxkDQopDQoNCmRpbShNKQ0KbGVuZ3RoKHkpDQpgYGANCg0KIyMgNS4gVmFsb3JlcyBhdXNlbnRlcyBlIGNvZGlmaWNhw6fDo28gZG9zIFNOUHMNCg0KT3MgbW9kZWxvcyBkZXN0ZSB0dXRvcmlhbCB1dGlsaXphbSBvIGFycXVpdm8gYW5hbMOtdGljbyBqw6EgZmlsdHJhZG8uIFBvciBpc3NvLA0KbsOjbyBlc3BlcmFtb3MgdmFsb3JlcyBhdXNlbnRlcyBub3MgU05QcyBuZW0gbm8gZmVuw7N0aXBvLg0KDQpUYW1iw6ltIHZlcmlmaWNhbW9zIHNlIHRvZG9zIG9zIGdlbsOzdGlwb3MgZXN0w6NvIGNvZGlmaWNhZG9zIGNvbW8gYDBgLCBgMWAgb3UNCmAyYC4NCg0KYGBge3IgY29uZmVyaXItdmFsb3Jlc30NCmF1ZGl0b3JpYV92YWxvcmVzIDwtIGRhdGEuZnJhbWUoDQogIFZlcmlmaWNhY2FvID0gYygNCiAgICAiRmVuw7N0aXBvcyBhdXNlbnRlcyIsDQogICAgIkdlbsOzdGlwb3MgYXVzZW50ZXMiLA0KICAgICJWYWxvcmVzIFNOUCBmb3JhIGRlIDAvMS8yIg0KICApLA0KICBWYWxvciA9IGMoDQogICAgc3VtKGlzLm5hKHkpKSwNCiAgICBzdW0oaXMubmEoTSkpLA0KICAgIHN1bSghKE0gJWluJSBjKDAsIDEsIDIpKSkNCiAgKQ0KKQ0KDQprbml0cjo6a2FibGUoDQogIGF1ZGl0b3JpYV92YWxvcmVzLA0KICBjYXB0aW9uID0gIlZlcmlmaWNhw6fDtWVzIGLDoXNpY2FzIGRvIGFycXVpdm8gYW5hbMOtdGljbyINCikNCg0KaWYgKGFueU5BKHkpKSBzdG9wKCJFeGlzdGVtIGZlbsOzdGlwb3MgYXVzZW50ZXMgbm8gYXJxdWl2byBhbmFsw610aWNvLiIpDQppZiAoYW55TkEoTSkpIHN0b3AoIkV4aXN0ZW0gU05QcyBhdXNlbnRlcyBubyBhcnF1aXZvIGFuYWzDrXRpY28uIikNCmlmICghYWxsKE0gJWluJSBjKDAsIDEsIDIpKSkgc3RvcCgiT3MgU05QcyBkZXZlbSBlc3RhciBjb2RpZmljYWRvcyBjb21vIDAsIDEgb3UgMi4iKQ0KYGBgDQoNCiMjIDYuIE1hcmNhZG9yZXMgc2VtIHZhcmlhw6fDo28gZSByZWdpc3Ryb3MgZHVwbGljYWRvcw0KDQpVbSBtYXJjYWRvciBtb25vbcOzcmZpY28gYXByZXNlbnRhIG8gbWVzbW8gdmFsb3IgcGFyYSB0b2RvcyBvcyBpbmRpdsOtZHVvcyBlIG7Do28NCmNvbnRyaWJ1aSBwYXJhIGRpZmVyZW5jaWFyIGdlbmV0aWNhbWVudGUgYSBwb3B1bGHDp8Ojby4gVGFtYsOpbSB2ZXJpZmljYW1vcyBzZSBow6ENCmxpbmhhcyBvdSBwZXJmaXMgZ2Vuw7RtaWNvcyBleGF0YW1lbnRlIGR1cGxpY2Fkb3MuDQoNCmBgYHtyIGR1cGxpY2F0YXMtZS12YXJpYWNhb30NCm5fY2xhc3NlcyA8LSBpbnRlZ2VyKG5jb2woTSkpDQoNCmZvciAoaiBpbiBzZXFfbGVuKG5jb2woTSkpKSB7DQogIG5fY2xhc3Nlc1tqXSA8LSBsZW5ndGgoDQogICAgdW5pcXVlKE1bLCBqXSkNCiAgKQ0KfQ0KDQpuX21vbm9tb3JmaWNvcyA8LSBzdW0obl9jbGFzc2VzIDw9IDEpDQpuX2xpbmhhc19kdXBsaWNhZGFzIDwtIHN1bShkdXBsaWNhdGVkKGRhZG9zKSkNCm5fcGVyZmlzX2R1cGxpY2Fkb3MgPC0gc3VtKA0KICBkdXBsaWNhdGVkKA0KICAgIGFzLmRhdGEuZnJhbWUoTSkNCiAgKQ0KKQ0KDQphdWRpdG9yaWFfZXN0cnV0dXJhIDwtIGRhdGEuZnJhbWUoDQogIFZlcmlmaWNhY2FvID0gYygNCiAgICAiSW5kaXbDrWR1b3MiLA0KICAgICJTTlBzIiwNCiAgICAiTWFyY2Fkb3JlcyBtb25vbcOzcmZpY29zIiwNCiAgICAiTGluaGFzIGR1cGxpY2FkYXMiLA0KICAgICJQZXJmaXMgZ2Vuw7RtaWNvcyBkdXBsaWNhZG9zIg0KICApLA0KICBWYWxvciA9IGMoDQogICAgbnJvdyhNKSwNCiAgICBuY29sKE0pLA0KICAgIG5fbW9ub21vcmZpY29zLA0KICAgIG5fbGluaGFzX2R1cGxpY2FkYXMsDQogICAgbl9wZXJmaXNfZHVwbGljYWRvcw0KICApDQopDQoNCmtuaXRyOjprYWJsZSgNCiAgYXVkaXRvcmlhX2VzdHJ1dHVyYSwNCiAgY2FwdGlvbiA9ICJFc3RydXR1cmEgdmFsaWRhZGEgZG9zIGRhZG9zIg0KKQ0KDQpzdG9waWZub3QobnJvdyhNKSA9PSAxMzc5KQ0Kc3RvcGlmbm90KG5jb2woTSkgPT0gNDMyNSkNCnN0b3BpZm5vdChuX21vbm9tb3JmaWNvcyA9PSAwKQ0Kc3RvcGlmbm90KG5fbGluaGFzX2R1cGxpY2FkYXMgPT0gMCkNCnN0b3BpZm5vdChuX3BlcmZpc19kdXBsaWNhZG9zID09IDApDQpgYGANCg0KIyMgNy4gUmVzdW1vIGRvIGZlbsOzdGlwbw0KDQpPIHJlc3VtbyBhYmFpeG8gcGVybWl0ZSBjb25oZWNlciBhIGVzY2FsYSBkYSBwcm9kdXRpdmlkYWRlIGFudGVzIGRhIG1vZGVsYWdlbS4NCg0KYGBge3IgcmVzdW1vLWZlbm90aXBvfQ0KcmVzdW1vX3lpZWxkIDwtIGRhdGEuZnJhbWUoDQogIE4gPSBsZW5ndGgoeSksDQogIE1lZGlhID0gbWVhbih5KSwNCiAgRGVzdmlvX3BhZHJhbyA9IHNkKHkpLA0KICBNaW5pbW8gPSBtaW4oeSksDQogIFExID0gdW5uYW1lKHF1YW50aWxlKHksIDAuMjUpKSwNCiAgTWVkaWFuYSA9IG1lZGlhbih5KSwNCiAgUTMgPSB1bm5hbWUocXVhbnRpbGUoeSwgMC43NSkpLA0KICBNYXhpbW8gPSBtYXgoeSkNCikNCg0Ka25pdHI6OmthYmxlKA0KICByZXN1bW9feWllbGQsDQogIGRpZ2l0cyA9IDIsDQogIGNhcHRpb24gPSAiUmVzdW1vIGRhIHByb2R1dGl2aWRhZGUiDQopDQpgYGANCg0KYGBge3IgaGlzdG9ncmFtYS15aWVsZCwgZmlnLmhlaWdodD00LjV9DQpoaXN0KA0KICB5LA0KICBicmVha3MgPSAzMCwNCiAgeGxhYiA9ICJQcm9kdXRpdmlkYWRlICh5aWVsZCkiLA0KICBtYWluID0gIkRpc3RyaWJ1acOnw6NvIGRhIHByb2R1dGl2aWRhZGUiDQopDQpgYGANCg0KIyMgOC4gT2JqZXRvIHNhbHZvIHBhcmEgYSBwcsOzeGltYSBldGFwYQ0KDQpOw6NvIHByZWNpc2Ftb3MgcmVsZXIgZSByZW9yZ2FuaXphciBvIENTViBlbSB0b2RvcyBvcyBtw7NkdWxvcy4gU2FsdmFtb3MgYXBlbmFzIG8NCm9iamV0byBqw6EgYXVkaXRhZG8gZW0gYG91dHB1dC8wMV9kYXRhX29iamVjdHMucmRzYC4NCg0KYGBge3Igc2FsdmFyLW9iamV0b3N9DQpkYXRhX29iamVjdHMgPC0gbGlzdCgNCiAgeSA9IHksDQogIE0gPSBNLA0KICBuID0gbnJvdyhNKSwNCiAgbSA9IG5jb2woTSksDQogIG1hcmtlcl9uYW1lcyA9IG1hcmtlcl9uYW1lcw0KKQ0KDQpzYXZlUkRTKA0KICBkYXRhX29iamVjdHMsDQogICJvdXRwdXQvMDFfZGF0YV9vYmplY3RzLnJkcyINCikNCmBgYA0KDQpOYSBwcsOzeGltYSBldGFwYSwgZXNzZSBvYmpldG8gc2Vyw6EgdXNhZG8gcGFyYSBzZXBhcmFyIGFsZWF0b3JpYW1lbnRlIG9zDQppbmRpdsOtZHVvcyBkZSB0cmVpbmFtZW50byBlIHZhbGlkYcOnw6NvLg0K</div>
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+https://docs.mathjax.org/en/latest/web/configuration.html. This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeSourceEmbed("01_data_audit.Rmd");
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

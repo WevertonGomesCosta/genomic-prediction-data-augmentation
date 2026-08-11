@@ -1,0 +1,2240 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Weverton Gomes da Costa" />
+
+<meta name="date" content="2026-08-11" />
+
+<title>6. Data Augmentation — completar T100</title>
+
+<script src="site_libs/header-attrs-2.30/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<script src="site_libs/navigation-1.1/sourceembed.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet" />
+<script src="site_libs/pagedtable-1.1/js/pagedtable.js"></script>
+<link href="site_libs/font-awesome-6.5.2/css/all.min.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet" />
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/main/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+<style type="text/css">
+#rmd-source-code {
+  display: none;
+}
+</style>
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Genomic prediction + DA</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="01_data_audit.html">1. Dados</a>
+</li>
+<li>
+  <a href="02_sampling_splits.html">2. Amostragem</a>
+</li>
+<li>
+  <a href="03_genomic_matrix.html">3. Matriz G</a>
+</li>
+<li>
+  <a href="04_gblup_baseline.html">4. GBLUP</a>
+</li>
+<li>
+  <a href="05_equivalence.html">5. Equivalência</a>
+</li>
+<li>
+  <a href="06_data_augmentation.html">6. Data Augmentation</a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation">
+    <span class="fa fa-github"></span>
+     
+    Source
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+<li role="separator" class="divider"></li>
+<li><a id="rmd-download-source" href="#">Download Rmd</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">6. Data Augmentation — completar T100</h1>
+<h4 class="author">Weverton Gomes da Costa</h4>
+<h4 class="date">2026-08-11</h4>
+
+</div>
+
+
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+workflowr <span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span>
+</button>
+</p>
+<div id="workflowr-report" class="collapse">
+<ul class="nav nav-tabs">
+<li class="active">
+<a data-toggle="tab" href="#summary">Summary</a>
+</li>
+<li>
+<a data-toggle="tab" href="#checks"> Checks <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span>
+</a>
+</li>
+<li>
+<a data-toggle="tab" href="#versions">Past versions</a>
+</li>
+</ul>
+<div class="tab-content">
+<div id="summary" class="tab-pane fade in active">
+<p>
+<strong>Last updated:</strong> 2026-08-11
+</p>
+<p>
+<strong>Checks:</strong> <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 7
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> 0
+</p>
+<p>
+<strong>Knit directory:</strong>
+<code>genomic-prediction-data-augmentation/</code> <span
+class="glyphicon glyphicon-question-sign" aria-hidden="true"
+title="This is the local directory in which the code in this file was executed.">
+</span>
+</p>
+<p>
+This reproducible <a href="https://rmarkdown.rstudio.com">R Markdown</a>
+analysis was created with <a
+  href="https://github.com/workflowr/workflowr">workflowr</a> (version
+1.7.2). The <em>Checks</em> tab describes the reproducibility checks
+that were applied when the results were created. The <em>Past
+versions</em> tab lists the development history.
+</p>
+<hr>
+</div>
+<div id="checks" class="tab-pane fade">
+<div id="workflowr-checks" class="panel-group">
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguptodate">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>R Markdown file:</strong> up-to-date
+</a>
+</p>
+</div>
+<div id="strongRMarkdownfilestronguptodate"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great! Since the R Markdown file has been committed to the Git
+repository, you know the exact version of the code that produced these
+results.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongEnvironmentstrongempty">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Environment:</strong> empty </a>
+</p>
+</div>
+<div id="strongEnvironmentstrongempty" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! The global environment was empty. Objects defined in the
+global environment can affect the analysis in your R Markdown file in
+unknown ways. For reproduciblity it’s best to always run the code in an
+empty environment.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSeedstrongcodesetseed20260810code">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Seed:</strong>
+<code>set.seed(20260810)</code> </a>
+</p>
+</div>
+<div id="strongSeedstrongcodesetseed20260810code"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The command <code>set.seed(20260810)</code> was run prior to running
+the code in the R Markdown file. Setting a seed ensures that any results
+that rely on randomness, e.g. subsampling or permutations, are
+reproducible.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSessioninformationstrongrecorded">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Session information:</strong>
+recorded </a>
+</p>
+</div>
+<div id="strongSessioninformationstrongrecorded"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Recording the operating system, R version, and package
+versions is critical for reproducibility.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongnone">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Cache:</strong> none </a>
+</p>
+</div>
+<div id="strongCachestrongnone" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Nice! There were no cached chunks for this analysis, so you can be
+confident that you successfully produced the results during this
+run.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongFilepathsstrongrelative">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>File paths:</strong> relative </a>
+</p>
+</div>
+<div id="strongFilepathsstrongrelative" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Using relative paths to the files within your workflowr
+project makes it easier to run your code on other machines.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomWevertonGomesCostagenomicpredictiondataaugmentationtree67109a10be53775be264f2c9489b8c3831b9ee8ctargetblank67109a1a">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Repository version:</strong>
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/tree/67109a10be53775be264f2c9489b8c3831b9ee8c" target="_blank">67109a1</a>
+</a>
+</p>
+</div>
+<div
+id="strongRepositoryversionstrongahrefhttpsgithubcomWevertonGomesCostagenomicpredictiondataaugmentationtree67109a10be53775be264f2c9489b8c3831b9ee8ctargetblank67109a1a"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>
+Great! You are using Git for version control. Tracking code development
+and connecting the code version to the results is critical for
+reproducibility.
+</p>
+<p>
+The results in this page were generated with repository version
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/tree/67109a10be53775be264f2c9489b8c3831b9ee8c" target="_blank">67109a1</a>.
+See the <em>Past versions</em> tab to see a history of the changes made
+to the R Markdown and HTML files.
+</p>
+<p>
+Note that you need to be careful to ensure that all relevant files for
+the analysis have been committed to Git prior to generating the results
+(you can use <code>wflow_publish</code> or
+<code>wflow_git_commit</code>). workflowr only checks the R Markdown
+file, but you know if there are other scripts or data files that it
+depends on. Below is the status of the Git repository when the results
+were generated:
+</p>
+<pre><code>
+Ignored files:
+    Ignored:    .Rproj.user/
+    Ignored:    ETA_1_varU.dat
+    Ignored:    data/dados_gblup.csv
+    Ignored:    mu.dat
+    Ignored:    output/01_data_objects.rds
+    Ignored:    output/02_splits_mestre_30rep.rds
+    Ignored:    output/03_genomic_objects.rds
+    Ignored:    output/checkpoints/06_da_progress.csv
+    Ignored:    varE.dat
+
+</code></pre>
+<p>
+Note that any generated files, e.g. HTML, png, CSS, etc., are not
+included in this status report because it is ok for generated content to
+have uncommitted changes.
+</p>
+</div>
+</div>
+</div>
+</div>
+<hr>
+</div>
+<div id="versions" class="tab-pane fade">
+<p>
+These are the previous versions of the repository in which changes were
+made to the R Markdown (<code>analysis/06_data_augmentation.Rmd</code>)
+and HTML (<code>docs/06_data_augmentation.html</code>) files. If you’ve
+configured a remote Git repository (see <code>?wflow_git_remote</code>),
+click on the hyperlinks in the table below to view the files as they
+were in that past version.
+</p>
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+File
+</th>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+<th>
+Message
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/blob/26286f785aebab62ea87b6b3e7e8331694162196/analysis/06_data_augmentation.Rmd" target="_blank">26286f7</a>
+</td>
+<td>
+Weverton Gomes da Costa
+</td>
+<td>
+2026-08-11
+</td>
+<td>
+Rebuild DA summaries from audited raw results
+</td>
+</tr>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/blob/6fb12d9c4b20121845d0a4885ebdb1e05d5f3479/analysis/06_data_augmentation.Rmd" target="_blank">6fb12d9</a>
+</td>
+<td>
+Weverton Gomes da Costa
+</td>
+<td>
+2026-08-11
+</td>
+<td>
+Rewrite Data Augmentation as explicit tutorial with audited results
+</td>
+</tr>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/blob/44f8535f82d7db271c39982a36c8d07fbbe7b7d6/analysis/06_data_augmentation.Rmd" target="_blank">44f8535</a>
+</td>
+<td>
+Weverton Gomes da Costa
+</td>
+<td>
+2026-08-10
+</td>
+<td>
+Allow DA stage to bootstrap lightweight prerequisites
+</td>
+</tr>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/blob/1b409e10896ccc38964c41a48c534441fc6b7d3a/analysis/06_data_augmentation.Rmd" target="_blank">1b409e1</a>
+</td>
+<td>
+Weverton Gomes da Costa
+</td>
+<td>
+2026-08-10
+</td>
+<td>
+Add stage 6 data augmentation
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr>
+</div>
+</div>
+</div>
+<div id="objetivo" class="section level2">
+<h2>1. Objetivo</h2>
+<p>Na Etapa 5 vimos que T75, com 827 indivíduos reais, já é equivalente
+a T100. Agora testamos se Data Augmentation permite usar ainda menos
+indivíduos reais.</p>
+<p>A regra é simples: começamos com uma amostra real reduzida e criamos
+exatamente o número de pseudoindivíduos necessário para completar o
+tamanho de T100.</p>
+<p><span class="math display">\[
+n_{syn}=1103-n_{real}.
+\]</span></p>
+<p>Assim:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Cenário</th>
+<th align="right">Reais</th>
+<th align="right">Sintéticos</th>
+<th align="right">Total</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>T25 + DA</td>
+<td align="right">275</td>
+<td align="right">828</td>
+<td align="right">1.103</td>
+</tr>
+<tr class="even">
+<td>T50 + DA</td>
+<td align="right">551</td>
+<td align="right">552</td>
+<td align="right">1.103</td>
+</tr>
+<tr class="odd">
+<td>T75 + DA</td>
+<td align="right">827</td>
+<td align="right">276</td>
+<td align="right">1.103</td>
+</tr>
+</tbody>
+</table>
+<p>Os 276 indivíduos de validação continuam fora do treinamento.</p>
+</div>
+<div id="o-que-é-mixup" class="section level2">
+<h2>2. O que é Mixup?</h2>
+<p>Um pseudoindivíduo é criado combinando dois indivíduos reais
+distintos do conjunto de treinamento.</p>
+<p>Para os marcadores:</p>
+<p><span class="math display">\[
+\widetilde{M}=\lambda M_i+(1-\lambda)M_j.
+\]</span></p>
+<p>Para o fenótipo:</p>
+<p><span class="math display">\[
+\widetilde{y}=\lambda y_i+(1-\lambda)y_j.
+\]</span></p>
+<p>O pseudoindivíduo não é um novo indivíduo biológico observado. Ele é
+uma interpolação matemática entre dois indivíduos reais.</p>
+<p>Nenhum ranking fenotípico é usado para escolher os indivíduos reais
+ou os dois doadores. Todos são amostrados aleatoriamente dentro do
+conjunto real de treinamento.</p>
+</div>
+<div id="como-escolhemos-lambda" class="section level2">
+<h2>3. Como escolhemos lambda?</h2>
+<p>Testamos quatro regras:</p>
+<ul>
+<li><code>lambda = 0.5</code>: todos os pseudoindivíduos são misturas
+50/50;</li>
+<li><code>lambda ~ Beta(0.1, 0.1)</code>;</li>
+<li><code>lambda ~ Beta(0.2, 0.2)</code>;</li>
+<li><code>lambda ~ Beta(0.4, 0.4)</code>.</li>
+</ul>
+<p>Nas distribuições Beta simétricas, a média de <code>lambda</code>
+continua próxima de 0,5, mas cada pseudoindivíduo pode receber uma
+intensidade de mistura diferente. Valores pequenos de <code>alpha</code>
+concentram mais probabilidade perto de 0 e 1.</p>
+</div>
+<div id="resultados-pesados-e-reprodução" class="section level2">
+<h2>4. Resultados pesados e reprodução</h2>
+<p>Os 360 ajustes já foram executados e auditados. O resultado primário
+completo está versionado em <code>results/06_da_results.csv</code>.</p>
+<p>Isso permite reconstruir todas as tabelas desta página sem repetir a
+modelagem pesada. O código completo dos 360 ajustes continua visível.
+Para reproduzir os modelos do zero, altere <code>RUN_MODELS</code> para
+<code>TRUE</code> depois de executar as Etapas 1, 2 e 3.</p>
+<pre class="r"><code>RUN_MODELS &lt;- FALSE
+
+CHECKPOINT &lt;- &quot;output/checkpoints/06_da_progress.csv&quot;
+RAW_DA_FILE &lt;- &quot;results/06_da_results.csv&quot;
+BASELINE_FILE &lt;- &quot;results/04_baseline_results.csv&quot;</code></pre>
+</div>
+<div id="configurações-avaliadas" class="section level2">
+<h2>5. Configurações avaliadas</h2>
+<pre class="r"><code>configs &lt;- data.frame(
+  config_mistura = c(
+    &quot;lambda_fixo_0.5&quot;,
+    &quot;beta_alpha_0.1&quot;,
+    &quot;beta_alpha_0.2&quot;,
+    &quot;beta_alpha_0.4&quot;
+  ),
+  tipo_mistura = c(
+    &quot;fixed&quot;,
+    &quot;beta&quot;,
+    &quot;beta&quot;,
+    &quot;beta&quot;
+  ),
+  alpha = c(
+    NA,
+    0.10,
+    0.20,
+    0.40
+  ),
+  stringsAsFactors = FALSE
+)
+
+knitr::kable(
+  configs,
+  caption = &quot;Regras de mistura avaliadas&quot;
+)</code></pre>
+<table>
+<caption>Regras de mistura avaliadas</caption>
+<thead>
+<tr class="header">
+<th align="left">config_mistura</th>
+<th align="left">tipo_mistura</th>
+<th align="right">alpha</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">lambda_fixo_0.5</td>
+<td align="left">fixed</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">beta_alpha_0.1</td>
+<td align="left">beta</td>
+<td align="right">0.1</td>
+</tr>
+<tr class="odd">
+<td align="left">beta_alpha_0.2</td>
+<td align="left">beta</td>
+<td align="right">0.2</td>
+</tr>
+<tr class="even">
+<td align="left">beta_alpha_0.4</td>
+<td align="left">beta</td>
+<td align="right">0.4</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="código-completo-do-data-augmentation" class="section level2">
+<h2>6. Código completo do Data Augmentation</h2>
+<p>O bloco abaixo mostra explicitamente o procedimento usado em cada um
+dos 360 ajustes. Não há função auxiliar escondendo a geração dos
+pseudoindivíduos ou a expansão da matriz genômica.</p>
+<pre class="r"><code>if (RUN_MODELS) {
+  arquivos_necessarios &lt;- c(
+    &quot;output/01_data_objects.rds&quot;,
+    &quot;output/02_splits_mestre_30rep.rds&quot;,
+    &quot;output/03_genomic_objects.rds&quot;
+  )
+
+  if (!all(file.exists(arquivos_necessarios))) {
+    stop(&quot;Execute primeiro as Etapas 1, 2 e 3.&quot;)
+  }
+
+  if (!requireNamespace(&quot;BGLR&quot;, quietly = TRUE)) {
+    stop(&quot;Instale o pacote BGLR antes de reproduzir os modelos.&quot;)
+  }
+
+  obj &lt;- readRDS(&quot;output/01_data_objects.rds&quot;)
+  splits_mestre &lt;- readRDS(&quot;output/02_splits_mestre_30rep.rds&quot;)
+  gobj &lt;- readRDS(&quot;output/03_genomic_objects.rds&quot;)
+
+  y &lt;- obj$y
+  M &lt;- obj$M
+  n &lt;- obj$n
+
+  p &lt;- gobj$p
+  Z &lt;- gobj$Z
+  G &lt;- gobj$G
+  denominador &lt;- gobj$denom
+
+  N_T100 &lt;- 1103
+  PROPORCOES &lt;- c(0.25, 0.50, 0.75)
+  N_ITER &lt;- 10000
+  BURN_IN &lt;- 5000
+
+  if (file.exists(CHECKPOINT)) {
+    resultados_da &lt;- read.csv(CHECKPOINT)
+  } else {
+    resultados_da &lt;- data.frame()
+  }
+
+  for (ci in seq_len(nrow(configs))) {
+    for (proporcao in PROPORCOES) {
+      for (rep in seq_len(30)) {
+
+        # Uma chave identifica unicamente cada modelo.
+        ja_executado &lt;-
+          nrow(resultados_da) &gt; 0 &amp;&amp;
+          any(
+            resultados_da$config_mistura == configs$config_mistura[ci] &amp;
+            resultados_da$proporcao_pool == proporcao &amp;
+            resultados_da$repeticao == rep
+          )
+
+        if (ja_executado) next
+
+        split &lt;- splits_mestre[[as.character(proporcao)]][[rep]]
+        treino &lt;- split$treino
+        validacao &lt;- split$valid
+
+        M_train &lt;- M[treino, , drop = FALSE]
+        y_train &lt;- y[treino]
+
+        n_real &lt;- length(treino)
+        n_syn &lt;- N_T100 - n_real
+
+        stopifnot(n_real + n_syn == N_T100)
+
+        # ------------------------------------------------------------
+        # 1. Sorteio de dois doadores reais distintos
+        # ------------------------------------------------------------
+        seed_da &lt;-
+          200000 +
+          ci * 10000 +
+          as.integer(proporcao * 100) * 100 +
+          rep
+
+        set.seed(seed_da)
+
+        idx1 &lt;- sample(
+          seq_len(n_real),
+          n_syn,
+          replace = TRUE
+        )
+
+        idx2_base &lt;- sample(
+          seq_len(n_real - 1),
+          n_syn,
+          replace = TRUE
+        )
+
+        idx2 &lt;- ifelse(
+          idx2_base &gt;= idx1,
+          idx2_base + 1L,
+          idx2_base
+        )
+
+        stopifnot(all(idx1 != idx2))
+
+        # ------------------------------------------------------------
+        # 2. Valor de lambda de cada pseudoindivíduo
+        # ------------------------------------------------------------
+        if (configs$tipo_mistura[ci] == &quot;fixed&quot;) {
+          lambda &lt;- rep(
+            0.5,
+            n_syn
+          )
+        } else {
+          lambda &lt;- rbeta(
+            n_syn,
+            shape1 = configs$alpha[ci],
+            shape2 = configs$alpha[ci]
+          )
+        }
+
+        # ------------------------------------------------------------
+        # 3. Genótipos e fenótipos sintéticos
+        # ------------------------------------------------------------
+        M_syn &lt;-
+          lambda * M_train[idx1, , drop = FALSE] +
+          (1 - lambda) * M_train[idx2, , drop = FALSE]
+
+        y_syn &lt;-
+          lambda * y_train[idx1] +
+          (1 - lambda) * y_train[idx2]
+
+        # ------------------------------------------------------------
+        # 4. Expansão da matriz G
+        # ------------------------------------------------------------
+        n_total_matriz &lt;- n + n_syn
+        idx_syn &lt;- (n + 1):(n + n_syn)
+
+        G_expanded &lt;- matrix(
+          0,
+          nrow = n_total_matriz,
+          ncol = n_total_matriz
+        )
+
+        # O bloco dos indivíduos reais permanece exatamente igual.
+        G_expanded[
+          seq_len(n),
+          seq_len(n)
+        ] &lt;- G
+
+        # Os sintéticos usam as mesmas frequências alélicas e a mesma escala.
+        Z_syn &lt;- sweep(
+          M_syn,
+          2,
+          2 * p,
+          FUN = &quot;-&quot;
+        )
+
+        G_syn_real &lt;- tcrossprod(
+          Z_syn,
+          Z
+        ) / denominador
+
+        G_syn_syn &lt;- tcrossprod(
+          Z_syn
+        ) / denominador
+
+        G_expanded[
+          idx_syn,
+          seq_len(n)
+        ] &lt;- G_syn_real
+
+        G_expanded[
+          seq_len(n),
+          idx_syn
+        ] &lt;- t(G_syn_real)
+
+        G_expanded[
+          idx_syn,
+          idx_syn
+        ] &lt;- G_syn_syn
+
+        G_expanded[
+          cbind(idx_syn, idx_syn)
+        ] &lt;-
+          G_expanded[cbind(idx_syn, idx_syn)] +
+          1e-6
+
+        stopifnot(
+          max(
+            abs(G_expanded - t(G_expanded))
+          ) &lt; 1e-8
+        )
+
+        stopifnot(
+          max(
+            abs(
+              G_expanded[seq_len(n), seq_len(n)] - G
+            )
+          ) &lt; 1e-12
+        )
+
+        # ------------------------------------------------------------
+        # 5. Fenótipos observados pelo modelo
+        # ------------------------------------------------------------
+        y_modelo &lt;- rep(
+          NA_real_,
+          n_total_matriz
+        )
+
+        y_modelo[treino] &lt;- y_train
+        y_modelo[idx_syn] &lt;- y_syn
+
+        reais_fora_treino &lt;- setdiff(
+          seq_len(n),
+          treino
+        )
+
+        stopifnot(all(is.na(y_modelo[validacao])))
+        stopifnot(all(is.na(y_modelo[reais_fora_treino])))
+        stopifnot(sum(!is.na(y_modelo)) == N_T100)
+
+        # ------------------------------------------------------------
+        # 6. GBLUP com a matriz expandida
+        # ------------------------------------------------------------
+        ETA &lt;- list(
+          list(
+            K = G_expanded,
+            model = &quot;RKHS&quot;
+          )
+        )
+
+        seed_bglr &lt;-
+          260000 +
+          ci * 10000 +
+          as.integer(proporcao * 100) * 100 +
+          rep
+
+        set.seed(seed_bglr)
+
+        ajuste &lt;- BGLR::BGLR(
+          y = y_modelo,
+          ETA = ETA,
+          nIter = N_ITER,
+          burnIn = BURN_IN,
+          verbose = FALSE
+        )
+
+        # ------------------------------------------------------------
+        # 7. Predição somente nos indivíduos reais da validação
+        # ------------------------------------------------------------
+        predicao &lt;- ajuste$yHat[validacao]
+        observado &lt;- y[validacao]
+
+        correlacao &lt;- cor(
+          observado,
+          predicao
+        )
+
+        RMSE &lt;- sqrt(
+          mean(
+            (observado - predicao)^2
+          )
+        )
+
+        MAE &lt;- mean(
+          abs(
+            observado - predicao
+          )
+        )
+
+        calibracao &lt;- lm(
+          observado ~ predicao
+        )
+
+        slope_calibracao &lt;- unname(
+          coef(calibracao)[2]
+        )
+
+        nova_linha &lt;- data.frame(
+          config_mistura = configs$config_mistura[ci],
+          tipo_mistura = configs$tipo_mistura[ci],
+          alpha = configs$alpha[ci],
+          repeticao = rep,
+          proporcao_pool = proporcao,
+          n_real = n_real,
+          n_syn = n_syn,
+          n_total_treino = n_real + n_syn,
+          correlacao = correlacao,
+          RMSE = RMSE,
+          MAE = MAE,
+          slope_calibracao = slope_calibracao,
+          media_lambda = mean(lambda),
+          sd_lambda = sd(lambda)
+        )
+
+        resultados_da &lt;- rbind(
+          resultados_da,
+          nova_linha
+        )
+
+        # Um resultado concluído é salvo imediatamente.
+        write.csv(
+          resultados_da,
+          CHECKPOINT,
+          row.names = FALSE
+        )
+      }
+    }
+  }
+
+  # Auditoria mínima antes de declarar a execução completa.
+  chaves_da &lt;- paste(
+    resultados_da$config_mistura,
+    resultados_da$proporcao_pool,
+    resultados_da$repeticao,
+    sep = &quot;__&quot;
+  )
+
+  stopifnot(nrow(resultados_da) == 360)
+  stopifnot(anyDuplicated(chaves_da) == 0)
+  stopifnot(all(resultados_da$n_total_treino == 1103))
+  stopifnot(
+    !anyNA(
+      resultados_da[
+        ,
+        c(
+          &quot;correlacao&quot;,
+          &quot;RMSE&quot;,
+          &quot;MAE&quot;,
+          &quot;slope_calibracao&quot;
+        )
+      ]
+    )
+  )
+
+  write.csv(
+    resultados_da,
+    RAW_DA_FILE,
+    row.names = FALSE
+  )
+}</code></pre>
+</div>
+<div id="carregando-e-auditando-os-360-resultados"
+class="section level2">
+<h2>7. Carregando e auditando os 360 resultados</h2>
+<p>A partir daqui não usamos tabelas-resumo previamente calculadas. O
+próprio resultado primário dos 360 ajustes é lido e todas as
+estatísticas seguintes são reconstruídas nesta página.</p>
+<pre class="r"><code>if (!file.exists(RAW_DA_FILE)) {
+  stop(&quot;Arquivo ausente: results/06_da_results.csv&quot;)
+}
+
+resultados_da &lt;- read.csv(
+  RAW_DA_FILE
+)
+
+chaves_da &lt;- paste(
+  resultados_da$config_mistura,
+  resultados_da$proporcao_pool,
+  resultados_da$repeticao,
+  sep = &quot;__&quot;
+)
+
+stopifnot(nrow(resultados_da) == 360)
+stopifnot(anyDuplicated(chaves_da) == 0)
+stopifnot(all(resultados_da$repeticao %in% 1:30))
+stopifnot(all(resultados_da$n_total_treino == 1103))
+stopifnot(all(resultados_da$n_real + resultados_da$n_syn == 1103))
+stopifnot(
+  !anyNA(
+    resultados_da[
+      ,
+      c(
+        &quot;correlacao&quot;,
+        &quot;RMSE&quot;,
+        &quot;MAE&quot;,
+        &quot;slope_calibracao&quot;
+      )
+    ]
+  )
+)
+
+contagem_cenarios &lt;- aggregate(
+  repeticao ~ config_mistura + proporcao_pool,
+  data = resultados_da,
+  FUN = length
+)
+
+stopifnot(all(contagem_cenarios$repeticao == 30))</code></pre>
+<p>Cada combinação de regra de mistura e tamanho real possui exatamente
+30 repetições.</p>
+</div>
+<div id="resumo-dos-12-cenários-de-data-augmentation"
+class="section level2">
+<h2>8. Resumo dos 12 cenários de Data Augmentation</h2>
+<p>Agora calculamos médias e desvios-padrão diretamente dos 360
+resultados.</p>
+<pre class="r"><code>variaveis_grupo &lt;- c(
+  &quot;config_mistura&quot;,
+  &quot;proporcao_pool&quot;,
+  &quot;n_real&quot;,
+  &quot;n_syn&quot;
+)
+
+resumo_media &lt;- aggregate(
+  cbind(
+    correlacao,
+    RMSE,
+    MAE,
+    slope_calibracao,
+    media_lambda,
+    sd_lambda
+  ) ~ config_mistura + proporcao_pool + n_real + n_syn,
+  data = resultados_da,
+  FUN = mean
+)
+
+names(resumo_media)[5:10] &lt;- c(
+  &quot;mean_cor&quot;,
+  &quot;mean_RMSE&quot;,
+  &quot;mean_MAE&quot;,
+  &quot;mean_slope&quot;,
+  &quot;mean_lambda&quot;,
+  &quot;mean_sd_lambda&quot;
+)
+
+resumo_sd &lt;- aggregate(
+  cbind(
+    correlacao,
+    RMSE,
+    MAE,
+    slope_calibracao
+  ) ~ config_mistura + proporcao_pool + n_real + n_syn,
+  data = resultados_da,
+  FUN = sd
+)
+
+names(resumo_sd)[5:8] &lt;- c(
+  &quot;sd_cor&quot;,
+  &quot;sd_RMSE&quot;,
+  &quot;sd_MAE&quot;,
+  &quot;sd_slope&quot;
+)
+
+resumo_da &lt;- merge(
+  resumo_media,
+  resumo_sd,
+  by = variaveis_grupo
+)
+
+resumo_exibicao &lt;- resumo_da[
+  order(
+    resumo_da$proporcao_pool,
+    -resumo_da$mean_cor
+  ),
+  c(
+    &quot;config_mistura&quot;,
+    &quot;n_real&quot;,
+    &quot;n_syn&quot;,
+    &quot;mean_cor&quot;,
+    &quot;sd_cor&quot;,
+    &quot;mean_RMSE&quot;,
+    &quot;mean_MAE&quot;,
+    &quot;mean_slope&quot;
+  )
+]
+
+knitr::kable(
+  resumo_exibicao,
+  digits = 4,
+  caption = &quot;Resumo dos 360 ajustes de Data Augmentation&quot;
+)</code></pre>
+<table>
+<caption>Resumo dos 360 ajustes de Data Augmentation</caption>
+<colgroup>
+<col width="3%" />
+<col width="20%" />
+<col width="8%" />
+<col width="7%" />
+<col width="11%" />
+<col width="8%" />
+<col width="12%" />
+<col width="11%" />
+<col width="14%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="left">config_mistura</th>
+<th align="right">n_real</th>
+<th align="right">n_syn</th>
+<th align="right">mean_cor</th>
+<th align="right">sd_cor</th>
+<th align="right">mean_RMSE</th>
+<th align="right">mean_MAE</th>
+<th align="right">mean_slope</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">4</td>
+<td align="left">beta_alpha_0.2</td>
+<td align="right">275</td>
+<td align="right">828</td>
+<td align="right">0.4398</td>
+<td align="right">0.0596</td>
+<td align="right">685.5431</td>
+<td align="right">545.2044</td>
+<td align="right">0.4113</td>
+</tr>
+<tr class="even">
+<td align="left">10</td>
+<td align="left">lambda_fixo_0.5</td>
+<td align="right">275</td>
+<td align="right">828</td>
+<td align="right">0.4319</td>
+<td align="right">0.0630</td>
+<td align="right">690.6369</td>
+<td align="right">548.5947</td>
+<td align="right">0.4038</td>
+</tr>
+<tr class="odd">
+<td align="left">7</td>
+<td align="left">beta_alpha_0.4</td>
+<td align="right">275</td>
+<td align="right">828</td>
+<td align="right">0.4289</td>
+<td align="right">0.0659</td>
+<td align="right">698.9813</td>
+<td align="right">555.3197</td>
+<td align="right">0.3949</td>
+</tr>
+<tr class="even">
+<td align="left">1</td>
+<td align="left">beta_alpha_0.1</td>
+<td align="right">275</td>
+<td align="right">828</td>
+<td align="right">0.4237</td>
+<td align="right">0.0621</td>
+<td align="right">694.8440</td>
+<td align="right">553.2972</td>
+<td align="right">0.3983</td>
+</tr>
+<tr class="odd">
+<td align="left">5</td>
+<td align="left">beta_alpha_0.2</td>
+<td align="right">551</td>
+<td align="right">552</td>
+<td align="right">0.4526</td>
+<td align="right">0.0614</td>
+<td align="right">694.0347</td>
+<td align="right">553.3651</td>
+<td align="right">0.4021</td>
+</tr>
+<tr class="even">
+<td align="left">11</td>
+<td align="left">lambda_fixo_0.5</td>
+<td align="right">551</td>
+<td align="right">552</td>
+<td align="right">0.4473</td>
+<td align="right">0.0615</td>
+<td align="right">703.8796</td>
+<td align="right">559.1611</td>
+<td align="right">0.3919</td>
+</tr>
+<tr class="odd">
+<td align="left">2</td>
+<td align="left">beta_alpha_0.1</td>
+<td align="right">551</td>
+<td align="right">552</td>
+<td align="right">0.4466</td>
+<td align="right">0.0640</td>
+<td align="right">701.7104</td>
+<td align="right">556.9321</td>
+<td align="right">0.3934</td>
+</tr>
+<tr class="even">
+<td align="left">8</td>
+<td align="left">beta_alpha_0.4</td>
+<td align="right">551</td>
+<td align="right">552</td>
+<td align="right">0.4423</td>
+<td align="right">0.0615</td>
+<td align="right">707.1385</td>
+<td align="right">562.8522</td>
+<td align="right">0.3874</td>
+</tr>
+<tr class="odd">
+<td align="left">12</td>
+<td align="left">lambda_fixo_0.5</td>
+<td align="right">827</td>
+<td align="right">276</td>
+<td align="right">0.6389</td>
+<td align="right">0.0331</td>
+<td align="right">481.7447</td>
+<td align="right">381.5474</td>
+<td align="right">0.8594</td>
+</tr>
+<tr class="even">
+<td align="left">9</td>
+<td align="left">beta_alpha_0.4</td>
+<td align="right">827</td>
+<td align="right">276</td>
+<td align="right">0.6332</td>
+<td align="right">0.0352</td>
+<td align="right">486.2463</td>
+<td align="right">385.3636</td>
+<td align="right">0.8399</td>
+</tr>
+<tr class="odd">
+<td align="left">6</td>
+<td align="left">beta_alpha_0.2</td>
+<td align="right">827</td>
+<td align="right">276</td>
+<td align="right">0.6320</td>
+<td align="right">0.0355</td>
+<td align="right">486.9749</td>
+<td align="right">386.1805</td>
+<td align="right">0.8391</td>
+</tr>
+<tr class="even">
+<td align="left">3</td>
+<td align="left">beta_alpha_0.1</td>
+<td align="right">827</td>
+<td align="right">276</td>
+<td align="right">0.6313</td>
+<td align="right">0.0354</td>
+<td align="right">487.7379</td>
+<td align="right">386.3879</td>
+<td align="right">0.8338</td>
+</tr>
+</tbody>
+</table>
+<p>Para T25 e T50, <code>Beta(0.2, 0.2)</code> apresentou a maior
+correlação média entre as regras de DA. Para T75,
+<code>lambda = 0.5</code> apresentou o melhor resultado.</p>
+</div>
+<div id="da-versus-o-mesmo-conjunto-real" class="section level2">
+<h2>9. DA versus o mesmo conjunto real</h2>
+<p>Uma melhora atribuível ao Data Augmentation deve aparecer quando
+comparamos DA com o GBLUP que usa exatamente a mesma quantidade de
+indivíduos reais.</p>
+<p>Por isso juntamos cada resultado de DA ao baseline da mesma repetição
+e da mesma proporção de treinamento.</p>
+<pre class="r"><code>if (!file.exists(BASELINE_FILE)) {
+  stop(&quot;Arquivo ausente: results/04_baseline_results.csv&quot;)
+}
+
+baseline &lt;- read.csv(
+  BASELINE_FILE
+)
+
+stopifnot(nrow(baseline) == 120)
+
+baseline_reduzido &lt;- baseline[
+  baseline$proporcao_pool &lt; 1,
+  c(
+    &quot;repeticao&quot;,
+    &quot;proporcao_pool&quot;,
+    &quot;correlacao&quot;,
+    &quot;RMSE&quot;,
+    &quot;MAE&quot;
+  )
+]
+
+names(baseline_reduzido)[3:5] &lt;- c(
+  &quot;correlacao_real&quot;,
+  &quot;RMSE_real&quot;,
+  &quot;MAE_real&quot;
+)
+
+comparacao_real &lt;- merge(
+  resultados_da,
+  baseline_reduzido,
+  by = c(
+    &quot;repeticao&quot;,
+    &quot;proporcao_pool&quot;
+  )
+)
+
+stopifnot(nrow(comparacao_real) == 360)
+
+comparacao_real$delta_cor_DA_real &lt;-
+  comparacao_real$correlacao -
+  comparacao_real$correlacao_real
+
+comparacao_real$delta_RMSE_DA_real &lt;-
+  comparacao_real$RMSE -
+  comparacao_real$RMSE_real
+
+comparacao_real$delta_MAE_DA_real &lt;-
+  comparacao_real$MAE -
+  comparacao_real$MAE_real
+
+resumo_da_vs_real &lt;- aggregate(
+  cbind(
+    delta_cor_DA_real,
+    delta_RMSE_DA_real,
+    delta_MAE_DA_real
+  ) ~ config_mistura + proporcao_pool + n_real,
+  data = comparacao_real,
+  FUN = mean
+)
+
+knitr::kable(
+  resumo_da_vs_real[
+    order(
+      resumo_da_vs_real$proporcao_pool,
+      -resumo_da_vs_real$delta_cor_DA_real
+    ),
+  ],
+  digits = 4,
+  caption = &quot;Data Augmentation versus o mesmo tamanho de amostra real&quot;
+)</code></pre>
+<table style="width:100%;">
+<caption>Data Augmentation versus o mesmo tamanho de amostra
+real</caption>
+<colgroup>
+<col width="3%" />
+<col width="16%" />
+<col width="15%" />
+<col width="7%" />
+<col width="18%" />
+<col width="19%" />
+<col width="18%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="left">config_mistura</th>
+<th align="right">proporcao_pool</th>
+<th align="right">n_real</th>
+<th align="right">delta_cor_DA_real</th>
+<th align="right">delta_RMSE_DA_real</th>
+<th align="right">delta_MAE_DA_real</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2</td>
+<td align="left">beta_alpha_0.2</td>
+<td align="right">0.25</td>
+<td align="right">275</td>
+<td align="right">-0.0937</td>
+<td align="right">158.7185</td>
+<td align="right">128.1701</td>
+</tr>
+<tr class="even">
+<td align="left">4</td>
+<td align="left">lambda_fixo_0.5</td>
+<td align="right">0.25</td>
+<td align="right">275</td>
+<td align="right">-0.1016</td>
+<td align="right">163.8123</td>
+<td align="right">131.5605</td>
+</tr>
+<tr class="odd">
+<td align="left">3</td>
+<td align="left">beta_alpha_0.4</td>
+<td align="right">0.25</td>
+<td align="right">275</td>
+<td align="right">-0.1046</td>
+<td align="right">172.1567</td>
+<td align="right">138.2855</td>
+</tr>
+<tr class="even">
+<td align="left">1</td>
+<td align="left">beta_alpha_0.1</td>
+<td align="right">0.25</td>
+<td align="right">275</td>
+<td align="right">-0.1097</td>
+<td align="right">168.0194</td>
+<td align="right">136.2629</td>
+</tr>
+<tr class="odd">
+<td align="left">6</td>
+<td align="left">beta_alpha_0.2</td>
+<td align="right">0.50</td>
+<td align="right">551</td>
+<td align="right">-0.1621</td>
+<td align="right">204.1484</td>
+<td align="right">164.8218</td>
+</tr>
+<tr class="even">
+<td align="left">8</td>
+<td align="left">lambda_fixo_0.5</td>
+<td align="right">0.50</td>
+<td align="right">551</td>
+<td align="right">-0.1674</td>
+<td align="right">213.9933</td>
+<td align="right">170.6178</td>
+</tr>
+<tr class="odd">
+<td align="left">5</td>
+<td align="left">beta_alpha_0.1</td>
+<td align="right">0.50</td>
+<td align="right">551</td>
+<td align="right">-0.1681</td>
+<td align="right">211.8241</td>
+<td align="right">168.3888</td>
+</tr>
+<tr class="even">
+<td align="left">7</td>
+<td align="left">beta_alpha_0.4</td>
+<td align="right">0.50</td>
+<td align="right">551</td>
+<td align="right">-0.1724</td>
+<td align="right">217.2522</td>
+<td align="right">174.3089</td>
+</tr>
+<tr class="odd">
+<td align="left">12</td>
+<td align="left">lambda_fixo_0.5</td>
+<td align="right">0.75</td>
+<td align="right">827</td>
+<td align="right">-0.0093</td>
+<td align="right">9.3900</td>
+<td align="right">7.4086</td>
+</tr>
+<tr class="even">
+<td align="left">11</td>
+<td align="left">beta_alpha_0.4</td>
+<td align="right">0.75</td>
+<td align="right">827</td>
+<td align="right">-0.0150</td>
+<td align="right">13.8917</td>
+<td align="right">11.2248</td>
+</tr>
+<tr class="odd">
+<td align="left">10</td>
+<td align="left">beta_alpha_0.2</td>
+<td align="right">0.75</td>
+<td align="right">827</td>
+<td align="right">-0.0162</td>
+<td align="right">14.6202</td>
+<td align="right">12.0418</td>
+</tr>
+<tr class="even">
+<td align="left">9</td>
+<td align="left">beta_alpha_0.1</td>
+<td align="right">0.75</td>
+<td align="right">827</td>
+<td align="right">-0.0169</td>
+<td align="right">15.3832</td>
+<td align="right">12.2491</td>
+</tr>
+</tbody>
+</table>
+<p>Valores positivos em <code>delta_cor_DA_real</code> indicariam ganho
+de correlação com DA. Valores negativos em
+<code>delta_RMSE_DA_real</code> ou <code>delta_MAE_DA_real</code>
+indicariam redução do erro.</p>
+<p>Nas 12 combinações, a diferença média de correlação é negativa.
+Portanto, nenhuma regra de Mixup melhorou em média o GBLUP
+correspondente usando somente os mesmos indivíduos reais.</p>
+</div>
+<div id="da-versus-t100" class="section level2">
+<h2>10. DA versus T100</h2>
+<p>A pergunta principal do projeto exige uma segunda comparação: uma
+amostra reduzida completada com pseudoindivíduos consegue atingir
+desempenho praticamente equivalente ao T100 real?</p>
+<p>Para isso, cada ajuste de DA é comparado com o T100 da mesma
+repetição.</p>
+<pre class="r"><code>t100 &lt;- baseline[
+  baseline$proporcao_pool == 1,
+  c(
+    &quot;repeticao&quot;,
+    &quot;correlacao&quot;,
+    &quot;RMSE&quot;,
+    &quot;MAE&quot;
+  )
+]
+
+names(t100)[2:4] &lt;- c(
+  &quot;correlacao_T100&quot;,
+  &quot;RMSE_T100&quot;,
+  &quot;MAE_T100&quot;
+)
+
+comparacao_t100 &lt;- merge(
+  resultados_da,
+  t100,
+  by = &quot;repeticao&quot;
+)
+
+stopifnot(nrow(comparacao_t100) == 360)
+
+comparacao_t100$delta_cor_vs_T100 &lt;-
+  comparacao_t100$correlacao -
+  comparacao_t100$correlacao_T100
+
+comparacao_t100$delta_RMSE_vs_T100 &lt;-
+  comparacao_t100$RMSE -
+  comparacao_t100$RMSE_T100
+
+comparacao_t100$delta_MAE_vs_T100 &lt;-
+  comparacao_t100$MAE -
+  comparacao_t100$MAE_T100</code></pre>
+</div>
+<div id="tost-com-correção-de-nadeau-bengio" class="section level2">
+<h2>11. TOST com correção de Nadeau-Bengio</h2>
+<p>Usamos a mesma definição da Etapa 5:</p>
+<p><span class="math display">\[
+\delta=0.05.
+\]</span></p>
+<p>A diferença é considerada praticamente equivalente a T100 quando o
+intervalo de 90% permanece completamente dentro de
+<code>[-0.05, +0.05]</code> e os dois testes unilaterais do TOST são
+significativos.</p>
+<p>Como os 30 holdouts reutilizam indivíduos da mesma população,
+aplicamos novamente:</p>
+<p><span class="math display">\[
+SE_{NB}=
+\sqrt{
+\left(
+\frac{1}{R}+
+\frac{n_{test}}{n_{train}}
+\right)s_d^2
+}.
+\]</span></p>
+<p>Aqui <code>n_train = 1103</code>, pois todos os cenários de DA
+possuem 1.103 observações de treinamento ao somar indivíduos reais e
+pseudoindivíduos.</p>
+<pre class="r"><code>DELTA &lt;- 0.05
+ALPHA &lt;- 0.05
+R &lt;- 30
+N_TEST &lt;- 276
+N_TRAIN &lt;- 1103
+
+resultado_equivalencia_da &lt;- data.frame()
+
+for (config in configs$config_mistura) {
+  for (proporcao in c(0.25, 0.50, 0.75)) {
+
+    grupo &lt;- comparacao_t100[
+      comparacao_t100$config_mistura == config &amp;
+      comparacao_t100$proporcao_pool == proporcao,
+    ]
+
+    d &lt;- grupo$delta_cor_vs_T100
+
+    stopifnot(length(d) == 30)
+
+    media_d &lt;- mean(d)
+    sd_d &lt;- sd(d)
+
+    fator_NB &lt;-
+      1 / R +
+      N_TEST / N_TRAIN
+
+    se_NB &lt;- sqrt(
+      fator_NB * sd_d^2
+    )
+
+    gl &lt;- length(d) - 1
+
+    p_inferior &lt;- 1 - pt(
+      (media_d + DELTA) / se_NB,
+      df = gl
+    )
+
+    p_superior &lt;- pt(
+      (media_d - DELTA) / se_NB,
+      df = gl
+    )
+
+    t_critico &lt;- qt(
+      1 - ALPHA,
+      df = gl
+    )
+
+    ic90_inf &lt;- media_d - t_critico * se_NB
+    ic90_sup &lt;- media_d + t_critico * se_NB
+
+    p_TOST &lt;- max(
+      p_inferior,
+      p_superior
+    )
+
+    equivalente &lt;-
+      p_inferior &lt; ALPHA &amp;&amp;
+      p_superior &lt; ALPHA &amp;&amp;
+      ic90_inf &gt; -DELTA &amp;&amp;
+      ic90_sup &lt; DELTA
+
+    resultado_equivalencia_da &lt;- rbind(
+      resultado_equivalencia_da,
+      data.frame(
+        Configuracao = config,
+        Proporcao = proporcao,
+        N_real = unique(grupo$n_real),
+        N_sintetico = unique(grupo$n_syn),
+        Delta_cor_media = media_d,
+        SE_NB = se_NB,
+        IC90_inf = ic90_inf,
+        IC90_sup = ic90_sup,
+        p_TOST = p_TOST,
+        Equivalente = equivalente
+      )
+    )
+  }
+}
+
+knitr::kable(
+  resultado_equivalencia_da[
+    order(
+      resultado_equivalencia_da$N_real,
+      -resultado_equivalencia_da$Delta_cor_media
+    ),
+  ],
+  digits = 4,
+  caption = &quot;Equivalência das estratégias de Data Augmentation com T100&quot;
+)</code></pre>
+<table>
+<caption>Equivalência das estratégias de Data Augmentation com
+T100</caption>
+<colgroup>
+<col width="2%" />
+<col width="14%" />
+<col width="9%" />
+<col width="6%" />
+<col width="11%" />
+<col width="14%" />
+<col width="6%" />
+<col width="8%" />
+<col width="8%" />
+<col width="6%" />
+<col width="11%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="left">Configuracao</th>
+<th align="right">Proporcao</th>
+<th align="right">N_real</th>
+<th align="right">N_sintetico</th>
+<th align="right">Delta_cor_media</th>
+<th align="right">SE_NB</th>
+<th align="right">IC90_inf</th>
+<th align="right">IC90_sup</th>
+<th align="right">p_TOST</th>
+<th align="left">Equivalente</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">7</td>
+<td align="left">beta_alpha_0.2</td>
+<td align="right">0.25</td>
+<td align="right">275</td>
+<td align="right">828</td>
+<td align="right">-0.2257</td>
+<td align="right">0.0269</td>
+<td align="right">-0.2715</td>
+<td align="right">-0.1799</td>
+<td align="right">1.0000</td>
+<td align="left">FALSE</td>
+</tr>
+<tr class="even">
+<td align="left">1</td>
+<td align="left">lambda_fixo_0.5</td>
+<td align="right">0.25</td>
+<td align="right">275</td>
+<td align="right">828</td>
+<td align="right">-0.2336</td>
+<td align="right">0.0262</td>
+<td align="right">-0.2780</td>
+<td align="right">-0.1892</td>
+<td align="right">1.0000</td>
+<td align="left">FALSE</td>
+</tr>
+<tr class="odd">
+<td align="left">10</td>
+<td align="left">beta_alpha_0.4</td>
+<td align="right">0.25</td>
+<td align="right">275</td>
+<td align="right">828</td>
+<td align="right">-0.2366</td>
+<td align="right">0.0276</td>
+<td align="right">-0.2834</td>
+<td align="right">-0.1898</td>
+<td align="right">1.0000</td>
+<td align="left">FALSE</td>
+</tr>
+<tr class="even">
+<td align="left">4</td>
+<td align="left">beta_alpha_0.1</td>
+<td align="right">0.25</td>
+<td align="right">275</td>
+<td align="right">828</td>
+<td align="right">-0.2418</td>
+<td align="right">0.0257</td>
+<td align="right">-0.2855</td>
+<td align="right">-0.1980</td>
+<td align="right">1.0000</td>
+<td align="left">FALSE</td>
+</tr>
+<tr class="odd">
+<td align="left">8</td>
+<td align="left">beta_alpha_0.2</td>
+<td align="right">0.50</td>
+<td align="right">551</td>
+<td align="right">552</td>
+<td align="right">-0.2129</td>
+<td align="right">0.0251</td>
+<td align="right">-0.2555</td>
+<td align="right">-0.1703</td>
+<td align="right">1.0000</td>
+<td align="left">FALSE</td>
+</tr>
+<tr class="even">
+<td align="left">2</td>
+<td align="left">lambda_fixo_0.5</td>
+<td align="right">0.50</td>
+<td align="right">551</td>
+<td align="right">552</td>
+<td align="right">-0.2182</td>
+<td align="right">0.0263</td>
+<td align="right">-0.2629</td>
+<td align="right">-0.1735</td>
+<td align="right">1.0000</td>
+<td align="left">FALSE</td>
+</tr>
+<tr class="odd">
+<td align="left">5</td>
+<td align="left">beta_alpha_0.1</td>
+<td align="right">0.50</td>
+<td align="right">551</td>
+<td align="right">552</td>
+<td align="right">-0.2189</td>
+<td align="right">0.0280</td>
+<td align="right">-0.2664</td>
+<td align="right">-0.1714</td>
+<td align="right">1.0000</td>
+<td align="left">FALSE</td>
+</tr>
+<tr class="even">
+<td align="left">11</td>
+<td align="left">beta_alpha_0.4</td>
+<td align="right">0.50</td>
+<td align="right">551</td>
+<td align="right">552</td>
+<td align="right">-0.2232</td>
+<td align="right">0.0266</td>
+<td align="right">-0.2684</td>
+<td align="right">-0.1779</td>
+<td align="right">1.0000</td>
+<td align="left">FALSE</td>
+</tr>
+<tr class="odd">
+<td align="left">3</td>
+<td align="left">lambda_fixo_0.5</td>
+<td align="right">0.75</td>
+<td align="right">827</td>
+<td align="right">276</td>
+<td align="right">-0.0266</td>
+<td align="right">0.0075</td>
+<td align="right">-0.0394</td>
+<td align="right">-0.0139</td>
+<td align="right">0.0021</td>
+<td align="left">TRUE</td>
+</tr>
+<tr class="even">
+<td align="left">12</td>
+<td align="left">beta_alpha_0.4</td>
+<td align="right">0.75</td>
+<td align="right">827</td>
+<td align="right">276</td>
+<td align="right">-0.0323</td>
+<td align="right">0.0088</td>
+<td align="right">-0.0473</td>
+<td align="right">-0.0173</td>
+<td align="right">0.0273</td>
+<td align="left">TRUE</td>
+</tr>
+<tr class="odd">
+<td align="left">9</td>
+<td align="left">beta_alpha_0.2</td>
+<td align="right">0.75</td>
+<td align="right">827</td>
+<td align="right">276</td>
+<td align="right">-0.0335</td>
+<td align="right">0.0086</td>
+<td align="right">-0.0481</td>
+<td align="right">-0.0189</td>
+<td align="right">0.0325</td>
+<td align="left">TRUE</td>
+</tr>
+<tr class="even">
+<td align="left">6</td>
+<td align="left">beta_alpha_0.1</td>
+<td align="right">0.75</td>
+<td align="right">827</td>
+<td align="right">276</td>
+<td align="right">-0.0342</td>
+<td align="right">0.0096</td>
+<td align="right">-0.0505</td>
+<td align="right">-0.0178</td>
+<td align="right">0.0554</td>
+<td align="left">FALSE</td>
+</tr>
+</tbody>
+</table>
+<p>Nenhuma estratégia com 275 ou 551 indivíduos reais é equivalente a
+T100. Algumas estratégias T75 + DA permanecem dentro da margem, mas T75
+já era equivalente sem Data Augmentation.</p>
+</div>
+<div id="conclusão-final" class="section level2">
+<h2>12. Conclusão final</h2>
+<p>Sem DA, o menor conjunto equivalente a T100 foi:</p>
+<p><span class="math display">\[
+827\text{ indivíduos reais}.
+\]</span></p>
+<p>Com as quatro regras de Mixup avaliadas, T25 e T50 continuaram fora
+da região de equivalência. Portanto:</p>
+<p><span class="math display">\[
+\boxed{\text{redução adicional atribuível ao DA}=0}.
+\]</span></p>
+<p>Sob este desenho, completar amostras aleatórias reduzidas até T100
+com pseudoindivíduos Mixup não substituiu a informação dos indivíduos
+reais retirados. Esse resultado não significa que todo método de Data
+Augmentation seja ineficaz; ele descreve especificamente as estratégias
+de Mixup avaliadas neste tutorial.</p>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 4.5.1 (2025-06-13 ucrt)
+Platform: x86_64-w64-mingw32/x64
+Running under: Windows 11 x64 (build 26200)
+
+Matrix products: default
+  LAPACK version 3.12.1
+
+locale:
+[1] LC_COLLATE=Portuguese_Brazil.utf8  LC_CTYPE=Portuguese_Brazil.utf8   
+[3] LC_MONETARY=Portuguese_Brazil.utf8 LC_NUMERIC=C                      
+[5] LC_TIME=Portuguese_Brazil.utf8    
+
+time zone: America/Sao_Paulo
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+loaded via a namespace (and not attached):
+ [1] vctrs_0.7.1       cli_3.6.5         knitr_1.50        rlang_1.1.7      
+ [5] xfun_0.54         stringi_1.8.7     otel_0.2.0        promises_1.5.0   
+ [9] jsonlite_2.0.0    workflowr_1.7.2   glue_1.8.0        rprojroot_2.1.1  
+[13] git2r_0.36.2      htmltools_0.5.9   httpuv_1.6.16     sass_0.4.10      
+[17] rmarkdown_2.30    evaluate_1.0.5    jquerylib_0.1.4   tibble_3.3.1     
+[21] fastmap_1.2.0     yaml_2.3.12       lifecycle_1.0.5   whisker_0.4.1    
+[25] stringr_1.6.0     compiler_4.5.1    fs_1.6.6          Rcpp_1.1.1       
+[29] pkgconfig_2.0.3   rstudioapi_0.17.1 later_1.4.4       digest_0.6.39    
+[33] R6_2.6.1          pillar_1.11.1     magrittr_2.0.4    bslib_0.9.0      
+[37] tools_4.5.1       cachem_1.1.0     </code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIjYuIERhdGEgQXVnbWVudGF0aW9uIOKAlCBjb21wbGV0YXIgVDEwMCINCmF1dGhvcjogIldldmVydG9uIEdvbWVzIGRhIENvc3RhIg0KZGF0ZTogImByIFN5cy5EYXRlKClgIg0Kc2l0ZTogd29ya2Zsb3dyOjp3Zmxvd19zaXRlDQpvdXRwdXQ6DQogIHdvcmtmbG93cjo6d2Zsb3dfaHRtbDoNCiAgICB0b2M6IHRydWUNCiAgICB0b2NfZGVwdGg6IDMNCiAgICB0b2NfZmxvYXQ6IHRydWUNCiAgICBjb2RlX2Rvd25sb2FkOiB0cnVlDQogICAgY29kZV9mb2xkaW5nOiBzaG93DQplZGl0b3Jfb3B0aW9uczoNCiAgY2h1bmtfb3V0cHV0X3R5cGU6IGNvbnNvbGUNCi0tLQ0KDQpgYGB7ciBzZXR1cCwgaW5jbHVkZT1GQUxTRX0NCmtuaXRyOjpvcHRzX2NodW5rJHNldCgNCiAgZWNobyA9IFRSVUUsDQogIHdhcm5pbmcgPSBGQUxTRSwNCiAgbWVzc2FnZSA9IEZBTFNFLA0KICBjYWNoZSA9IEZBTFNFLA0KICBmaWcuYWxpZ24gPSAiY2VudGVyIiwNCiAgb3V0LndpZHRoID0gIjEwMCUiDQopDQpkaXIuY3JlYXRlKCJvdXRwdXQvY2hlY2twb2ludHMiLCBzaG93V2FybmluZ3MgPSBGQUxTRSwgcmVjdXJzaXZlID0gVFJVRSkNCmRpci5jcmVhdGUoInJlc3VsdHMiLCBzaG93V2FybmluZ3MgPSBGQUxTRSwgcmVjdXJzaXZlID0gVFJVRSkNCmBgYA0KDQojIyAxLiBPYmpldGl2bw0KDQpOYSBFdGFwYSA1IHZpbW9zIHF1ZSBUNzUsIGNvbSA4MjcgaW5kaXbDrWR1b3MgcmVhaXMsIGrDoSDDqSBlcXVpdmFsZW50ZSBhIFQxMDAuDQpBZ29yYSB0ZXN0YW1vcyBzZSBEYXRhIEF1Z21lbnRhdGlvbiBwZXJtaXRlIHVzYXIgYWluZGEgbWVub3MgaW5kaXbDrWR1b3MgcmVhaXMuDQoNCkEgcmVncmEgw6kgc2ltcGxlczogY29tZcOnYW1vcyBjb20gdW1hIGFtb3N0cmEgcmVhbCByZWR1emlkYSBlIGNyaWFtb3MgZXhhdGFtZW50ZQ0KbyBuw7ptZXJvIGRlIHBzZXVkb2luZGl2w61kdW9zIG5lY2Vzc8OhcmlvIHBhcmEgY29tcGxldGFyIG8gdGFtYW5obyBkZSBUMTAwLg0KDQpcWw0Kbl97c3lufT0xMTAzLW5fe3JlYWx9Lg0KXF0NCg0KQXNzaW06DQoNCnwgQ2Vuw6FyaW8gfCBSZWFpcyB8IFNpbnTDqXRpY29zIHwgVG90YWwgfA0KfC0tLXwtLS06fC0tLTp8LS0tOnwNCnwgVDI1ICsgREEgfCAyNzUgfCA4MjggfCAxLjEwMyB8DQp8IFQ1MCArIERBIHwgNTUxIHwgNTUyIHwgMS4xMDMgfA0KfCBUNzUgKyBEQSB8IDgyNyB8IDI3NiB8IDEuMTAzIHwNCg0KT3MgMjc2IGluZGl2w61kdW9zIGRlIHZhbGlkYcOnw6NvIGNvbnRpbnVhbSBmb3JhIGRvIHRyZWluYW1lbnRvLg0KDQojIyAyLiBPIHF1ZSDDqSBNaXh1cD8NCg0KVW0gcHNldWRvaW5kaXbDrWR1byDDqSBjcmlhZG8gY29tYmluYW5kbyBkb2lzIGluZGl2w61kdW9zIHJlYWlzIGRpc3RpbnRvcyBkbw0KY29uanVudG8gZGUgdHJlaW5hbWVudG8uDQoNClBhcmEgb3MgbWFyY2Fkb3JlczoNCg0KXFsNClx3aWRldGlsZGV7TX09XGxhbWJkYSBNX2krKDEtXGxhbWJkYSlNX2ouDQpcXQ0KDQpQYXJhIG8gZmVuw7N0aXBvOg0KDQpcWw0KXHdpZGV0aWxkZXt5fT1cbGFtYmRhIHlfaSsoMS1cbGFtYmRhKXlfai4NClxdDQoNCk8gcHNldWRvaW5kaXbDrWR1byBuw6NvIMOpIHVtIG5vdm8gaW5kaXbDrWR1byBiaW9sw7NnaWNvIG9ic2VydmFkby4gRWxlIMOpIHVtYQ0KaW50ZXJwb2xhw6fDo28gbWF0ZW3DoXRpY2EgZW50cmUgZG9pcyBpbmRpdsOtZHVvcyByZWFpcy4NCg0KTmVuaHVtIHJhbmtpbmcgZmVub3TDrXBpY28gw6kgdXNhZG8gcGFyYSBlc2NvbGhlciBvcyBpbmRpdsOtZHVvcyByZWFpcyBvdSBvcw0KZG9pcyBkb2Fkb3Jlcy4gVG9kb3Mgc8OjbyBhbW9zdHJhZG9zIGFsZWF0b3JpYW1lbnRlIGRlbnRybyBkbyBjb25qdW50byByZWFsIGRlDQp0cmVpbmFtZW50by4NCg0KIyMgMy4gQ29tbyBlc2NvbGhlbW9zIGxhbWJkYT8NCg0KVGVzdGFtb3MgcXVhdHJvIHJlZ3JhczoNCg0KLSBgbGFtYmRhID0gMC41YDogdG9kb3Mgb3MgcHNldWRvaW5kaXbDrWR1b3Mgc8OjbyBtaXN0dXJhcyA1MC81MDsNCi0gYGxhbWJkYSB+IEJldGEoMC4xLCAwLjEpYDsNCi0gYGxhbWJkYSB+IEJldGEoMC4yLCAwLjIpYDsNCi0gYGxhbWJkYSB+IEJldGEoMC40LCAwLjQpYC4NCg0KTmFzIGRpc3RyaWJ1acOnw7VlcyBCZXRhIHNpbcOpdHJpY2FzLCBhIG3DqWRpYSBkZSBgbGFtYmRhYCBjb250aW51YSBwcsOzeGltYSBkZSAwLDUsDQptYXMgY2FkYSBwc2V1ZG9pbmRpdsOtZHVvIHBvZGUgcmVjZWJlciB1bWEgaW50ZW5zaWRhZGUgZGUgbWlzdHVyYSBkaWZlcmVudGUuDQpWYWxvcmVzIHBlcXVlbm9zIGRlIGBhbHBoYWAgY29uY2VudHJhbSBtYWlzIHByb2JhYmlsaWRhZGUgcGVydG8gZGUgMCBlIDEuDQoNCiMjIDQuIFJlc3VsdGFkb3MgcGVzYWRvcyBlIHJlcHJvZHXDp8Ojbw0KDQpPcyAzNjAgYWp1c3RlcyBqw6EgZm9yYW0gZXhlY3V0YWRvcyBlIGF1ZGl0YWRvcy4gTyByZXN1bHRhZG8gcHJpbcOhcmlvIGNvbXBsZXRvDQplc3TDoSB2ZXJzaW9uYWRvIGVtIGByZXN1bHRzLzA2X2RhX3Jlc3VsdHMuY3N2YC4NCg0KSXNzbyBwZXJtaXRlIHJlY29uc3RydWlyIHRvZGFzIGFzIHRhYmVsYXMgZGVzdGEgcMOhZ2luYSBzZW0gcmVwZXRpciBhIG1vZGVsYWdlbQ0KcGVzYWRhLiBPIGPDs2RpZ28gY29tcGxldG8gZG9zIDM2MCBhanVzdGVzIGNvbnRpbnVhIHZpc8OtdmVsLiBQYXJhIHJlcHJvZHV6aXIgb3MNCm1vZGVsb3MgZG8gemVybywgYWx0ZXJlIGBSVU5fTU9ERUxTYCBwYXJhIGBUUlVFYCBkZXBvaXMgZGUgZXhlY3V0YXIgYXMgRXRhcGFzIDEsDQoyIGUgMy4NCg0KYGBge3IgY29uZmlndXJhY2FvLWV4ZWN1Y2FvfQ0KUlVOX01PREVMUyA8LSBGQUxTRQ0KDQpDSEVDS1BPSU5UIDwtICJvdXRwdXQvY2hlY2twb2ludHMvMDZfZGFfcHJvZ3Jlc3MuY3N2Ig0KUkFXX0RBX0ZJTEUgPC0gInJlc3VsdHMvMDZfZGFfcmVzdWx0cy5jc3YiDQpCQVNFTElORV9GSUxFIDwtICJyZXN1bHRzLzA0X2Jhc2VsaW5lX3Jlc3VsdHMuY3N2Ig0KYGBgDQoNCiMjIDUuIENvbmZpZ3VyYcOnw7VlcyBhdmFsaWFkYXMNCg0KYGBge3IgY29uZmlndXJhY29lcy1kYX0NCmNvbmZpZ3MgPC0gZGF0YS5mcmFtZSgNCiAgY29uZmlnX21pc3R1cmEgPSBjKA0KICAgICJsYW1iZGFfZml4b18wLjUiLA0KICAgICJiZXRhX2FscGhhXzAuMSIsDQogICAgImJldGFfYWxwaGFfMC4yIiwNCiAgICAiYmV0YV9hbHBoYV8wLjQiDQogICksDQogIHRpcG9fbWlzdHVyYSA9IGMoDQogICAgImZpeGVkIiwNCiAgICAiYmV0YSIsDQogICAgImJldGEiLA0KICAgICJiZXRhIg0KICApLA0KICBhbHBoYSA9IGMoDQogICAgTkEsDQogICAgMC4xMCwNCiAgICAwLjIwLA0KICAgIDAuNDANCiAgKSwNCiAgc3RyaW5nc0FzRmFjdG9ycyA9IEZBTFNFDQopDQoNCmtuaXRyOjprYWJsZSgNCiAgY29uZmlncywNCiAgY2FwdGlvbiA9ICJSZWdyYXMgZGUgbWlzdHVyYSBhdmFsaWFkYXMiDQopDQpgYGANCg0KIyMgNi4gQ8OzZGlnbyBjb21wbGV0byBkbyBEYXRhIEF1Z21lbnRhdGlvbg0KDQpPIGJsb2NvIGFiYWl4byBtb3N0cmEgZXhwbGljaXRhbWVudGUgbyBwcm9jZWRpbWVudG8gdXNhZG8gZW0gY2FkYSB1bSBkb3MgMzYwDQphanVzdGVzLiBOw6NvIGjDoSBmdW7Dp8OjbyBhdXhpbGlhciBlc2NvbmRlbmRvIGEgZ2VyYcOnw6NvIGRvcyBwc2V1ZG9pbmRpdsOtZHVvcyBvdSBhDQpleHBhbnPDo28gZGEgbWF0cml6IGdlbsO0bWljYS4NCg0KYGBge3IgZXhlY3V0YXItZGF0YS1hdWdtZW50YXRpb259DQppZiAoUlVOX01PREVMUykgew0KICBhcnF1aXZvc19uZWNlc3NhcmlvcyA8LSBjKA0KICAgICJvdXRwdXQvMDFfZGF0YV9vYmplY3RzLnJkcyIsDQogICAgIm91dHB1dC8wMl9zcGxpdHNfbWVzdHJlXzMwcmVwLnJkcyIsDQogICAgIm91dHB1dC8wM19nZW5vbWljX29iamVjdHMucmRzIg0KICApDQoNCiAgaWYgKCFhbGwoZmlsZS5leGlzdHMoYXJxdWl2b3NfbmVjZXNzYXJpb3MpKSkgew0KICAgIHN0b3AoIkV4ZWN1dGUgcHJpbWVpcm8gYXMgRXRhcGFzIDEsIDIgZSAzLiIpDQogIH0NCg0KICBpZiAoIXJlcXVpcmVOYW1lc3BhY2UoIkJHTFIiLCBxdWlldGx5ID0gVFJVRSkpIHsNCiAgICBzdG9wKCJJbnN0YWxlIG8gcGFjb3RlIEJHTFIgYW50ZXMgZGUgcmVwcm9kdXppciBvcyBtb2RlbG9zLiIpDQogIH0NCg0KICBvYmogPC0gcmVhZFJEUygib3V0cHV0LzAxX2RhdGFfb2JqZWN0cy5yZHMiKQ0KICBzcGxpdHNfbWVzdHJlIDwtIHJlYWRSRFMoIm91dHB1dC8wMl9zcGxpdHNfbWVzdHJlXzMwcmVwLnJkcyIpDQogIGdvYmogPC0gcmVhZFJEUygib3V0cHV0LzAzX2dlbm9taWNfb2JqZWN0cy5yZHMiKQ0KDQogIHkgPC0gb2JqJHkNCiAgTSA8LSBvYmokTQ0KICBuIDwtIG9iaiRuDQoNCiAgcCA8LSBnb2JqJHANCiAgWiA8LSBnb2JqJFoNCiAgRyA8LSBnb2JqJEcNCiAgZGVub21pbmFkb3IgPC0gZ29iaiRkZW5vbQ0KDQogIE5fVDEwMCA8LSAxMTAzDQogIFBST1BPUkNPRVMgPC0gYygwLjI1LCAwLjUwLCAwLjc1KQ0KICBOX0lURVIgPC0gMTAwMDANCiAgQlVSTl9JTiA8LSA1MDAwDQoNCiAgaWYgKGZpbGUuZXhpc3RzKENIRUNLUE9JTlQpKSB7DQogICAgcmVzdWx0YWRvc19kYSA8LSByZWFkLmNzdihDSEVDS1BPSU5UKQ0KICB9IGVsc2Ugew0KICAgIHJlc3VsdGFkb3NfZGEgPC0gZGF0YS5mcmFtZSgpDQogIH0NCg0KICBmb3IgKGNpIGluIHNlcV9sZW4obnJvdyhjb25maWdzKSkpIHsNCiAgICBmb3IgKHByb3BvcmNhbyBpbiBQUk9QT1JDT0VTKSB7DQogICAgICBmb3IgKHJlcCBpbiBzZXFfbGVuKDMwKSkgew0KDQogICAgICAgICMgVW1hIGNoYXZlIGlkZW50aWZpY2EgdW5pY2FtZW50ZSBjYWRhIG1vZGVsby4NCiAgICAgICAgamFfZXhlY3V0YWRvIDwtDQogICAgICAgICAgbnJvdyhyZXN1bHRhZG9zX2RhKSA+IDAgJiYNCiAgICAgICAgICBhbnkoDQogICAgICAgICAgICByZXN1bHRhZG9zX2RhJGNvbmZpZ19taXN0dXJhID09IGNvbmZpZ3MkY29uZmlnX21pc3R1cmFbY2ldICYNCiAgICAgICAgICAgIHJlc3VsdGFkb3NfZGEkcHJvcG9yY2FvX3Bvb2wgPT0gcHJvcG9yY2FvICYNCiAgICAgICAgICAgIHJlc3VsdGFkb3NfZGEkcmVwZXRpY2FvID09IHJlcA0KICAgICAgICAgICkNCg0KICAgICAgICBpZiAoamFfZXhlY3V0YWRvKSBuZXh0DQoNCiAgICAgICAgc3BsaXQgPC0gc3BsaXRzX21lc3RyZVtbYXMuY2hhcmFjdGVyKHByb3BvcmNhbyldXVtbcmVwXV0NCiAgICAgICAgdHJlaW5vIDwtIHNwbGl0JHRyZWlubw0KICAgICAgICB2YWxpZGFjYW8gPC0gc3BsaXQkdmFsaWQNCg0KICAgICAgICBNX3RyYWluIDwtIE1bdHJlaW5vLCAsIGRyb3AgPSBGQUxTRV0NCiAgICAgICAgeV90cmFpbiA8LSB5W3RyZWlub10NCg0KICAgICAgICBuX3JlYWwgPC0gbGVuZ3RoKHRyZWlubykNCiAgICAgICAgbl9zeW4gPC0gTl9UMTAwIC0gbl9yZWFsDQoNCiAgICAgICAgc3RvcGlmbm90KG5fcmVhbCArIG5fc3luID09IE5fVDEwMCkNCg0KICAgICAgICAjIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQ0KICAgICAgICAjIDEuIFNvcnRlaW8gZGUgZG9pcyBkb2Fkb3JlcyByZWFpcyBkaXN0aW50b3MNCiAgICAgICAgIyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0NCiAgICAgICAgc2VlZF9kYSA8LQ0KICAgICAgICAgIDIwMDAwMCArDQogICAgICAgICAgY2kgKiAxMDAwMCArDQogICAgICAgICAgYXMuaW50ZWdlcihwcm9wb3JjYW8gKiAxMDApICogMTAwICsNCiAgICAgICAgICByZXANCg0KICAgICAgICBzZXQuc2VlZChzZWVkX2RhKQ0KDQogICAgICAgIGlkeDEgPC0gc2FtcGxlKA0KICAgICAgICAgIHNlcV9sZW4obl9yZWFsKSwNCiAgICAgICAgICBuX3N5biwNCiAgICAgICAgICByZXBsYWNlID0gVFJVRQ0KICAgICAgICApDQoNCiAgICAgICAgaWR4Ml9iYXNlIDwtIHNhbXBsZSgNCiAgICAgICAgICBzZXFfbGVuKG5fcmVhbCAtIDEpLA0KICAgICAgICAgIG5fc3luLA0KICAgICAgICAgIHJlcGxhY2UgPSBUUlVFDQogICAgICAgICkNCg0KICAgICAgICBpZHgyIDwtIGlmZWxzZSgNCiAgICAgICAgICBpZHgyX2Jhc2UgPj0gaWR4MSwNCiAgICAgICAgICBpZHgyX2Jhc2UgKyAxTCwNCiAgICAgICAgICBpZHgyX2Jhc2UNCiAgICAgICAgKQ0KDQogICAgICAgIHN0b3BpZm5vdChhbGwoaWR4MSAhPSBpZHgyKSkNCg0KICAgICAgICAjIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQ0KICAgICAgICAjIDIuIFZhbG9yIGRlIGxhbWJkYSBkZSBjYWRhIHBzZXVkb2luZGl2w61kdW8NCiAgICAgICAgIyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0NCiAgICAgICAgaWYgKGNvbmZpZ3MkdGlwb19taXN0dXJhW2NpXSA9PSAiZml4ZWQiKSB7DQogICAgICAgICAgbGFtYmRhIDwtIHJlcCgNCiAgICAgICAgICAgIDAuNSwNCiAgICAgICAgICAgIG5fc3luDQogICAgICAgICAgKQ0KICAgICAgICB9IGVsc2Ugew0KICAgICAgICAgIGxhbWJkYSA8LSByYmV0YSgNCiAgICAgICAgICAgIG5fc3luLA0KICAgICAgICAgICAgc2hhcGUxID0gY29uZmlncyRhbHBoYVtjaV0sDQogICAgICAgICAgICBzaGFwZTIgPSBjb25maWdzJGFscGhhW2NpXQ0KICAgICAgICAgICkNCiAgICAgICAgfQ0KDQogICAgICAgICMgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tDQogICAgICAgICMgMy4gR2Vuw7N0aXBvcyBlIGZlbsOzdGlwb3Mgc2ludMOpdGljb3MNCiAgICAgICAgIyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0NCiAgICAgICAgTV9zeW4gPC0NCiAgICAgICAgICBsYW1iZGEgKiBNX3RyYWluW2lkeDEsICwgZHJvcCA9IEZBTFNFXSArDQogICAgICAgICAgKDEgLSBsYW1iZGEpICogTV90cmFpbltpZHgyLCAsIGRyb3AgPSBGQUxTRV0NCg0KICAgICAgICB5X3N5biA8LQ0KICAgICAgICAgIGxhbWJkYSAqIHlfdHJhaW5baWR4MV0gKw0KICAgICAgICAgICgxIC0gbGFtYmRhKSAqIHlfdHJhaW5baWR4Ml0NCg0KICAgICAgICAjIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQ0KICAgICAgICAjIDQuIEV4cGFuc8OjbyBkYSBtYXRyaXogRw0KICAgICAgICAjIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQ0KICAgICAgICBuX3RvdGFsX21hdHJpeiA8LSBuICsgbl9zeW4NCiAgICAgICAgaWR4X3N5biA8LSAobiArIDEpOihuICsgbl9zeW4pDQoNCiAgICAgICAgR19leHBhbmRlZCA8LSBtYXRyaXgoDQogICAgICAgICAgMCwNCiAgICAgICAgICBucm93ID0gbl90b3RhbF9tYXRyaXosDQogICAgICAgICAgbmNvbCA9IG5fdG90YWxfbWF0cml6DQogICAgICAgICkNCg0KICAgICAgICAjIE8gYmxvY28gZG9zIGluZGl2w61kdW9zIHJlYWlzIHBlcm1hbmVjZSBleGF0YW1lbnRlIGlndWFsLg0KICAgICAgICBHX2V4cGFuZGVkWw0KICAgICAgICAgIHNlcV9sZW4obiksDQogICAgICAgICAgc2VxX2xlbihuKQ0KICAgICAgICBdIDwtIEcNCg0KICAgICAgICAjIE9zIHNpbnTDqXRpY29zIHVzYW0gYXMgbWVzbWFzIGZyZXF1w6puY2lhcyBhbMOpbGljYXMgZSBhIG1lc21hIGVzY2FsYS4NCiAgICAgICAgWl9zeW4gPC0gc3dlZXAoDQogICAgICAgICAgTV9zeW4sDQogICAgICAgICAgMiwNCiAgICAgICAgICAyICogcCwNCiAgICAgICAgICBGVU4gPSAiLSINCiAgICAgICAgKQ0KDQogICAgICAgIEdfc3luX3JlYWwgPC0gdGNyb3NzcHJvZCgNCiAgICAgICAgICBaX3N5biwNCiAgICAgICAgICBaDQogICAgICAgICkgLyBkZW5vbWluYWRvcg0KDQogICAgICAgIEdfc3luX3N5biA8LSB0Y3Jvc3Nwcm9kKA0KICAgICAgICAgIFpfc3luDQogICAgICAgICkgLyBkZW5vbWluYWRvcg0KDQogICAgICAgIEdfZXhwYW5kZWRbDQogICAgICAgICAgaWR4X3N5biwNCiAgICAgICAgICBzZXFfbGVuKG4pDQogICAgICAgIF0gPC0gR19zeW5fcmVhbA0KDQogICAgICAgIEdfZXhwYW5kZWRbDQogICAgICAgICAgc2VxX2xlbihuKSwNCiAgICAgICAgICBpZHhfc3luDQogICAgICAgIF0gPC0gdChHX3N5bl9yZWFsKQ0KDQogICAgICAgIEdfZXhwYW5kZWRbDQogICAgICAgICAgaWR4X3N5biwNCiAgICAgICAgICBpZHhfc3luDQogICAgICAgIF0gPC0gR19zeW5fc3luDQoNCiAgICAgICAgR19leHBhbmRlZFsNCiAgICAgICAgICBjYmluZChpZHhfc3luLCBpZHhfc3luKQ0KICAgICAgICBdIDwtDQogICAgICAgICAgR19leHBhbmRlZFtjYmluZChpZHhfc3luLCBpZHhfc3luKV0gKw0KICAgICAgICAgIDFlLTYNCg0KICAgICAgICBzdG9waWZub3QoDQogICAgICAgICAgbWF4KA0KICAgICAgICAgICAgYWJzKEdfZXhwYW5kZWQgLSB0KEdfZXhwYW5kZWQpKQ0KICAgICAgICAgICkgPCAxZS04DQogICAgICAgICkNCg0KICAgICAgICBzdG9waWZub3QoDQogICAgICAgICAgbWF4KA0KICAgICAgICAgICAgYWJzKA0KICAgICAgICAgICAgICBHX2V4cGFuZGVkW3NlcV9sZW4obiksIHNlcV9sZW4obildIC0gRw0KICAgICAgICAgICAgKQ0KICAgICAgICAgICkgPCAxZS0xMg0KICAgICAgICApDQoNCiAgICAgICAgIyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0NCiAgICAgICAgIyA1LiBGZW7Ds3RpcG9zIG9ic2VydmFkb3MgcGVsbyBtb2RlbG8NCiAgICAgICAgIyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0NCiAgICAgICAgeV9tb2RlbG8gPC0gcmVwKA0KICAgICAgICAgIE5BX3JlYWxfLA0KICAgICAgICAgIG5fdG90YWxfbWF0cml6DQogICAgICAgICkNCg0KICAgICAgICB5X21vZGVsb1t0cmVpbm9dIDwtIHlfdHJhaW4NCiAgICAgICAgeV9tb2RlbG9baWR4X3N5bl0gPC0geV9zeW4NCg0KICAgICAgICByZWFpc19mb3JhX3RyZWlubyA8LSBzZXRkaWZmKA0KICAgICAgICAgIHNlcV9sZW4obiksDQogICAgICAgICAgdHJlaW5vDQogICAgICAgICkNCg0KICAgICAgICBzdG9waWZub3QoYWxsKGlzLm5hKHlfbW9kZWxvW3ZhbGlkYWNhb10pKSkNCiAgICAgICAgc3RvcGlmbm90KGFsbChpcy5uYSh5X21vZGVsb1tyZWFpc19mb3JhX3RyZWlub10pKSkNCiAgICAgICAgc3RvcGlmbm90KHN1bSghaXMubmEoeV9tb2RlbG8pKSA9PSBOX1QxMDApDQoNCiAgICAgICAgIyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0NCiAgICAgICAgIyA2LiBHQkxVUCBjb20gYSBtYXRyaXogZXhwYW5kaWRhDQogICAgICAgICMgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tDQogICAgICAgIEVUQSA8LSBsaXN0KA0KICAgICAgICAgIGxpc3QoDQogICAgICAgICAgICBLID0gR19leHBhbmRlZCwNCiAgICAgICAgICAgIG1vZGVsID0gIlJLSFMiDQogICAgICAgICAgKQ0KICAgICAgICApDQoNCiAgICAgICAgc2VlZF9iZ2xyIDwtDQogICAgICAgICAgMjYwMDAwICsNCiAgICAgICAgICBjaSAqIDEwMDAwICsNCiAgICAgICAgICBhcy5pbnRlZ2VyKHByb3BvcmNhbyAqIDEwMCkgKiAxMDAgKw0KICAgICAgICAgIHJlcA0KDQogICAgICAgIHNldC5zZWVkKHNlZWRfYmdscikNCg0KICAgICAgICBhanVzdGUgPC0gQkdMUjo6QkdMUigNCiAgICAgICAgICB5ID0geV9tb2RlbG8sDQogICAgICAgICAgRVRBID0gRVRBLA0KICAgICAgICAgIG5JdGVyID0gTl9JVEVSLA0KICAgICAgICAgIGJ1cm5JbiA9IEJVUk5fSU4sDQogICAgICAgICAgdmVyYm9zZSA9IEZBTFNFDQogICAgICAgICkNCg0KICAgICAgICAjIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQ0KICAgICAgICAjIDcuIFByZWRpw6fDo28gc29tZW50ZSBub3MgaW5kaXbDrWR1b3MgcmVhaXMgZGEgdmFsaWRhw6fDo28NCiAgICAgICAgIyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0NCiAgICAgICAgcHJlZGljYW8gPC0gYWp1c3RlJHlIYXRbdmFsaWRhY2FvXQ0KICAgICAgICBvYnNlcnZhZG8gPC0geVt2YWxpZGFjYW9dDQoNCiAgICAgICAgY29ycmVsYWNhbyA8LSBjb3IoDQogICAgICAgICAgb2JzZXJ2YWRvLA0KICAgICAgICAgIHByZWRpY2FvDQogICAgICAgICkNCg0KICAgICAgICBSTVNFIDwtIHNxcnQoDQogICAgICAgICAgbWVhbigNCiAgICAgICAgICAgIChvYnNlcnZhZG8gLSBwcmVkaWNhbyleMg0KICAgICAgICAgICkNCiAgICAgICAgKQ0KDQogICAgICAgIE1BRSA8LSBtZWFuKA0KICAgICAgICAgIGFicygNCiAgICAgICAgICAgIG9ic2VydmFkbyAtIHByZWRpY2FvDQogICAgICAgICAgKQ0KICAgICAgICApDQoNCiAgICAgICAgY2FsaWJyYWNhbyA8LSBsbSgNCiAgICAgICAgICBvYnNlcnZhZG8gfiBwcmVkaWNhbw0KICAgICAgICApDQoNCiAgICAgICAgc2xvcGVfY2FsaWJyYWNhbyA8LSB1bm5hbWUoDQogICAgICAgICAgY29lZihjYWxpYnJhY2FvKVsyXQ0KICAgICAgICApDQoNCiAgICAgICAgbm92YV9saW5oYSA8LSBkYXRhLmZyYW1lKA0KICAgICAgICAgIGNvbmZpZ19taXN0dXJhID0gY29uZmlncyRjb25maWdfbWlzdHVyYVtjaV0sDQogICAgICAgICAgdGlwb19taXN0dXJhID0gY29uZmlncyR0aXBvX21pc3R1cmFbY2ldLA0KICAgICAgICAgIGFscGhhID0gY29uZmlncyRhbHBoYVtjaV0sDQogICAgICAgICAgcmVwZXRpY2FvID0gcmVwLA0KICAgICAgICAgIHByb3BvcmNhb19wb29sID0gcHJvcG9yY2FvLA0KICAgICAgICAgIG5fcmVhbCA9IG5fcmVhbCwNCiAgICAgICAgICBuX3N5biA9IG5fc3luLA0KICAgICAgICAgIG5fdG90YWxfdHJlaW5vID0gbl9yZWFsICsgbl9zeW4sDQogICAgICAgICAgY29ycmVsYWNhbyA9IGNvcnJlbGFjYW8sDQogICAgICAgICAgUk1TRSA9IFJNU0UsDQogICAgICAgICAgTUFFID0gTUFFLA0KICAgICAgICAgIHNsb3BlX2NhbGlicmFjYW8gPSBzbG9wZV9jYWxpYnJhY2FvLA0KICAgICAgICAgIG1lZGlhX2xhbWJkYSA9IG1lYW4obGFtYmRhKSwNCiAgICAgICAgICBzZF9sYW1iZGEgPSBzZChsYW1iZGEpDQogICAgICAgICkNCg0KICAgICAgICByZXN1bHRhZG9zX2RhIDwtIHJiaW5kKA0KICAgICAgICAgIHJlc3VsdGFkb3NfZGEsDQogICAgICAgICAgbm92YV9saW5oYQ0KICAgICAgICApDQoNCiAgICAgICAgIyBVbSByZXN1bHRhZG8gY29uY2x1w61kbyDDqSBzYWx2byBpbWVkaWF0YW1lbnRlLg0KICAgICAgICB3cml0ZS5jc3YoDQogICAgICAgICAgcmVzdWx0YWRvc19kYSwNCiAgICAgICAgICBDSEVDS1BPSU5ULA0KICAgICAgICAgIHJvdy5uYW1lcyA9IEZBTFNFDQogICAgICAgICkNCiAgICAgIH0NCiAgICB9DQogIH0NCg0KICAjIEF1ZGl0b3JpYSBtw61uaW1hIGFudGVzIGRlIGRlY2xhcmFyIGEgZXhlY3XDp8OjbyBjb21wbGV0YS4NCiAgY2hhdmVzX2RhIDwtIHBhc3RlKA0KICAgIHJlc3VsdGFkb3NfZGEkY29uZmlnX21pc3R1cmEsDQogICAgcmVzdWx0YWRvc19kYSRwcm9wb3JjYW9fcG9vbCwNCiAgICByZXN1bHRhZG9zX2RhJHJlcGV0aWNhbywNCiAgICBzZXAgPSAiX18iDQogICkNCg0KICBzdG9waWZub3QobnJvdyhyZXN1bHRhZG9zX2RhKSA9PSAzNjApDQogIHN0b3BpZm5vdChhbnlEdXBsaWNhdGVkKGNoYXZlc19kYSkgPT0gMCkNCiAgc3RvcGlmbm90KGFsbChyZXN1bHRhZG9zX2RhJG5fdG90YWxfdHJlaW5vID09IDExMDMpKQ0KICBzdG9waWZub3QoDQogICAgIWFueU5BKA0KICAgICAgcmVzdWx0YWRvc19kYVsNCiAgICAgICAgLA0KICAgICAgICBjKA0KICAgICAgICAgICJjb3JyZWxhY2FvIiwNCiAgICAgICAgICAiUk1TRSIsDQogICAgICAgICAgIk1BRSIsDQogICAgICAgICAgInNsb3BlX2NhbGlicmFjYW8iDQogICAgICAgICkNCiAgICAgIF0NCiAgICApDQogICkNCg0KICB3cml0ZS5jc3YoDQogICAgcmVzdWx0YWRvc19kYSwNCiAgICBSQVdfREFfRklMRSwNCiAgICByb3cubmFtZXMgPSBGQUxTRQ0KICApDQp9DQpgYGANCg0KIyMgNy4gQ2FycmVnYW5kbyBlIGF1ZGl0YW5kbyBvcyAzNjAgcmVzdWx0YWRvcw0KDQpBIHBhcnRpciBkYXF1aSBuw6NvIHVzYW1vcyB0YWJlbGFzLXJlc3VtbyBwcmV2aWFtZW50ZSBjYWxjdWxhZGFzLiBPIHByw7NwcmlvDQpyZXN1bHRhZG8gcHJpbcOhcmlvIGRvcyAzNjAgYWp1c3RlcyDDqSBsaWRvIGUgdG9kYXMgYXMgZXN0YXTDrXN0aWNhcyBzZWd1aW50ZXMgc8Ojbw0KcmVjb25zdHJ1w61kYXMgbmVzdGEgcMOhZ2luYS4NCg0KYGBge3IgY2FycmVnYXItcmVzdWx0YWRvcy1kYX0NCmlmICghZmlsZS5leGlzdHMoUkFXX0RBX0ZJTEUpKSB7DQogIHN0b3AoIkFycXVpdm8gYXVzZW50ZTogcmVzdWx0cy8wNl9kYV9yZXN1bHRzLmNzdiIpDQp9DQoNCnJlc3VsdGFkb3NfZGEgPC0gcmVhZC5jc3YoDQogIFJBV19EQV9GSUxFDQopDQoNCmNoYXZlc19kYSA8LSBwYXN0ZSgNCiAgcmVzdWx0YWRvc19kYSRjb25maWdfbWlzdHVyYSwNCiAgcmVzdWx0YWRvc19kYSRwcm9wb3JjYW9fcG9vbCwNCiAgcmVzdWx0YWRvc19kYSRyZXBldGljYW8sDQogIHNlcCA9ICJfXyINCikNCg0Kc3RvcGlmbm90KG5yb3cocmVzdWx0YWRvc19kYSkgPT0gMzYwKQ0Kc3RvcGlmbm90KGFueUR1cGxpY2F0ZWQoY2hhdmVzX2RhKSA9PSAwKQ0Kc3RvcGlmbm90KGFsbChyZXN1bHRhZG9zX2RhJHJlcGV0aWNhbyAlaW4lIDE6MzApKQ0Kc3RvcGlmbm90KGFsbChyZXN1bHRhZG9zX2RhJG5fdG90YWxfdHJlaW5vID09IDExMDMpKQ0Kc3RvcGlmbm90KGFsbChyZXN1bHRhZG9zX2RhJG5fcmVhbCArIHJlc3VsdGFkb3NfZGEkbl9zeW4gPT0gMTEwMykpDQpzdG9waWZub3QoDQogICFhbnlOQSgNCiAgICByZXN1bHRhZG9zX2RhWw0KICAgICAgLA0KICAgICAgYygNCiAgICAgICAgImNvcnJlbGFjYW8iLA0KICAgICAgICAiUk1TRSIsDQogICAgICAgICJNQUUiLA0KICAgICAgICAic2xvcGVfY2FsaWJyYWNhbyINCiAgICAgICkNCiAgICBdDQogICkNCikNCg0KY29udGFnZW1fY2VuYXJpb3MgPC0gYWdncmVnYXRlKA0KICByZXBldGljYW8gfiBjb25maWdfbWlzdHVyYSArIHByb3BvcmNhb19wb29sLA0KICBkYXRhID0gcmVzdWx0YWRvc19kYSwNCiAgRlVOID0gbGVuZ3RoDQopDQoNCnN0b3BpZm5vdChhbGwoY29udGFnZW1fY2VuYXJpb3MkcmVwZXRpY2FvID09IDMwKSkNCmBgYA0KDQpDYWRhIGNvbWJpbmHDp8OjbyBkZSByZWdyYSBkZSBtaXN0dXJhIGUgdGFtYW5obyByZWFsIHBvc3N1aSBleGF0YW1lbnRlIDMwDQpyZXBldGnDp8O1ZXMuDQoNCiMjIDguIFJlc3VtbyBkb3MgMTIgY2Vuw6FyaW9zIGRlIERhdGEgQXVnbWVudGF0aW9uDQoNCkFnb3JhIGNhbGN1bGFtb3MgbcOpZGlhcyBlIGRlc3Zpb3MtcGFkcsOjbyBkaXJldGFtZW50ZSBkb3MgMzYwIHJlc3VsdGFkb3MuDQoNCmBgYHtyIHJlc3Vtby1kYX0NCnZhcmlhdmVpc19ncnVwbyA8LSBjKA0KICAiY29uZmlnX21pc3R1cmEiLA0KICAicHJvcG9yY2FvX3Bvb2wiLA0KICAibl9yZWFsIiwNCiAgIm5fc3luIg0KKQ0KDQpyZXN1bW9fbWVkaWEgPC0gYWdncmVnYXRlKA0KICBjYmluZCgNCiAgICBjb3JyZWxhY2FvLA0KICAgIFJNU0UsDQogICAgTUFFLA0KICAgIHNsb3BlX2NhbGlicmFjYW8sDQogICAgbWVkaWFfbGFtYmRhLA0KICAgIHNkX2xhbWJkYQ0KICApIH4gY29uZmlnX21pc3R1cmEgKyBwcm9wb3JjYW9fcG9vbCArIG5fcmVhbCArIG5fc3luLA0KICBkYXRhID0gcmVzdWx0YWRvc19kYSwNCiAgRlVOID0gbWVhbg0KKQ0KDQpuYW1lcyhyZXN1bW9fbWVkaWEpWzU6MTBdIDwtIGMoDQogICJtZWFuX2NvciIsDQogICJtZWFuX1JNU0UiLA0KICAibWVhbl9NQUUiLA0KICAibWVhbl9zbG9wZSIsDQogICJtZWFuX2xhbWJkYSIsDQogICJtZWFuX3NkX2xhbWJkYSINCikNCg0KcmVzdW1vX3NkIDwtIGFnZ3JlZ2F0ZSgNCiAgY2JpbmQoDQogICAgY29ycmVsYWNhbywNCiAgICBSTVNFLA0KICAgIE1BRSwNCiAgICBzbG9wZV9jYWxpYnJhY2FvDQogICkgfiBjb25maWdfbWlzdHVyYSArIHByb3BvcmNhb19wb29sICsgbl9yZWFsICsgbl9zeW4sDQogIGRhdGEgPSByZXN1bHRhZG9zX2RhLA0KICBGVU4gPSBzZA0KKQ0KDQpuYW1lcyhyZXN1bW9fc2QpWzU6OF0gPC0gYygNCiAgInNkX2NvciIsDQogICJzZF9STVNFIiwNCiAgInNkX01BRSIsDQogICJzZF9zbG9wZSINCikNCg0KcmVzdW1vX2RhIDwtIG1lcmdlKA0KICByZXN1bW9fbWVkaWEsDQogIHJlc3Vtb19zZCwNCiAgYnkgPSB2YXJpYXZlaXNfZ3J1cG8NCikNCg0KcmVzdW1vX2V4aWJpY2FvIDwtIHJlc3Vtb19kYVsNCiAgb3JkZXIoDQogICAgcmVzdW1vX2RhJHByb3BvcmNhb19wb29sLA0KICAgIC1yZXN1bW9fZGEkbWVhbl9jb3INCiAgKSwNCiAgYygNCiAgICAiY29uZmlnX21pc3R1cmEiLA0KICAgICJuX3JlYWwiLA0KICAgICJuX3N5biIsDQogICAgIm1lYW5fY29yIiwNCiAgICAic2RfY29yIiwNCiAgICAibWVhbl9STVNFIiwNCiAgICAibWVhbl9NQUUiLA0KICAgICJtZWFuX3Nsb3BlIg0KICApDQpdDQoNCmtuaXRyOjprYWJsZSgNCiAgcmVzdW1vX2V4aWJpY2FvLA0KICBkaWdpdHMgPSA0LA0KICBjYXB0aW9uID0gIlJlc3VtbyBkb3MgMzYwIGFqdXN0ZXMgZGUgRGF0YSBBdWdtZW50YXRpb24iDQopDQpgYGANCg0KUGFyYSBUMjUgZSBUNTAsIGBCZXRhKDAuMiwgMC4yKWAgYXByZXNlbnRvdSBhIG1haW9yIGNvcnJlbGHDp8OjbyBtw6lkaWEgZW50cmUgYXMNCnJlZ3JhcyBkZSBEQS4gUGFyYSBUNzUsIGBsYW1iZGEgPSAwLjVgIGFwcmVzZW50b3UgbyBtZWxob3IgcmVzdWx0YWRvLg0KDQojIyA5LiBEQSB2ZXJzdXMgbyBtZXNtbyBjb25qdW50byByZWFsDQoNClVtYSBtZWxob3JhIGF0cmlidcOtdmVsIGFvIERhdGEgQXVnbWVudGF0aW9uIGRldmUgYXBhcmVjZXIgcXVhbmRvIGNvbXBhcmFtb3MgREENCmNvbSBvIEdCTFVQIHF1ZSB1c2EgZXhhdGFtZW50ZSBhIG1lc21hIHF1YW50aWRhZGUgZGUgaW5kaXbDrWR1b3MgcmVhaXMuDQoNClBvciBpc3NvIGp1bnRhbW9zIGNhZGEgcmVzdWx0YWRvIGRlIERBIGFvIGJhc2VsaW5lIGRhIG1lc21hIHJlcGV0acOnw6NvIGUgZGEgbWVzbWENCnByb3BvcsOnw6NvIGRlIHRyZWluYW1lbnRvLg0KDQpgYGB7ciBkYS12cy1yZWFsfQ0KaWYgKCFmaWxlLmV4aXN0cyhCQVNFTElORV9GSUxFKSkgew0KICBzdG9wKCJBcnF1aXZvIGF1c2VudGU6IHJlc3VsdHMvMDRfYmFzZWxpbmVfcmVzdWx0cy5jc3YiKQ0KfQ0KDQpiYXNlbGluZSA8LSByZWFkLmNzdigNCiAgQkFTRUxJTkVfRklMRQ0KKQ0KDQpzdG9waWZub3QobnJvdyhiYXNlbGluZSkgPT0gMTIwKQ0KDQpiYXNlbGluZV9yZWR1emlkbyA8LSBiYXNlbGluZVsNCiAgYmFzZWxpbmUkcHJvcG9yY2FvX3Bvb2wgPCAxLA0KICBjKA0KICAgICJyZXBldGljYW8iLA0KICAgICJwcm9wb3JjYW9fcG9vbCIsDQogICAgImNvcnJlbGFjYW8iLA0KICAgICJSTVNFIiwNCiAgICAiTUFFIg0KICApDQpdDQoNCm5hbWVzKGJhc2VsaW5lX3JlZHV6aWRvKVszOjVdIDwtIGMoDQogICJjb3JyZWxhY2FvX3JlYWwiLA0KICAiUk1TRV9yZWFsIiwNCiAgIk1BRV9yZWFsIg0KKQ0KDQpjb21wYXJhY2FvX3JlYWwgPC0gbWVyZ2UoDQogIHJlc3VsdGFkb3NfZGEsDQogIGJhc2VsaW5lX3JlZHV6aWRvLA0KICBieSA9IGMoDQogICAgInJlcGV0aWNhbyIsDQogICAgInByb3BvcmNhb19wb29sIg0KICApDQopDQoNCnN0b3BpZm5vdChucm93KGNvbXBhcmFjYW9fcmVhbCkgPT0gMzYwKQ0KDQpjb21wYXJhY2FvX3JlYWwkZGVsdGFfY29yX0RBX3JlYWwgPC0NCiAgY29tcGFyYWNhb19yZWFsJGNvcnJlbGFjYW8gLQ0KICBjb21wYXJhY2FvX3JlYWwkY29ycmVsYWNhb19yZWFsDQoNCmNvbXBhcmFjYW9fcmVhbCRkZWx0YV9STVNFX0RBX3JlYWwgPC0NCiAgY29tcGFyYWNhb19yZWFsJFJNU0UgLQ0KICBjb21wYXJhY2FvX3JlYWwkUk1TRV9yZWFsDQoNCmNvbXBhcmFjYW9fcmVhbCRkZWx0YV9NQUVfREFfcmVhbCA8LQ0KICBjb21wYXJhY2FvX3JlYWwkTUFFIC0NCiAgY29tcGFyYWNhb19yZWFsJE1BRV9yZWFsDQoNCnJlc3Vtb19kYV92c19yZWFsIDwtIGFnZ3JlZ2F0ZSgNCiAgY2JpbmQoDQogICAgZGVsdGFfY29yX0RBX3JlYWwsDQogICAgZGVsdGFfUk1TRV9EQV9yZWFsLA0KICAgIGRlbHRhX01BRV9EQV9yZWFsDQogICkgfiBjb25maWdfbWlzdHVyYSArIHByb3BvcmNhb19wb29sICsgbl9yZWFsLA0KICBkYXRhID0gY29tcGFyYWNhb19yZWFsLA0KICBGVU4gPSBtZWFuDQopDQoNCmtuaXRyOjprYWJsZSgNCiAgcmVzdW1vX2RhX3ZzX3JlYWxbDQogICAgb3JkZXIoDQogICAgICByZXN1bW9fZGFfdnNfcmVhbCRwcm9wb3JjYW9fcG9vbCwNCiAgICAgIC1yZXN1bW9fZGFfdnNfcmVhbCRkZWx0YV9jb3JfREFfcmVhbA0KICAgICksDQogIF0sDQogIGRpZ2l0cyA9IDQsDQogIGNhcHRpb24gPSAiRGF0YSBBdWdtZW50YXRpb24gdmVyc3VzIG8gbWVzbW8gdGFtYW5obyBkZSBhbW9zdHJhIHJlYWwiDQopDQpgYGANCg0KVmFsb3JlcyBwb3NpdGl2b3MgZW0gYGRlbHRhX2Nvcl9EQV9yZWFsYCBpbmRpY2FyaWFtIGdhbmhvIGRlIGNvcnJlbGHDp8OjbyBjb20gREEuDQpWYWxvcmVzIG5lZ2F0aXZvcyBlbSBgZGVsdGFfUk1TRV9EQV9yZWFsYCBvdSBgZGVsdGFfTUFFX0RBX3JlYWxgIGluZGljYXJpYW0NCnJlZHXDp8OjbyBkbyBlcnJvLg0KDQpOYXMgMTIgY29tYmluYcOnw7VlcywgYSBkaWZlcmVuw6dhIG3DqWRpYSBkZSBjb3JyZWxhw6fDo28gw6kgbmVnYXRpdmEuIFBvcnRhbnRvLA0KbmVuaHVtYSByZWdyYSBkZSBNaXh1cCBtZWxob3JvdSBlbSBtw6lkaWEgbyBHQkxVUCBjb3JyZXNwb25kZW50ZSB1c2FuZG8gc29tZW50ZQ0Kb3MgbWVzbW9zIGluZGl2w61kdW9zIHJlYWlzLg0KDQojIyAxMC4gREEgdmVyc3VzIFQxMDANCg0KQSBwZXJndW50YSBwcmluY2lwYWwgZG8gcHJvamV0byBleGlnZSB1bWEgc2VndW5kYSBjb21wYXJhw6fDo286IHVtYSBhbW9zdHJhDQpyZWR1emlkYSBjb21wbGV0YWRhIGNvbSBwc2V1ZG9pbmRpdsOtZHVvcyBjb25zZWd1ZSBhdGluZ2lyIGRlc2VtcGVuaG8NCnByYXRpY2FtZW50ZSBlcXVpdmFsZW50ZSBhbyBUMTAwIHJlYWw/DQoNClBhcmEgaXNzbywgY2FkYSBhanVzdGUgZGUgREEgw6kgY29tcGFyYWRvIGNvbSBvIFQxMDAgZGEgbWVzbWEgcmVwZXRpw6fDo28uDQoNCmBgYHtyIHByZXBhcmFyLWRhLXZzLXQxMDB9DQp0MTAwIDwtIGJhc2VsaW5lWw0KICBiYXNlbGluZSRwcm9wb3JjYW9fcG9vbCA9PSAxLA0KICBjKA0KICAgICJyZXBldGljYW8iLA0KICAgICJjb3JyZWxhY2FvIiwNCiAgICAiUk1TRSIsDQogICAgIk1BRSINCiAgKQ0KXQ0KDQpuYW1lcyh0MTAwKVsyOjRdIDwtIGMoDQogICJjb3JyZWxhY2FvX1QxMDAiLA0KICAiUk1TRV9UMTAwIiwNCiAgIk1BRV9UMTAwIg0KKQ0KDQpjb21wYXJhY2FvX3QxMDAgPC0gbWVyZ2UoDQogIHJlc3VsdGFkb3NfZGEsDQogIHQxMDAsDQogIGJ5ID0gInJlcGV0aWNhbyINCikNCg0Kc3RvcGlmbm90KG5yb3coY29tcGFyYWNhb190MTAwKSA9PSAzNjApDQoNCmNvbXBhcmFjYW9fdDEwMCRkZWx0YV9jb3JfdnNfVDEwMCA8LQ0KICBjb21wYXJhY2FvX3QxMDAkY29ycmVsYWNhbyAtDQogIGNvbXBhcmFjYW9fdDEwMCRjb3JyZWxhY2FvX1QxMDANCg0KY29tcGFyYWNhb190MTAwJGRlbHRhX1JNU0VfdnNfVDEwMCA8LQ0KICBjb21wYXJhY2FvX3QxMDAkUk1TRSAtDQogIGNvbXBhcmFjYW9fdDEwMCRSTVNFX1QxMDANCg0KY29tcGFyYWNhb190MTAwJGRlbHRhX01BRV92c19UMTAwIDwtDQogIGNvbXBhcmFjYW9fdDEwMCRNQUUgLQ0KICBjb21wYXJhY2FvX3QxMDAkTUFFX1QxMDANCmBgYA0KDQojIyAxMS4gVE9TVCBjb20gY29ycmXDp8OjbyBkZSBOYWRlYXUtQmVuZ2lvDQoNClVzYW1vcyBhIG1lc21hIGRlZmluacOnw6NvIGRhIEV0YXBhIDU6DQoNClxbDQpcZGVsdGE9MC4wNS4NClxdDQoNCkEgZGlmZXJlbsOnYSDDqSBjb25zaWRlcmFkYSBwcmF0aWNhbWVudGUgZXF1aXZhbGVudGUgYSBUMTAwIHF1YW5kbyBvIGludGVydmFsbw0KZGUgOTAlIHBlcm1hbmVjZSBjb21wbGV0YW1lbnRlIGRlbnRybyBkZSBgWy0wLjA1LCArMC4wNV1gIGUgb3MgZG9pcyB0ZXN0ZXMNCnVuaWxhdGVyYWlzIGRvIFRPU1Qgc8OjbyBzaWduaWZpY2F0aXZvcy4NCg0KQ29tbyBvcyAzMCBob2xkb3V0cyByZXV0aWxpemFtIGluZGl2w61kdW9zIGRhIG1lc21hIHBvcHVsYcOnw6NvLCBhcGxpY2Ftb3MNCm5vdmFtZW50ZToNCg0KXFsNClNFX3tOQn09DQpcc3FydHsNClxsZWZ0KA0KXGZyYWN7MX17Un0rDQpcZnJhY3tuX3t0ZXN0fX17bl97dHJhaW59fQ0KXHJpZ2h0KXNfZF4yDQp9Lg0KXF0NCg0KQXF1aSBgbl90cmFpbiA9IDExMDNgLCBwb2lzIHRvZG9zIG9zIGNlbsOhcmlvcyBkZSBEQSBwb3NzdWVtIDEuMTAzIG9ic2VydmHDp8O1ZXMgZGUNCnRyZWluYW1lbnRvIGFvIHNvbWFyIGluZGl2w61kdW9zIHJlYWlzIGUgcHNldWRvaW5kaXbDrWR1b3MuDQoNCmBgYHtyIGVxdWl2YWxlbmNpYS1kYX0NCkRFTFRBIDwtIDAuMDUNCkFMUEhBIDwtIDAuMDUNClIgPC0gMzANCk5fVEVTVCA8LSAyNzYNCk5fVFJBSU4gPC0gMTEwMw0KDQpyZXN1bHRhZG9fZXF1aXZhbGVuY2lhX2RhIDwtIGRhdGEuZnJhbWUoKQ0KDQpmb3IgKGNvbmZpZyBpbiBjb25maWdzJGNvbmZpZ19taXN0dXJhKSB7DQogIGZvciAocHJvcG9yY2FvIGluIGMoMC4yNSwgMC41MCwgMC43NSkpIHsNCg0KICAgIGdydXBvIDwtIGNvbXBhcmFjYW9fdDEwMFsNCiAgICAgIGNvbXBhcmFjYW9fdDEwMCRjb25maWdfbWlzdHVyYSA9PSBjb25maWcgJg0KICAgICAgY29tcGFyYWNhb190MTAwJHByb3BvcmNhb19wb29sID09IHByb3BvcmNhbywNCiAgICBdDQoNCiAgICBkIDwtIGdydXBvJGRlbHRhX2Nvcl92c19UMTAwDQoNCiAgICBzdG9waWZub3QobGVuZ3RoKGQpID09IDMwKQ0KDQogICAgbWVkaWFfZCA8LSBtZWFuKGQpDQogICAgc2RfZCA8LSBzZChkKQ0KDQogICAgZmF0b3JfTkIgPC0NCiAgICAgIDEgLyBSICsNCiAgICAgIE5fVEVTVCAvIE5fVFJBSU4NCg0KICAgIHNlX05CIDwtIHNxcnQoDQogICAgICBmYXRvcl9OQiAqIHNkX2ReMg0KICAgICkNCg0KICAgIGdsIDwtIGxlbmd0aChkKSAtIDENCg0KICAgIHBfaW5mZXJpb3IgPC0gMSAtIHB0KA0KICAgICAgKG1lZGlhX2QgKyBERUxUQSkgLyBzZV9OQiwNCiAgICAgIGRmID0gZ2wNCiAgICApDQoNCiAgICBwX3N1cGVyaW9yIDwtIHB0KA0KICAgICAgKG1lZGlhX2QgLSBERUxUQSkgLyBzZV9OQiwNCiAgICAgIGRmID0gZ2wNCiAgICApDQoNCiAgICB0X2NyaXRpY28gPC0gcXQoDQogICAgICAxIC0gQUxQSEEsDQogICAgICBkZiA9IGdsDQogICAgKQ0KDQogICAgaWM5MF9pbmYgPC0gbWVkaWFfZCAtIHRfY3JpdGljbyAqIHNlX05CDQogICAgaWM5MF9zdXAgPC0gbWVkaWFfZCArIHRfY3JpdGljbyAqIHNlX05CDQoNCiAgICBwX1RPU1QgPC0gbWF4KA0KICAgICAgcF9pbmZlcmlvciwNCiAgICAgIHBfc3VwZXJpb3INCiAgICApDQoNCiAgICBlcXVpdmFsZW50ZSA8LQ0KICAgICAgcF9pbmZlcmlvciA8IEFMUEhBICYmDQogICAgICBwX3N1cGVyaW9yIDwgQUxQSEEgJiYNCiAgICAgIGljOTBfaW5mID4gLURFTFRBICYmDQogICAgICBpYzkwX3N1cCA8IERFTFRBDQoNCiAgICByZXN1bHRhZG9fZXF1aXZhbGVuY2lhX2RhIDwtIHJiaW5kKA0KICAgICAgcmVzdWx0YWRvX2VxdWl2YWxlbmNpYV9kYSwNCiAgICAgIGRhdGEuZnJhbWUoDQogICAgICAgIENvbmZpZ3VyYWNhbyA9IGNvbmZpZywNCiAgICAgICAgUHJvcG9yY2FvID0gcHJvcG9yY2FvLA0KICAgICAgICBOX3JlYWwgPSB1bmlxdWUoZ3J1cG8kbl9yZWFsKSwNCiAgICAgICAgTl9zaW50ZXRpY28gPSB1bmlxdWUoZ3J1cG8kbl9zeW4pLA0KICAgICAgICBEZWx0YV9jb3JfbWVkaWEgPSBtZWRpYV9kLA0KICAgICAgICBTRV9OQiA9IHNlX05CLA0KICAgICAgICBJQzkwX2luZiA9IGljOTBfaW5mLA0KICAgICAgICBJQzkwX3N1cCA9IGljOTBfc3VwLA0KICAgICAgICBwX1RPU1QgPSBwX1RPU1QsDQogICAgICAgIEVxdWl2YWxlbnRlID0gZXF1aXZhbGVudGUNCiAgICAgICkNCiAgICApDQogIH0NCn0NCg0Ka25pdHI6OmthYmxlKA0KICByZXN1bHRhZG9fZXF1aXZhbGVuY2lhX2RhWw0KICAgIG9yZGVyKA0KICAgICAgcmVzdWx0YWRvX2VxdWl2YWxlbmNpYV9kYSROX3JlYWwsDQogICAgICAtcmVzdWx0YWRvX2VxdWl2YWxlbmNpYV9kYSREZWx0YV9jb3JfbWVkaWENCiAgICApLA0KICBdLA0KICBkaWdpdHMgPSA0LA0KICBjYXB0aW9uID0gIkVxdWl2YWzDqm5jaWEgZGFzIGVzdHJhdMOpZ2lhcyBkZSBEYXRhIEF1Z21lbnRhdGlvbiBjb20gVDEwMCINCikNCmBgYA0KDQpOZW5odW1hIGVzdHJhdMOpZ2lhIGNvbSAyNzUgb3UgNTUxIGluZGl2w61kdW9zIHJlYWlzIMOpIGVxdWl2YWxlbnRlIGEgVDEwMC4NCkFsZ3VtYXMgZXN0cmF0w6lnaWFzIFQ3NSArIERBIHBlcm1hbmVjZW0gZGVudHJvIGRhIG1hcmdlbSwgbWFzIFQ3NSBqw6EgZXJhDQplcXVpdmFsZW50ZSBzZW0gRGF0YSBBdWdtZW50YXRpb24uDQoNCiMjIDEyLiBDb25jbHVzw6NvIGZpbmFsDQoNClNlbSBEQSwgbyBtZW5vciBjb25qdW50byBlcXVpdmFsZW50ZSBhIFQxMDAgZm9pOg0KDQpcWw0KODI3XHRleHR7IGluZGl2w61kdW9zIHJlYWlzfS4NClxdDQoNCkNvbSBhcyBxdWF0cm8gcmVncmFzIGRlIE1peHVwIGF2YWxpYWRhcywgVDI1IGUgVDUwIGNvbnRpbnVhcmFtIGZvcmEgZGEgcmVnacOjbyBkZQ0KZXF1aXZhbMOqbmNpYS4gUG9ydGFudG86DQoNClxbDQpcYm94ZWR7XHRleHR7cmVkdcOnw6NvIGFkaWNpb25hbCBhdHJpYnXDrXZlbCBhbyBEQX09MH0uDQpcXQ0KDQpTb2IgZXN0ZSBkZXNlbmhvLCBjb21wbGV0YXIgYW1vc3RyYXMgYWxlYXTDs3JpYXMgcmVkdXppZGFzIGF0w6kgVDEwMCBjb20NCnBzZXVkb2luZGl2w61kdW9zIE1peHVwIG7Do28gc3Vic3RpdHVpdSBhIGluZm9ybWHDp8OjbyBkb3MgaW5kaXbDrWR1b3MgcmVhaXMNCnJldGlyYWRvcy4gRXNzZSByZXN1bHRhZG8gbsOjbyBzaWduaWZpY2EgcXVlIHRvZG8gbcOpdG9kbyBkZSBEYXRhIEF1Z21lbnRhdGlvbg0Kc2VqYSBpbmVmaWNhejsgZWxlIGRlc2NyZXZlIGVzcGVjaWZpY2FtZW50ZSBhcyBlc3RyYXTDqWdpYXMgZGUgTWl4dXAgYXZhbGlhZGFzDQpuZXN0ZSB0dXRvcmlhbC4NCg==</div>
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+https://docs.mathjax.org/en/latest/web/configuration.html. This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeSourceEmbed("06_data_augmentation.Rmd");
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

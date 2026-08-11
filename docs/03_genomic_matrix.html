@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Weverton Gomes da Costa" />
+
+<meta name="date" content="2026-08-11" />
+
+<title>3. Matriz de relacionamento genômico</title>
+
+<script src="site_libs/header-attrs-2.30/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<script src="site_libs/navigation-1.1/sourceembed.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet" />
+<script src="site_libs/pagedtable-1.1/js/pagedtable.js"></script>
+<link href="site_libs/font-awesome-6.5.2/css/all.min.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet" />
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/main/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+<style type="text/css">
+#rmd-source-code {
+  display: none;
+}
+</style>
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Genomic prediction + DA</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="01_data_audit.html">1. Dados</a>
+</li>
+<li>
+  <a href="02_sampling_splits.html">2. Amostragem</a>
+</li>
+<li>
+  <a href="03_genomic_matrix.html">3. Matriz G</a>
+</li>
+<li>
+  <a href="04_gblup_baseline.html">4. GBLUP</a>
+</li>
+<li>
+  <a href="05_equivalence.html">5. Equivalência</a>
+</li>
+<li>
+  <a href="06_data_augmentation.html">6. Data Augmentation</a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation">
+    <span class="fa fa-github"></span>
+     
+    Source
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+<li role="separator" class="divider"></li>
+<li><a id="rmd-download-source" href="#">Download Rmd</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">3. Matriz de relacionamento genômico</h1>
+<h4 class="author">Weverton Gomes da Costa</h4>
+<h4 class="date">2026-08-11</h4>
+
+</div>
+
+
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+workflowr <span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span>
+</button>
+</p>
+<div id="workflowr-report" class="collapse">
+<ul class="nav nav-tabs">
+<li class="active">
+<a data-toggle="tab" href="#summary">Summary</a>
+</li>
+<li>
+<a data-toggle="tab" href="#checks"> Checks <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span>
+</a>
+</li>
+<li>
+<a data-toggle="tab" href="#versions">Past versions</a>
+</li>
+</ul>
+<div class="tab-content">
+<div id="summary" class="tab-pane fade in active">
+<p>
+<strong>Last updated:</strong> 2026-08-11
+</p>
+<p>
+<strong>Checks:</strong> <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 7
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> 0
+</p>
+<p>
+<strong>Knit directory:</strong>
+<code>genomic-prediction-data-augmentation/</code> <span
+class="glyphicon glyphicon-question-sign" aria-hidden="true"
+title="This is the local directory in which the code in this file was executed.">
+</span>
+</p>
+<p>
+This reproducible <a href="https://rmarkdown.rstudio.com">R Markdown</a>
+analysis was created with <a
+  href="https://github.com/workflowr/workflowr">workflowr</a> (version
+1.7.2). The <em>Checks</em> tab describes the reproducibility checks
+that were applied when the results were created. The <em>Past
+versions</em> tab lists the development history.
+</p>
+<hr>
+</div>
+<div id="checks" class="tab-pane fade">
+<div id="workflowr-checks" class="panel-group">
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguptodate">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>R Markdown file:</strong> up-to-date
+</a>
+</p>
+</div>
+<div id="strongRMarkdownfilestronguptodate"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great! Since the R Markdown file has been committed to the Git
+repository, you know the exact version of the code that produced these
+results.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongEnvironmentstrongempty">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Environment:</strong> empty </a>
+</p>
+</div>
+<div id="strongEnvironmentstrongempty" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! The global environment was empty. Objects defined in the
+global environment can affect the analysis in your R Markdown file in
+unknown ways. For reproduciblity it’s best to always run the code in an
+empty environment.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSeedstrongcodesetseed20260810code">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Seed:</strong>
+<code>set.seed(20260810)</code> </a>
+</p>
+</div>
+<div id="strongSeedstrongcodesetseed20260810code"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The command <code>set.seed(20260810)</code> was run prior to running
+the code in the R Markdown file. Setting a seed ensures that any results
+that rely on randomness, e.g. subsampling or permutations, are
+reproducible.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSessioninformationstrongrecorded">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Session information:</strong>
+recorded </a>
+</p>
+</div>
+<div id="strongSessioninformationstrongrecorded"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Recording the operating system, R version, and package
+versions is critical for reproducibility.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongnone">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Cache:</strong> none </a>
+</p>
+</div>
+<div id="strongCachestrongnone" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Nice! There were no cached chunks for this analysis, so you can be
+confident that you successfully produced the results during this
+run.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongFilepathsstrongrelative">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>File paths:</strong> relative </a>
+</p>
+</div>
+<div id="strongFilepathsstrongrelative" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Using relative paths to the files within your workflowr
+project makes it easier to run your code on other machines.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomWevertonGomesCostagenomicpredictiondataaugmentationtree94cb60b8fceb4c7967187316b02d81f136d801c1targetblank94cb60ba">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Repository version:</strong>
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/tree/94cb60b8fceb4c7967187316b02d81f136d801c1" target="_blank">94cb60b</a>
+</a>
+</p>
+</div>
+<div
+id="strongRepositoryversionstrongahrefhttpsgithubcomWevertonGomesCostagenomicpredictiondataaugmentationtree94cb60b8fceb4c7967187316b02d81f136d801c1targetblank94cb60ba"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>
+Great! You are using Git for version control. Tracking code development
+and connecting the code version to the results is critical for
+reproducibility.
+</p>
+<p>
+The results in this page were generated with repository version
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/tree/94cb60b8fceb4c7967187316b02d81f136d801c1" target="_blank">94cb60b</a>.
+See the <em>Past versions</em> tab to see a history of the changes made
+to the R Markdown and HTML files.
+</p>
+<p>
+Note that you need to be careful to ensure that all relevant files for
+the analysis have been committed to Git prior to generating the results
+(you can use <code>wflow_publish</code> or
+<code>wflow_git_commit</code>). workflowr only checks the R Markdown
+file, but you know if there are other scripts or data files that it
+depends on. Below is the status of the Git repository when the results
+were generated:
+</p>
+<pre><code>
+Ignored files:
+    Ignored:    .Rproj.user/
+    Ignored:    ETA_1_varU.dat
+    Ignored:    data/dados_gblup.csv
+    Ignored:    mu.dat
+    Ignored:    output/01_data_objects.rds
+    Ignored:    output/02_splits_mestre_30rep.rds
+    Ignored:    output/03_genomic_objects.rds
+    Ignored:    output/checkpoints/06_da_progress.csv
+    Ignored:    varE.dat
+
+Untracked files:
+    Untracked:  results/01_data_audit.csv
+    Untracked:  results/02_splits_summary.csv
+    Untracked:  results/06_da_equivalence_vs_T100.csv
+    Untracked:  results/06_da_results.csv
+    Untracked:  results/06_da_vs_same_real.csv
+
+</code></pre>
+<p>
+Note that any generated files, e.g. HTML, png, CSS, etc., are not
+included in this status report because it is ok for generated content to
+have uncommitted changes.
+</p>
+</div>
+</div>
+</div>
+</div>
+<hr>
+</div>
+<div id="versions" class="tab-pane fade">
+<p>
+These are the previous versions of the repository in which changes were
+made to the R Markdown (<code>analysis/03_genomic_matrix.Rmd</code>) and
+HTML (<code>docs/03_genomic_matrix.html</code>) files. If you’ve
+configured a remote Git repository (see <code>?wflow_git_remote</code>),
+click on the hyperlinks in the table below to view the files as they
+were in that past version.
+</p>
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+File
+</th>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+<th>
+Message
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/blob/1078d5ca0e0aacb7215eaa3aa609d344d2e14bde/analysis/03_genomic_matrix.Rmd" target="_blank">1078d5c</a>
+</td>
+<td>
+Weverton Gomes da Costa
+</td>
+<td>
+2026-08-11
+</td>
+<td>
+Add explicit genomic-matrix tutorial module
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr>
+</div>
+</div>
+</div>
+<div id="objetivo" class="section level2">
+<h2>1. Objetivo</h2>
+<p>Os modelos GBLUP utilizam a semelhança genômica entre os indivíduos.
+Essa informação é resumida em uma matriz chamada <code>G</code>.</p>
+<p>Cada elemento de <code>G</code> representa o grau de relacionamento
+genômico entre dois indivíduos. Indivíduos com padrões de SNPs mais
+semelhantes tendem a apresentar maior relacionamento genômico.</p>
+<p>Neste projeto, <code>G</code> é calculada uma única vez usando todos
+os indivíduos genotipados. Os fenótipos de validação continuarão
+mascarados durante cada ajuste; portanto, usar os genótipos dos
+indivíduos de validação em <code>G</code> não fornece seus fenótipos ao
+modelo.</p>
+</div>
+<div id="carregando-a-matriz-de-snps" class="section level2">
+<h2>2. Carregando a matriz de SNPs</h2>
+<p>Reutilizamos diretamente o objeto auditado na Etapa 1. Nenhuma
+leitura ou filtragem dos dados é repetida.</p>
+<pre class="r"><code>DATA_OBJECTS &lt;- &quot;output/01_data_objects.rds&quot;
+
+if (!file.exists(DATA_OBJECTS)) {
+  stop(&quot;Execute primeiro analysis/01_data_audit.Rmd.&quot;)
+}
+
+obj &lt;- readRDS(DATA_OBJECTS)
+
+M &lt;- obj$M
+
+dim(M)</code></pre>
+<pre><code>[1] 1379 4325</code></pre>
+<p>A matriz <code>M</code> possui indivíduos nas linhas e SNPs nas
+colunas.</p>
+</div>
+<div id="frequência-alélica" class="section level2">
+<h2>3. Frequência alélica</h2>
+<p>Como os SNPs estão codificados como 0, 1 e 2, a média de uma coluna
+corresponde a duas vezes a frequência do alelo contado. Assim, para cada
+marcador:</p>
+<p><span class="math display">\[
+p_j = \frac{\bar M_j}{2}.
+\]</span></p>
+<pre class="r"><code>p &lt;- colMeans(M) / 2
+
+summary(p)</code></pre>
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.4275  0.5685  0.6186  0.6210  0.6730  0.9007 </code></pre>
+</div>
+<div id="centralização-dos-marcadores" class="section level2">
+<h2>4. Centralização dos marcadores</h2>
+<p>A contribuição esperada do marcador <code>j</code> é
+<code>2p_j</code>. Subtraímos esse valor de cada genótipo para obter a
+matriz centralizada <code>Z</code>:</p>
+<p><span class="math display">\[
+Z_{ij}=M_{ij}-2p_j.
+\]</span></p>
+<p>Em R, <code>sweep()</code> aplica a subtração coluna a coluna.</p>
+<pre class="r"><code>Z &lt;- sweep(
+  M,
+  2,
+  2 * p,
+  FUN = &quot;-&quot;
+)
+
+dim(Z)</code></pre>
+<pre><code>[1] 1379 4325</code></pre>
+</div>
+<div id="construção-da-matriz-g" class="section level2">
+<h2>5. Construção da matriz G</h2>
+<p>Utilizamos a forma aditiva de VanRaden:</p>
+<p><span class="math display">\[
+\mathbf{G}=
+\frac{\mathbf{Z}\mathbf{Z}^{\mathsf{T}}}
+{2\sum_j p_j(1-p_j)}.
+\]</span></p>
+<p>O denominador coloca os relacionamentos na escala da variabilidade
+genética esperada para os marcadores.</p>
+<pre class="r"><code>denominador &lt;- 2 * sum(
+  p * (1 - p)
+)
+
+G &lt;- tcrossprod(Z) / denominador</code></pre>
+<p>Adicionamos um valor numérico muito pequeno à diagonal para evitar
+problemas de estabilidade computacional sem alterar de forma relevante
+os relacionamentos.</p>
+<pre class="r"><code>diag(G) &lt;- diag(G) + 1e-6</code></pre>
+</div>
+<div id="verificações-da-matriz" class="section level2">
+<h2>6. Verificações da matriz</h2>
+<p>Uma matriz de relacionamento deve ser quadrada, simétrica e formada
+por valores finitos.</p>
+<pre class="r"><code>erro_simetria &lt;- max(
+  abs(G - t(G))
+)
+
+resumo_G &lt;- data.frame(
+  Individuos = nrow(G),
+  Media_diagonal = mean(diag(G)),
+  Minimo = min(G),
+  Maximo = max(G),
+  Erro_simetria = erro_simetria
+)
+
+knitr::kable(
+  resumo_G,
+  digits = 6,
+  caption = &quot;Resumo da matriz de relacionamento genômico&quot;
+)</code></pre>
+<table>
+<caption>Resumo da matriz de relacionamento genômico</caption>
+<thead>
+<tr class="header">
+<th align="right">Individuos</th>
+<th align="right">Media_diagonal</th>
+<th align="right">Minimo</th>
+<th align="right">Maximo</th>
+<th align="right">Erro_simetria</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1379</td>
+<td align="right">1.861778</td>
+<td align="right">-0.987897</td>
+<td align="right">2.416039</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>stopifnot(nrow(G) == 1379)
+stopifnot(ncol(G) == 1379)
+stopifnot(all(is.finite(G)))
+stopifnot(erro_simetria &lt; 1e-10)</code></pre>
+</div>
+<div id="visualização-simples-dos-relacionamentos"
+class="section level2">
+<h2>7. Visualização simples dos relacionamentos</h2>
+<p>Para manter a figura legível, mostramos apenas os primeiros 80
+indivíduos. A figura é ilustrativa e não altera nenhuma etapa do
+modelo.</p>
+<pre class="r"><code>image(
+  G[1:80, 1:80],
+  axes = FALSE,
+  xlab = &quot;Indivíduos&quot;,
+  ylab = &quot;Indivíduos&quot;,
+  main = &quot;Relacionamento genômico — primeiros 80 indivíduos&quot;
+)</code></pre>
+<p><img src="figure/03_genomic_matrix.Rmd/heatmap-G-1.png" width="100%" style="display: block; margin: auto;" /></p>
+</div>
+<div id="objeto-salvo-para-a-modelagem" class="section level2">
+<h2>8. Objeto salvo para a modelagem</h2>
+<p>Salvamos <code>p</code>, <code>Z</code>, <code>G</code> e o
+denominador porque o Data Augmentation precisará da mesma escala
+genômica para relacionar pseudoindivíduos e indivíduos reais.</p>
+<pre class="r"><code>genomic_objects &lt;- list(
+  p = p,
+  Z = Z,
+  G = G,
+  denom = denominador
+)
+
+saveRDS(
+  genomic_objects,
+  &quot;output/03_genomic_objects.rds&quot;
+)</code></pre>
+<p>Com os dados auditados, os splits definidos e a matriz <code>G</code>
+construída, a próxima etapa pode ajustar o GBLUP usando somente
+indivíduos reais.</p>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 4.5.1 (2025-06-13 ucrt)
+Platform: x86_64-w64-mingw32/x64
+Running under: Windows 11 x64 (build 26200)
+
+Matrix products: default
+  LAPACK version 3.12.1
+
+locale:
+[1] LC_COLLATE=Portuguese_Brazil.utf8  LC_CTYPE=Portuguese_Brazil.utf8   
+[3] LC_MONETARY=Portuguese_Brazil.utf8 LC_NUMERIC=C                      
+[5] LC_TIME=Portuguese_Brazil.utf8    
+
+time zone: America/Sao_Paulo
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+loaded via a namespace (and not attached):
+ [1] vctrs_0.7.1       cli_3.6.5         knitr_1.50        rlang_1.1.7      
+ [5] xfun_0.54         stringi_1.8.7     otel_0.2.0        promises_1.5.0   
+ [9] jsonlite_2.0.0    workflowr_1.7.2   glue_1.8.0        rprojroot_2.1.1  
+[13] git2r_0.36.2      htmltools_0.5.9   httpuv_1.6.16     sass_0.4.10      
+[17] rmarkdown_2.30    evaluate_1.0.5    jquerylib_0.1.4   tibble_3.3.1     
+[21] fastmap_1.2.0     yaml_2.3.12       lifecycle_1.0.5   whisker_0.4.1    
+[25] stringr_1.6.0     compiler_4.5.1    fs_1.6.6          Rcpp_1.1.1       
+[29] pkgconfig_2.0.3   rstudioapi_0.17.1 later_1.4.4       digest_0.6.39    
+[33] R6_2.6.1          pillar_1.11.1     magrittr_2.0.4    bslib_0.9.0      
+[37] tools_4.5.1       cachem_1.1.0     </code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIjMuIE1hdHJpeiBkZSByZWxhY2lvbmFtZW50byBnZW7DtG1pY28iDQphdXRob3I6ICJXZXZlcnRvbiBHb21lcyBkYSBDb3N0YSINCmRhdGU6ICJgciBTeXMuRGF0ZSgpYCINCnNpdGU6IHdvcmtmbG93cjo6d2Zsb3dfc2l0ZQ0Kb3V0cHV0Og0KICB3b3JrZmxvd3I6OndmbG93X2h0bWw6DQogICAgdG9jOiB0cnVlDQogICAgdG9jX2RlcHRoOiAzDQogICAgdG9jX2Zsb2F0OiB0cnVlDQogICAgY29kZV9kb3dubG9hZDogdHJ1ZQ0KICAgIGNvZGVfZm9sZGluZzogc2hvdw0KZWRpdG9yX29wdGlvbnM6DQogIGNodW5rX291dHB1dF90eXBlOiBjb25zb2xlDQotLS0NCg0KYGBge3Igc2V0dXAsIGluY2x1ZGU9RkFMU0V9DQprbml0cjo6b3B0c19jaHVuayRzZXQoDQogIGVjaG8gPSBUUlVFLA0KICB3YXJuaW5nID0gRkFMU0UsDQogIG1lc3NhZ2UgPSBGQUxTRSwNCiAgY2FjaGUgPSBGQUxTRSwNCiAgZmlnLmFsaWduID0gImNlbnRlciIsDQogIG91dC53aWR0aCA9ICIxMDAlIg0KKQ0KZGlyLmNyZWF0ZSgib3V0cHV0Iiwgc2hvd1dhcm5pbmdzID0gRkFMU0UsIHJlY3Vyc2l2ZSA9IFRSVUUpDQpgYGANCg0KIyMgMS4gT2JqZXRpdm8NCg0KT3MgbW9kZWxvcyBHQkxVUCB1dGlsaXphbSBhIHNlbWVsaGFuw6dhIGdlbsO0bWljYSBlbnRyZSBvcyBpbmRpdsOtZHVvcy4gRXNzYQ0KaW5mb3JtYcOnw6NvIMOpIHJlc3VtaWRhIGVtIHVtYSBtYXRyaXogY2hhbWFkYSBgR2AuDQoNCkNhZGEgZWxlbWVudG8gZGUgYEdgIHJlcHJlc2VudGEgbyBncmF1IGRlIHJlbGFjaW9uYW1lbnRvIGdlbsO0bWljbyBlbnRyZSBkb2lzDQppbmRpdsOtZHVvcy4gSW5kaXbDrWR1b3MgY29tIHBhZHLDtWVzIGRlIFNOUHMgbWFpcyBzZW1lbGhhbnRlcyB0ZW5kZW0gYSBhcHJlc2VudGFyDQptYWlvciByZWxhY2lvbmFtZW50byBnZW7DtG1pY28uDQoNCk5lc3RlIHByb2pldG8sIGBHYCDDqSBjYWxjdWxhZGEgdW1hIMO6bmljYSB2ZXogdXNhbmRvIHRvZG9zIG9zIGluZGl2w61kdW9zDQpnZW5vdGlwYWRvcy4gT3MgZmVuw7N0aXBvcyBkZSB2YWxpZGHDp8OjbyBjb250aW51YXLDo28gbWFzY2FyYWRvcyBkdXJhbnRlIGNhZGENCmFqdXN0ZTsgcG9ydGFudG8sIHVzYXIgb3MgZ2Vuw7N0aXBvcyBkb3MgaW5kaXbDrWR1b3MgZGUgdmFsaWRhw6fDo28gZW0gYEdgIG7Do28NCmZvcm5lY2Ugc2V1cyBmZW7Ds3RpcG9zIGFvIG1vZGVsby4NCg0KIyMgMi4gQ2FycmVnYW5kbyBhIG1hdHJpeiBkZSBTTlBzDQoNClJldXRpbGl6YW1vcyBkaXJldGFtZW50ZSBvIG9iamV0byBhdWRpdGFkbyBuYSBFdGFwYSAxLiBOZW5odW1hIGxlaXR1cmEgb3UNCmZpbHRyYWdlbSBkb3MgZGFkb3Mgw6kgcmVwZXRpZGEuDQoNCmBgYHtyIGNhcnJlZ2FyLWRhZG9zfQ0KREFUQV9PQkpFQ1RTIDwtICJvdXRwdXQvMDFfZGF0YV9vYmplY3RzLnJkcyINCg0KaWYgKCFmaWxlLmV4aXN0cyhEQVRBX09CSkVDVFMpKSB7DQogIHN0b3AoIkV4ZWN1dGUgcHJpbWVpcm8gYW5hbHlzaXMvMDFfZGF0YV9hdWRpdC5SbWQuIikNCn0NCg0Kb2JqIDwtIHJlYWRSRFMoREFUQV9PQkpFQ1RTKQ0KDQpNIDwtIG9iaiRNDQoNCmRpbShNKQ0KYGBgDQoNCkEgbWF0cml6IGBNYCBwb3NzdWkgaW5kaXbDrWR1b3MgbmFzIGxpbmhhcyBlIFNOUHMgbmFzIGNvbHVuYXMuDQoNCiMjIDMuIEZyZXF1w6puY2lhIGFsw6lsaWNhDQoNCkNvbW8gb3MgU05QcyBlc3TDo28gY29kaWZpY2Fkb3MgY29tbyAwLCAxIGUgMiwgYSBtw6lkaWEgZGUgdW1hIGNvbHVuYSBjb3JyZXNwb25kZQ0KYSBkdWFzIHZlemVzIGEgZnJlcXXDqm5jaWEgZG8gYWxlbG8gY29udGFkby4gQXNzaW0sIHBhcmEgY2FkYSBtYXJjYWRvcjoNCg0KXFsNCnBfaiA9IFxmcmFje1xiYXIgTV9qfXsyfS4NClxdDQoNCmBgYHtyIGZyZXF1ZW5jaWEtYWxlbGljYX0NCnAgPC0gY29sTWVhbnMoTSkgLyAyDQoNCnN1bW1hcnkocCkNCmBgYA0KDQojIyA0LiBDZW50cmFsaXphw6fDo28gZG9zIG1hcmNhZG9yZXMNCg0KQSBjb250cmlidWnDp8OjbyBlc3BlcmFkYSBkbyBtYXJjYWRvciBgamAgw6kgYDJwX2pgLiBTdWJ0cmHDrW1vcyBlc3NlIHZhbG9yIGRlIGNhZGENCmdlbsOzdGlwbyBwYXJhIG9idGVyIGEgbWF0cml6IGNlbnRyYWxpemFkYSBgWmA6DQoNClxbDQpaX3tpan09TV97aWp9LTJwX2ouDQpcXQ0KDQpFbSBSLCBgc3dlZXAoKWAgYXBsaWNhIGEgc3VidHJhw6fDo28gY29sdW5hIGEgY29sdW5hLg0KDQpgYGB7ciBjZW50cmFsaXphci1tYXJjYWRvcmVzfQ0KWiA8LSBzd2VlcCgNCiAgTSwNCiAgMiwNCiAgMiAqIHAsDQogIEZVTiA9ICItIg0KKQ0KDQpkaW0oWikNCmBgYA0KDQojIyA1LiBDb25zdHJ1w6fDo28gZGEgbWF0cml6IEcNCg0KVXRpbGl6YW1vcyBhIGZvcm1hIGFkaXRpdmEgZGUgVmFuUmFkZW46DQoNClxbDQpcbWF0aGJme0d9PQ0KXGZyYWN7XG1hdGhiZntafVxtYXRoYmZ7Wn1ee1xtYXRoc2Z7VH19fQ0KezJcc3VtX2ogcF9qKDEtcF9qKX0uDQpcXQ0KDQpPIGRlbm9taW5hZG9yIGNvbG9jYSBvcyByZWxhY2lvbmFtZW50b3MgbmEgZXNjYWxhIGRhIHZhcmlhYmlsaWRhZGUgZ2Vuw6l0aWNhDQplc3BlcmFkYSBwYXJhIG9zIG1hcmNhZG9yZXMuDQoNCmBgYHtyIGNvbnN0cnVpci1HfQ0KZGVub21pbmFkb3IgPC0gMiAqIHN1bSgNCiAgcCAqICgxIC0gcCkNCikNCg0KRyA8LSB0Y3Jvc3Nwcm9kKFopIC8gZGVub21pbmFkb3INCmBgYA0KDQpBZGljaW9uYW1vcyB1bSB2YWxvciBudW3DqXJpY28gbXVpdG8gcGVxdWVubyDDoCBkaWFnb25hbCBwYXJhIGV2aXRhciBwcm9ibGVtYXMgZGUNCmVzdGFiaWxpZGFkZSBjb21wdXRhY2lvbmFsIHNlbSBhbHRlcmFyIGRlIGZvcm1hIHJlbGV2YW50ZSBvcyByZWxhY2lvbmFtZW50b3MuDQoNCmBgYHtyIGVzdGFiaWxpZGFkZS1udW1lcmljYX0NCmRpYWcoRykgPC0gZGlhZyhHKSArIDFlLTYNCmBgYA0KDQojIyA2LiBWZXJpZmljYcOnw7VlcyBkYSBtYXRyaXoNCg0KVW1hIG1hdHJpeiBkZSByZWxhY2lvbmFtZW50byBkZXZlIHNlciBxdWFkcmFkYSwgc2ltw6l0cmljYSBlIGZvcm1hZGEgcG9yDQp2YWxvcmVzIGZpbml0b3MuDQoNCmBgYHtyIHZhbGlkYXItR30NCmVycm9fc2ltZXRyaWEgPC0gbWF4KA0KICBhYnMoRyAtIHQoRykpDQopDQoNCnJlc3Vtb19HIDwtIGRhdGEuZnJhbWUoDQogIEluZGl2aWR1b3MgPSBucm93KEcpLA0KICBNZWRpYV9kaWFnb25hbCA9IG1lYW4oZGlhZyhHKSksDQogIE1pbmltbyA9IG1pbihHKSwNCiAgTWF4aW1vID0gbWF4KEcpLA0KICBFcnJvX3NpbWV0cmlhID0gZXJyb19zaW1ldHJpYQ0KKQ0KDQprbml0cjo6a2FibGUoDQogIHJlc3Vtb19HLA0KICBkaWdpdHMgPSA2LA0KICBjYXB0aW9uID0gIlJlc3VtbyBkYSBtYXRyaXogZGUgcmVsYWNpb25hbWVudG8gZ2Vuw7RtaWNvIg0KKQ0KDQpzdG9waWZub3QobnJvdyhHKSA9PSAxMzc5KQ0Kc3RvcGlmbm90KG5jb2woRykgPT0gMTM3OSkNCnN0b3BpZm5vdChhbGwoaXMuZmluaXRlKEcpKSkNCnN0b3BpZm5vdChlcnJvX3NpbWV0cmlhIDwgMWUtMTApDQpgYGANCg0KIyMgNy4gVmlzdWFsaXphw6fDo28gc2ltcGxlcyBkb3MgcmVsYWNpb25hbWVudG9zDQoNClBhcmEgbWFudGVyIGEgZmlndXJhIGxlZ8OtdmVsLCBtb3N0cmFtb3MgYXBlbmFzIG9zIHByaW1laXJvcyA4MCBpbmRpdsOtZHVvcy4gQQ0KZmlndXJhIMOpIGlsdXN0cmF0aXZhIGUgbsOjbyBhbHRlcmEgbmVuaHVtYSBldGFwYSBkbyBtb2RlbG8uDQoNCmBgYHtyIGhlYXRtYXAtRywgZmlnLmhlaWdodD02LCBmaWcud2lkdGg9Nn0NCmltYWdlKA0KICBHWzE6ODAsIDE6ODBdLA0KICBheGVzID0gRkFMU0UsDQogIHhsYWIgPSAiSW5kaXbDrWR1b3MiLA0KICB5bGFiID0gIkluZGl2w61kdW9zIiwNCiAgbWFpbiA9ICJSZWxhY2lvbmFtZW50byBnZW7DtG1pY28g4oCUIHByaW1laXJvcyA4MCBpbmRpdsOtZHVvcyINCikNCmBgYA0KDQojIyA4LiBPYmpldG8gc2Fsdm8gcGFyYSBhIG1vZGVsYWdlbQ0KDQpTYWx2YW1vcyBgcGAsIGBaYCwgYEdgIGUgbyBkZW5vbWluYWRvciBwb3JxdWUgbyBEYXRhIEF1Z21lbnRhdGlvbiBwcmVjaXNhcsOhIGRhDQptZXNtYSBlc2NhbGEgZ2Vuw7RtaWNhIHBhcmEgcmVsYWNpb25hciBwc2V1ZG9pbmRpdsOtZHVvcyBlIGluZGl2w61kdW9zIHJlYWlzLg0KDQpgYGB7ciBzYWx2YXItR30NCmdlbm9taWNfb2JqZWN0cyA8LSBsaXN0KA0KICBwID0gcCwNCiAgWiA9IFosDQogIEcgPSBHLA0KICBkZW5vbSA9IGRlbm9taW5hZG9yDQopDQoNCnNhdmVSRFMoDQogIGdlbm9taWNfb2JqZWN0cywNCiAgIm91dHB1dC8wM19nZW5vbWljX29iamVjdHMucmRzIg0KKQ0KYGBgDQoNCkNvbSBvcyBkYWRvcyBhdWRpdGFkb3MsIG9zIHNwbGl0cyBkZWZpbmlkb3MgZSBhIG1hdHJpeiBgR2AgY29uc3RydcOtZGEsIGENCnByw7N4aW1hIGV0YXBhIHBvZGUgYWp1c3RhciBvIEdCTFVQIHVzYW5kbyBzb21lbnRlIGluZGl2w61kdW9zIHJlYWlzLg0K</div>
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+https://docs.mathjax.org/en/latest/web/configuration.html. This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeSourceEmbed("03_genomic_matrix.Rmd");
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
