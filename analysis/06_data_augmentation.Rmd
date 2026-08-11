@@ -124,7 +124,7 @@ Neste estudo comparamos quatro regras:
 Os valores `0.1`, `0.2` e `0.4` formam, portanto, uma **grade de sensibilidade**
 dentro do regime `alpha < 1`. Eles permitem avaliar se o desempenho muda à
 medida que os pseudoindivíduos passam de misturas muito próximas de um dos
-doador para interpolações progressivamente menos extremas. Esses valores são
+doadores para interpolações progressivamente menos extremas. Esses valores são
 níveis avaliados neste estudo, e não recomendações universais para Mixup.
 
 ## 4. Parâmetros e cenários avaliados
@@ -218,7 +218,7 @@ O pipeline aplicado a cada combinação segue sempre a mesma sequência:
 4. gerar os valores de `lambda`;
 5. interpolar genótipos e fenótipos;
 6. expandir a matriz de relacionamento genômico;
-7. definir quais fenótipos são observados pelo modelo;
+7. definir quais valores fenotípicos são fornecidos ao modelo;
 8. ajustar o GBLUP e calcular as métricas.
 
 As variáveis `ci`, `proporcao` e `rep` identificam, respectivamente, a regra de
@@ -258,6 +258,9 @@ p <- gobj$p
 Z <- gobj$Z
 G <- gobj$G
 denominador <- gobj$denom
+
+# Tabela que recebe uma linha para cada combinação do desenho.
+resultados_da <- data.frame()
 ```
 
 ### 5.2. Seleção do conjunto real e número de sintéticos
@@ -462,12 +465,12 @@ preservada exatamente. O aumento de dados acrescenta novas linhas e colunas,
 mas não altera os relacionamentos já existentes entre os 1.379 indivíduos
 reais.
 
-### 5.7. Fenótipos observados pelo modelo
+### 5.7. Valores fenotípicos fornecidos ao modelo
 
-O vetor fenotípico expandido contém valores observados somente para dois grupos:
+O vetor fenotípico expandido fornece valores ao modelo para dois grupos:
 
-- indivíduos reais pertencentes ao treinamento atual;
-- pseudoindivíduos criados pelo Mixup.
+- indivíduos reais pertencentes ao treinamento atual, com fenótipos observados;
+- pseudoindivíduos, com fenótipos interpolados pelo Mixup.
 
 Os indivíduos reais fora do treinamento, incluindo toda a validação, recebem
 `NA`.
@@ -478,7 +481,7 @@ y_modelo <- rep(
   n_total_matriz
 )
 
-# Fenótipos dos indivíduos reais de treinamento.
+# Fenótipos observados dos indivíduos reais de treinamento.
 y_modelo[treino] <- y_train
 
 # Fenótipos interpolados dos pseudoindivíduos.
@@ -495,9 +498,10 @@ stopifnot(all(is.na(y_modelo[reais_fora_treino])))
 stopifnot(sum(!is.na(y_modelo)) == N_T100)
 ```
 
-Essa etapa é fundamental para a comparação: embora todos os cenários tenham
-1.103 fenótipos disponíveis para o modelo, apenas `n_real` deles correspondem a
-indivíduos realmente observados.
+Essa etapa é fundamental para a comparação: todos os cenários fornecem 1.103
+valores fenotípicos ao modelo, mas apenas `n_real` deles correspondem a
+fenótipos realmente observados. Os demais são interpolações construídas pelo
+Mixup.
 
 ### 5.8. Ajuste do GBLUP e métricas
 
@@ -1029,9 +1033,8 @@ SE_{NB}=
 }.
 \]
 
-Aqui `n_train = 1103`, pois todos os cenários comparados possuem 1.103
-observações fenotípicas no treinamento após combinar indivíduos reais e
-pseudoindivíduos.
+Aqui `n_train = 1103`, pois todos os cenários comparados fornecem 1.103 valores
+fenotípicos ao modelo após combinar indivíduos reais e pseudoindivíduos.
 
 ```{r equivalencia-da}
 DELTA <- 0.05
