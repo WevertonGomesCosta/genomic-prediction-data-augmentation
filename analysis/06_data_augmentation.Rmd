@@ -315,10 +315,9 @@ for (s in seq_len(nrow(cenarios_da))) {
 
   # Identifica o cenário atual.
   cenario <- cenarios_da[s, ]
+  proporcao_chave <- as.character(cenario$proporcao_pool)
 
-  split <- splits_mestre[
-    [as.character(cenario$proporcao_pool)]
-  ][[cenario$repeticao]]
+  split <- splits_mestre[[proporcao_chave]][[cenario$repeticao]]
 
   treino <- split$treino
   n_real <- length(treino)
@@ -394,10 +393,9 @@ for (s in seq_len(nrow(cenarios_da))) {
 
   # Recupera o cenário e o conjunto real de treinamento.
   cenario <- cenarios_da[s, ]
+  proporcao_chave <- as.character(cenario$proporcao_pool)
 
-  split <- splits_mestre[
-    [as.character(cenario$proporcao_pool)]
-  ][[cenario$repeticao]]
+  split <- splits_mestre[[proporcao_chave]][[cenario$repeticao]]
 
   treino <- split$treino
 
@@ -450,10 +448,9 @@ for (s in seq_len(nrow(cenarios_da))) {
 
   # Recupera cenário, treinamento e receita do Mixup.
   cenario <- cenarios_da[s, ]
+  proporcao_chave <- as.character(cenario$proporcao_pool)
 
-  split <- splits_mestre[
-    [as.character(cenario$proporcao_pool)]
-  ][[cenario$repeticao]]
+  split <- splits_mestre[[proporcao_chave]][[cenario$repeticao]]
 
   treino <- split$treino
 
@@ -563,10 +560,9 @@ for (s in seq_len(nrow(cenarios_da))) {
 
   # Recupera cenário e split correspondente.
   cenario <- cenarios_da[s, ]
+  proporcao_chave <- as.character(cenario$proporcao_pool)
 
-  split <- splits_mestre[
-    [as.character(cenario$proporcao_pool)]
-  ][[cenario$repeticao]]
+  split <- splits_mestre[[proporcao_chave]][[cenario$repeticao]]
 
   treino <- split$treino
   validacao <- split$valid
@@ -631,10 +627,9 @@ for (s in seq_len(nrow(cenarios_da))) {
 
   # 1. Recupera cenário, treinamento, validação e receita do Mixup.
   cenario <- cenarios_da[s, ]
+  proporcao_chave <- as.character(cenario$proporcao_pool)
 
-  split <- splits_mestre[
-    [as.character(cenario$proporcao_pool)]
-  ][[cenario$repeticao]]
+  split <- splits_mestre[[proporcao_chave]][[cenario$repeticao]]
 
   treino <- split$treino
   validacao <- split$valid
