@@ -1,0 +1,194 @@
+---
+title: "3. Matriz de relacionamento genômico"
+author: "Weverton Gomes da Costa"
+date: "`r Sys.Date()`"
+site: workflowr::wflow_site
+output:
+  workflowr::wflow_html:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    code_download: true
+    code_folding: show
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  cache = FALSE,
+  fig.align = "center",
+  out.width = "100%"
+)
+dir.create("output", showWarnings = FALSE, recursive = TRUE)
+```
+
+## 1. Objetivo
+
+Os modelos GBLUP utilizam a semelhança genômica entre os indivíduos. Essa
+informação é resumida em uma matriz chamada `G`.
+
+Cada elemento de `G` representa o grau de relacionamento genômico entre dois
+indivíduos. Indivíduos com padrões de SNPs mais semelhantes tendem a apresentar
+maior relacionamento genômico.
+
+Neste projeto, `G` é calculada uma única vez usando todos os indivíduos
+genotipados. Os fenótipos de validação continuarão mascarados durante cada
+ajuste; portanto, usar os genótipos dos indivíduos de validação em `G` não
+fornece seus fenótipos ao modelo.
+
+## 2. Carregando a matriz de SNPs
+
+Reutilizamos diretamente o objeto auditado na Etapa 1. Nenhuma leitura ou
+filtragem dos dados é repetida.
+
+```{r carregar-dados}
+DATA_OBJECTS <- "output/01_data_objects.rds"
+
+if (!file.exists(DATA_OBJECTS)) {
+  stop("Execute primeiro analysis/01_data_audit.Rmd.")
+}
+
+obj <- readRDS(DATA_OBJECTS)
+
+M <- obj$M
+
+dim(M)
+```
+
+A matriz `M` possui indivíduos nas linhas e SNPs nas colunas.
+
+## 3. Frequência alélica
+
+Como os SNPs estão codificados como 0, 1 e 2, a média de uma coluna corresponde
+a duas vezes a frequência do alelo contado. Assim, para cada marcador:
+
+\[
+p_j = \frac{\bar M_j}{2}.
+\]
+
+```{r frequencia-alelica}
+p <- colMeans(M) / 2
+
+summary(p)
+```
+
+## 4. Centralização dos marcadores
+
+A contribuição esperada do marcador `j` é `2p_j`. Subtraímos esse valor de cada
+genótipo para obter a matriz centralizada `Z`:
+
+\[
+Z_{ij}=M_{ij}-2p_j.
+\]
+
+Em R, `sweep()` aplica a subtração coluna a coluna.
+
+```{r centralizar-marcadores}
+Z <- sweep(
+  M,
+  2,
+  2 * p,
+  FUN = "-"
+)
+
+dim(Z)
+```
+
+## 5. Construção da matriz G
+
+Utilizamos a forma aditiva de VanRaden:
+
+\[
+\mathbf{G}=
+\frac{\mathbf{Z}\mathbf{Z}^{\mathsf{T}}}
+{2\sum_j p_j(1-p_j)}.
+\]
+
+O denominador coloca os relacionamentos na escala da variabilidade genética
+esperada para os marcadores.
+
+```{r construir-G}
+denominador <- 2 * sum(
+  p * (1 - p)
+)
+
+G <- tcrossprod(Z) / denominador
+```
+
+Adicionamos um valor numérico muito pequeno à diagonal para evitar problemas de
+estabilidade computacional sem alterar de forma relevante os relacionamentos.
+
+```{r estabilidade-numerica}
+diag(G) <- diag(G) + 1e-6
+```
+
+## 6. Verificações da matriz
+
+Uma matriz de relacionamento deve ser quadrada, simétrica e formada por
+valores finitos.
+
+```{r validar-G}
+erro_simetria <- max(
+  abs(G - t(G))
+)
+
+resumo_G <- data.frame(
+  Individuos = nrow(G),
+  Media_diagonal = mean(diag(G)),
+  Minimo = min(G),
+  Maximo = max(G),
+  Erro_simetria = erro_simetria
+)
+
+knitr::kable(
+  resumo_G,
+  digits = 6,
+  caption = "Resumo da matriz de relacionamento genômico"
+)
+
+stopifnot(nrow(G) == 1379)
+stopifnot(ncol(G) == 1379)
+stopifnot(all(is.finite(G)))
+stopifnot(erro_simetria < 1e-10)
+```
+
+## 7. Visualização simples dos relacionamentos
+
+Para manter a figura legível, mostramos apenas os primeiros 80 indivíduos. A
+figura é ilustrativa e não altera nenhuma etapa do modelo.
+
+```{r heatmap-G, fig.height=6, fig.width=6}
+image(
+  G[1:80, 1:80],
+  axes = FALSE,
+  xlab = "Indivíduos",
+  ylab = "Indivíduos",
+  main = "Relacionamento genômico — primeiros 80 indivíduos"
+)
+```
+
+## 8. Objeto salvo para a modelagem
+
+Salvamos `p`, `Z`, `G` e o denominador porque o Data Augmentation precisará da
+mesma escala genômica para relacionar pseudoindivíduos e indivíduos reais.
+
+```{r salvar-G}
+genomic_objects <- list(
+  p = p,
+  Z = Z,
+  G = G,
+  denom = denominador
+)
+
+saveRDS(
+  genomic_objects,
+  "output/03_genomic_objects.rds"
+)
+```
+
+Com os dados auditados, os splits definidos e a matriz `G` construída, a
+próxima etapa pode ajustar o GBLUP usando somente indivíduos reais.
