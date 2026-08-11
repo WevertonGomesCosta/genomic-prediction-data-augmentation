@@ -23,18 +23,16 @@ knitr::opts_chunk$set(
   fig.align = "center",
   out.width = "100%"
 )
-dir.create("output/checkpoints", showWarnings = FALSE, recursive = TRUE)
 dir.create("output/figures", showWarnings = FALSE, recursive = TRUE)
-dir.create("results", showWarnings = FALSE, recursive = TRUE)
 ```
 
 ## 1. Objetivo
 
-Antes de testar Data Augmentation, precisamos descobrir como o desempenho do
-GBLUP muda quando aumentamos a quantidade de indivíduos reais usados no
-treinamento.
+Agora que os conjuntos de treinamento estão definidos e a matriz de
+relacionamento genômico `G` foi construída, podemos avaliar como o tamanho da
+amostra real influencia a predição genômica.
 
-Em cada uma das 30 repetições ajustamos o mesmo modelo usando:
+Em cada uma das 30 repetições ajustamos o mesmo GBLUP usando:
 
 - T25 = 275 indivíduos reais;
 - T50 = 551 indivíduos reais;
@@ -42,215 +40,196 @@ Em cada uma das 30 repetições ajustamos o mesmo modelo usando:
 - T100 = 1.103 indivíduos reais.
 
 A validação contém sempre 276 indivíduos e é exatamente a mesma para os quatro
-tamanhos de treinamento dentro de cada repetição.
+tamanhos de treinamento dentro de cada repetição. Portanto, as diferenças entre
+T25, T50, T75 e T100 refletem principalmente a quantidade de informação
+fenotípica disponível para o treinamento.
 
-Esta etapa responde apenas à pergunta:
+Esta etapa responde à pergunta:
 
-> Como a capacidade preditiva muda quando aumentamos o tamanho da amostra real?
+> **Como o desempenho preditivo do GBLUP muda quando aumentamos o número de
+> indivíduos reais no treinamento?**
 
-A comparação formal de T25, T50 e T75 com T100 será feita somente na Etapa 5.
+A equivalência estatística entre os tamanhos reduzidos e T100 será avaliada na
+Etapa 5.
 
-## 2. Como o GBLUP é avaliado
+## 2. Como o GBLUP usa treinamento e validação
 
-O ponto mais importante é que os fenótipos da validação **não podem ser vistos
-pelo modelo**.
+A matriz `G` contém os relacionamentos genômicos dos 1.379 indivíduos, mas o
+fenótipo é fornecido ao modelo somente para os indivíduos do conjunto de
+treinamento.
 
-Para isso criamos um vetor cheio de `NA` e copiamos para ele somente os
-fenótipos dos indivíduos de treinamento:
+Para representar essa estrutura, criamos um vetor fenotípico com `NA` para
+todos os indivíduos e preenchemos apenas as posições pertencentes ao
+Treinamento:
 
 ```r
-# Exemplo conceitual
+# Estrutura conceitual do vetor fenotípico usado pelo modelo.
 y_modelo <- rep(NA_real_, length(y))
 y_modelo[treino] <- y[treino]
 ```
 
-Os genótipos continuam representados em `G`, mas somente o conjunto de
-treinamento fornece fenótipos ao BGLR.
+Assim, os indivíduos da validação participam da matriz genômica, mas seus
+fenótipos não são utilizados no ajuste. As predições obtidas nessas posições
+podem então ser comparadas aos valores observados para avaliar o modelo.
 
-## 3. Resultados pesados e reprodução
+## 3. Modelo e parâmetros
 
-Os 120 ajustes já foram executados, auditados e estão versionados em
-`results/04_baseline_results.csv`. Assim, o site pode ser reconstruído sem
-refazer os modelos.
+O componente genômico é especificado no `BGLR` usando `G` como kernel `RKHS`:
 
-O código completo da execução continua visível abaixo. Por padrão ele não é
-executado. Para reproduzir os 120 ajustes do zero, altere:
+\[
+y = \mu + g + \varepsilon,
+\]
 
-```r
-RUN_MODELS <- FALSE
-```
+em que `g` representa o efeito genômico associado à matriz de relacionamento.
+O mesmo modelo e os mesmos parâmetros são mantidos em todos os tamanhos de
+Treinamento, permitindo uma comparação direta entre T25, T50, T75 e T100.
 
-para `TRUE`.
-
-```{r configuracao-execucao}
-RUN_MODELS <- FALSE
+```{r parametros-gblup}
+PROPORCOES <- c(0.25, 0.50, 0.75, 1.00)
+N_REP <- 30
+N_ITER <- 10000
+BURN_IN <- 5000
 
 FINAL_FILE <- "results/04_baseline_results.csv"
-CHECKPOINT <- "output/checkpoints/04_baseline_progress.csv"
 ```
 
-## 4. Código completo dos 120 ajustes
+Utilizamos 10.000 iterações MCMC, com as primeiras 5.000 descartadas como
+período de *burn-in*.
 
-Esta seção mostra explicitamente cada etapa do ajuste: carregamento dos objetos,
-mascaramento dos fenótipos, especificação do GBLUP, predição e cálculo das
-métricas.
+## 4. Pipeline do GBLUP
 
-```{r executar-baseline}
-if (RUN_MODELS) {
-  arquivos_necessarios <- c(
-    "output/01_data_objects.rds",
-    "output/02_splits_mestre_30rep.rds",
-    "output/03_genomic_objects.rds"
-  )
+O código abaixo reúne o pipeline analítico aplicado a cada repetição e a cada
+tamanho de treinamento. Os comentários destacam as etapas essenciais: seleção
+do split, mascaramento dos fenótipos, especificação do modelo, predição e
+cálculo das métricas.
 
-  if (!all(file.exists(arquivos_necessarios))) {
-    stop("Execute primeiro as Etapas 1, 2 e 3.")
+```{r pipeline-gblup, eval=FALSE}
+# Objetos produzidos nas etapas anteriores.
+obj <- readRDS("output/01_data_objects.rds")
+splits_mestre <- readRDS("output/02_splits_mestre_30rep.rds")
+gobj <- readRDS("output/03_genomic_objects.rds")
+
+y <- obj$y
+G <- gobj$G
+
+resultados_baseline <- data.frame()
+
+for (rep in seq_len(N_REP)) {
+  for (i in seq_along(PROPORCOES)) {
+    proporcao <- PROPORCOES[i]
+
+    # 1. Recupera treinamento e validação da repetição atual.
+    split <- splits_mestre[[as.character(proporcao)]][[rep]]
+    treino <- split$treino
+    validacao <- split$valid
+
+    # 2. Mantém fenótipos somente nos indivíduos de treinamento.
+    y_modelo <- rep(
+      NA_real_,
+      length(y)
+    )
+
+    y_modelo[treino] <- y[treino]
+
+    # 3. Define o componente genômico usando G como kernel.
+    ETA <- list(
+      list(
+        K = G,
+        model = "RKHS"
+      )
+    )
+
+    # 4. Ajusta o mesmo modelo em todos os cenários.
+    set.seed(
+      50000 + rep * 100 + i
+    )
+
+    ajuste <- BGLR::BGLR(
+      y = y_modelo,
+      ETA = ETA,
+      nIter = N_ITER,
+      burnIn = BURN_IN,
+      verbose = FALSE
+    )
+
+    # 5. Obtém predições apenas para os indivíduos da validação.
+    predicao <- ajuste$yHat[validacao]
+    observado <- y[validacao]
+
+    # 6. Calcula as métricas de desempenho preditivo.
+    correlacao <- cor(
+      observado,
+      predicao
+    )
+
+    RMSE <- sqrt(
+      mean(
+        (observado - predicao)^2
+      )
+    )
+
+    MAE <- mean(
+      abs(
+        observado - predicao
+      )
+    )
+
+    calibracao <- lm(
+      observado ~ predicao
+    )
+
+    slope_calibracao <- unname(
+      coef(calibracao)[2]
+    )
+
+    # 7. Armazena uma linha para a combinação repetição × tamanho.
+    nova_linha <- data.frame(
+      repeticao = rep,
+      proporcao_pool = proporcao,
+      n_treino = length(treino),
+      n_validacao = length(validacao),
+      correlacao = correlacao,
+      RMSE = RMSE,
+      MAE = MAE,
+      slope_calibracao = slope_calibracao
+    )
+
+    resultados_baseline <- rbind(
+      resultados_baseline,
+      nova_linha
+    )
   }
-
-  if (!requireNamespace("BGLR", quietly = TRUE)) {
-    stop("Instale o pacote BGLR antes de reproduzir os modelos.")
-  }
-
-  obj <- readRDS("output/01_data_objects.rds")
-  splits_mestre <- readRDS("output/02_splits_mestre_30rep.rds")
-  gobj <- readRDS("output/03_genomic_objects.rds")
-
-  y <- obj$y
-  G <- gobj$G
-
-  PROPORCOES <- c(0.25, 0.50, 0.75, 1.00)
-  N_ITER <- 10000
-  BURN_IN <- 5000
-
-  if (file.exists(CHECKPOINT)) {
-    resultados_baseline <- read.csv(CHECKPOINT)
-  } else {
-    resultados_baseline <- data.frame()
-  }
-
-  for (rep in seq_len(30)) {
-    for (i in seq_along(PROPORCOES)) {
-      proporcao <- PROPORCOES[i]
-
-      ja_executado <-
-        nrow(resultados_baseline) > 0 &&
-        any(
-          resultados_baseline$repeticao == rep &
-          resultados_baseline$proporcao_pool == proporcao
-        )
-
-      if (ja_executado) next
-
-      split <- splits_mestre[[as.character(proporcao)]][[rep]]
-      treino <- split$treino
-      validacao <- split$valid
-
-      # Somente os indivíduos de treinamento mantêm fenótipo observado.
-      y_modelo <- rep(
-        NA_real_,
-        length(y)
-      )
-
-      y_modelo[treino] <- y[treino]
-
-      stopifnot(
-        all(
-          is.na(
-            y_modelo[setdiff(seq_along(y), treino)]
-          )
-        )
-      )
-
-      # GBLUP no BGLR: a matriz G entra como kernel RKHS.
-      ETA <- list(
-        list(
-          K = G,
-          model = "RKHS"
-        )
-      )
-
-      set.seed(
-        50000 + rep * 100 + i
-      )
-
-      ajuste <- BGLR::BGLR(
-        y = y_modelo,
-        ETA = ETA,
-        nIter = N_ITER,
-        burnIn = BURN_IN,
-        verbose = FALSE
-      )
-
-      predicao <- ajuste$yHat[validacao]
-      observado <- y[validacao]
-
-      correlacao <- cor(
-        observado,
-        predicao
-      )
-
-      RMSE <- sqrt(
-        mean(
-          (observado - predicao)^2
-        )
-      )
-
-      MAE <- mean(
-        abs(
-          observado - predicao
-        )
-      )
-
-      calibracao <- lm(
-        observado ~ predicao
-      )
-
-      slope_calibracao <- unname(
-        coef(calibracao)[2]
-      )
-
-      nova_linha <- data.frame(
-        repeticao = rep,
-        proporcao_pool = proporcao,
-        n_treino = length(treino),
-        n_validacao = length(validacao),
-        correlacao = correlacao,
-        RMSE = RMSE,
-        MAE = MAE,
-        slope_calibracao = slope_calibracao
-      )
-
-      resultados_baseline <- rbind(
-        resultados_baseline,
-        nova_linha
-      )
-
-      # O checkpoint permite retomar uma execução interrompida.
-      write.csv(
-        resultados_baseline,
-        CHECKPOINT,
-        row.names = FALSE
-      )
-    }
-  }
-
-  write.csv(
-    resultados_baseline,
-    FINAL_FILE,
-    row.names = FALSE
-  )
 }
+
+write.csv(
+  resultados_baseline,
+  FINAL_FILE,
+  row.names = FALSE
+)
 ```
 
-## 5. Carregando os resultados aprovados
+## 5. Métricas de avaliação
 
-A partir daqui usamos apenas o arquivo final já auditado.
+Quatro medidas complementares são utilizadas:
+
+- **correlação preditiva**: mede a associação linear entre valores observados e
+  preditos; valores maiores indicam melhor capacidade de ordenar os indivíduos;
+- **RMSE**: resume a magnitude dos erros e dá maior peso a erros grandes;
+- **MAE**: representa o erro absoluto médio em uma escala de interpretação
+  direta;
+- **inclinação de calibração**: é obtida da regressão `observado ~ predito` e
+  ajuda a avaliar a escala das predições; valores próximos de 1 indicam melhor
+  calibração.
+
+A correlação é a métrica principal para a comparação de equivalência, enquanto
+as demais descrevem aspectos adicionais do comportamento preditivo.
+
+## 6. Resultados do GBLUP com dados reais
+
+A tabela primária contém uma linha para cada combinação entre as 30 repetições e
+os quatro tamanhos de treinamento, totalizando 120 resultados.
 
 ```{r carregar-resultados}
-if (!file.exists(FINAL_FILE)) {
-  stop("Arquivo ausente: results/04_baseline_results.csv")
-}
-
 baseline <- read.csv(FINAL_FILE)
 
 chaves <- paste(
@@ -266,12 +245,14 @@ stopifnot(all(baseline$n_validacao == 276))
 stopifnot(!anyNA(baseline[, c("correlacao", "RMSE", "MAE", "slope_calibracao")]))
 ```
 
-## 6. Curva de aprendizado
+## 7. Curva de aprendizado
 
-Calculamos a média das quatro métricas e o desvio-padrão da correlação para cada
-tamanho de treinamento.
+Para cada tamanho de treinamento calculamos a média das quatro métricas e o
+desvio-padrão da correlação. A curva de aprendizado permite visualizar quanto o
+desempenho aumenta quando mais indivíduos reais são adicionados ao treinamento.
 
 ```{r resumo-baseline}
+# Médias das quatro métricas em cada tamanho de treinamento.
 resumo_baseline <- aggregate(
   cbind(
     correlacao,
@@ -283,6 +264,7 @@ resumo_baseline <- aggregate(
   FUN = mean
 )
 
+# Variabilidade da correlação entre as 30 repetições.
 sd_cor <- aggregate(
   correlacao ~ proporcao_pool,
   data = baseline,
@@ -303,9 +285,10 @@ knitr::kable(
 )
 ```
 
-A figura mantém a informação das 30 repetições. Cada linha fina representa uma
-repetição completa de T25 a T100. A linha destacada mostra a correlação média e
-a faixa representa média ± 1 desvio-padrão em cada tamanho de treinamento.
+A figura preserva a informação das 30 repetições. Cada linha fina representa a
+trajetória de uma repetição de T25 até T100. A linha destacada mostra a
+correlação média e a faixa representa média ± 1 desvio-padrão em cada tamanho
+de treinamento.
 
 ```{r curva-aprendizado, fig.height=5.5, fig.width=8.5, fig.cap="Curva de aprendizado do GBLUP nas 30 repetições, com média e faixa de ±1 desvio-padrão."}
 if (!requireNamespace("ggplot2", quietly = TRUE)) {
@@ -407,7 +390,8 @@ ggplot2::ggsave(
 
 A correlação média aumenta de aproximadamente 0,53 em T25 para 0,67 em T100.
 O ganho, porém, fica progressivamente menor à medida que mais indivíduos são
-adicionados.
+adicionados. A curva sugere que T75 já se aproxima de T100, mas proximidade
+visual não é suficiente para declarar equivalência.
 
 Na próxima etapa, T25, T50 e T75 serão comparados formalmente com T100 usando as
 diferenças pareadas das mesmas 30 repetições.
