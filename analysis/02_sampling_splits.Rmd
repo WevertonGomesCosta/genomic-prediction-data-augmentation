@@ -31,9 +31,11 @@ dir.create("output/figures", showWarnings = FALSE, recursive = TRUE)
 
 Um modelo de predição precisa ser avaliado em indivíduos que não forneceram
 fenótipos durante o treinamento. Caso contrário, mediríamos principalmente a
-capacidade de reproduzir dados já observados.
+capacidade de reproduzir dados já observados, e não a capacidade de predizer
+indivíduos ainda não fenotipados.
 
-Em cada repetição deste tutorial:
+Por isso, cada repetição é dividida em duas partes independentes quanto ao uso
+do fenótipo:
 
 - aproximadamente 20% dos 1.379 indivíduos são separados para validação;
 - os 80% restantes formam o conjunto completo de treinamento, chamado `T100`;
@@ -46,21 +48,18 @@ T_{25}\subset T_{50}\subset T_{75}\subset T_{100}.
 \]
 
 Isso significa que os indivíduos usados em T25 também estão em T50, os de T50
-estão em T75 e assim por diante. Dessa forma, aumentar o tamanho da amostra
-real corresponde realmente a adicionar indivíduos ao mesmo conjunto de
-referência.
+estão em T75 e assim por diante. Dessa forma, a comparação entre tamanhos de
+amostra representa a adição progressiva de indivíduos ao mesmo conjunto de
+referência, em vez da comparação entre amostras independentes.
 
-## 2. Carregando os dados auditados
+## 2. Dados utilizados
 
-Esta etapa reutiliza o objeto produzido no módulo anterior. Nenhuma auditoria
-do CSV é repetida aqui.
+Esta etapa parte do objeto criado após a auditoria dos dados. O valor `n`
+representa o número total de indivíduos disponíveis para formar treinamento e
+validação.
 
 ```{r carregar-dados}
 DATA_OBJECTS <- "output/01_data_objects.rds"
-
-if (!file.exists(DATA_OBJECTS)) {
-  stop("Execute primeiro analysis/01_data_audit.Rmd.")
-}
 
 obj <- readRDS(DATA_OBJECTS)
 
@@ -68,10 +67,12 @@ n <- obj$n
 n
 ```
 
-## 3. Parâmetros da amostragem
+## 3. Parâmetros do desenho amostral
 
-Utilizamos 30 repetições. A validação contém 20% da população e as sementes
-fixas tornam o sorteio reproduzível.
+Utilizamos 30 repetições independentes do sorteio de validação. Em cada uma
+delas, 20% dos indivíduos são reservados para validação externa. As sementes
+são definidas previamente para que o mesmo desenho amostral seja utilizado em
+todas as etapas seguintes.
 
 ```{r parametros-amostragem}
 PROP_VALIDACAO <- 0.20
@@ -94,16 +95,22 @@ Com 1.379 indivíduos, cada repetição contém:
 1379 = 1103_{\text{treinamento}} + 276_{\text{validação}}.
 \]
 
-## 4. Sorteio da validação e do pool de treinamento
+O termo `T100` refere-se, portanto, a **100% do pool disponível para
+Treinamento naquela repetição**, e não a 100% dos 1.379 indivíduos da população
+analítica.
+
+## 4. Sorteio da validação e formação dos conjuntos aninhados
 
 Para cada repetição, primeiro sorteamos os 276 indivíduos de validação. Os
 1.103 indivíduos restantes formam T100.
 
-Em seguida, uma única permutação aleatória de T100 é criada. Os conjuntos T25,
-T50 e T75 são obtidos usando os primeiros indivíduos dessa mesma permutação,
-o que garante o aninhamento.
+Em seguida, uma única permutação aleatória de T100 é criada. T25, T50 e T75 são
+obtidos usando partes progressivamente maiores dessa mesma ordem aleatória. É
+essa construção que garante o aninhamento entre os quatro tamanhos de
+Treinamento.
 
 ```{r criar-splits}
+# Estrutura que armazenará os 30 splits de cada tamanho de treinamento.
 splits_mestre <- setNames(
   lapply(
     PROPORCOES_TREINO,
@@ -115,6 +122,7 @@ splits_mestre <- setNames(
 for (rep in seq_len(N_REP)) {
   set.seed(SEEDS_REP[rep])
 
+  # 1. Sorteia a validação externa da repetição atual.
   validacao <- sort(
     sample(
       seq_len(n),
@@ -123,11 +131,13 @@ for (rep in seq_len(N_REP)) {
     )
   )
 
+  # 2. Os indivíduos restantes formam o pool completo T100.
   pool <- setdiff(
     seq_len(n),
     validacao
   )
 
+  # 3. Uma única ordem aleatória será compartilhada por T25, T50, T75 e T100.
   ordem_pool <- sample(
     pool,
     length(pool),
@@ -141,6 +151,7 @@ for (rep in seq_len(N_REP)) {
     length(pool)
   )
 
+  # 4. Cada conjunto maior contém integralmente o conjunto anterior.
   for (i in seq_along(PROPORCOES_TREINO)) {
     proporcao <- PROPORCOES_TREINO[i]
 
@@ -158,24 +169,30 @@ for (rep in seq_len(N_REP)) {
 }
 ```
 
-## 5. Conferindo o desenho
+## 5. Verificação do desenho amostral
 
-As verificações abaixo garantem que todas as repetições obedecem ao mesmo
-contrato experimental.
+As verificações abaixo confirmam duas propriedades essenciais do desenho:
+
+1. T25, T50, T75 e T100 permanecem aninhados em todas as repetições;
+2. nenhum indivíduo da validação pertence ao conjunto de treinamento da mesma
+   repetição.
 
 ```{r validar-splits}
 for (rep in seq_len(N_REP)) {
+  # Recupera os quatro conjuntos de treinamento e a validação da repetição.
   t25 <- splits_mestre[["0.25"]][[rep]]$treino
   t50 <- splits_mestre[["0.5"]][[rep]]$treino
   t75 <- splits_mestre[["0.75"]][[rep]]$treino
   t100 <- splits_mestre[["1"]][[rep]]$treino
   validacao <- splits_mestre[["1"]][[rep]]$valid
 
+  # Confirma o aninhamento e a independência entre treinamento e validação.
   stopifnot(all(t25 %in% t50))
   stopifnot(all(t50 %in% t75))
   stopifnot(all(t75 %in% t100))
   stopifnot(length(intersect(t100, validacao)) == 0)
 
+  # Confirma os tamanhos definidos pelo desenho amostral.
   stopifnot(length(t25) == 275)
   stopifnot(length(t50) == 551)
   stopifnot(length(t75) == 827)
@@ -186,8 +203,10 @@ for (rep in seq_len(N_REP)) {
 
 ## 6. Resumo das 30 repetições
 
-A tabela mostra os tamanhos de treinamento e validação. A validação é a mesma
-para T25, T50, T75 e T100 dentro de cada repetição.
+A tabela resume os tamanhos de treinamento e validação. Dentro de uma mesma
+repetição, T25, T50, T75 e T100 são comparados exatamente nos mesmos 276
+indivíduos de validação. Esse pareamento será importante quando compararmos o
+desempenho das diferentes amostras nas etapas seguintes.
 
 ```{r resumo-splits}
 resumo_splits <- data.frame()
@@ -216,9 +235,8 @@ head(resumo_splits, 8) |>
 ```
 
 O número de vezes em que cada indivíduo aparece na validação pode variar porque
-a validação é sorteada novamente em cada repetição. Essa visualização permite
-verificar se os 30 holdouts distribuem a participação na validação ao longo da
-população, sem alterar o desenho amostral.
+a validação é sorteada novamente em cada repetição. A figura mostra como essa
+participação se distribui ao longo dos 30 holdouts.
 
 ```{r frequencia-validacao, fig.height=4.8, fig.width=8, fig.cap="Frequência com que cada indivíduo aparece na validação ao longo dos 30 holdouts."}
 validacoes <- unlist(
@@ -290,10 +308,11 @@ ggplot2::ggsave(
 )
 ```
 
-## 7. Objeto salvo para as próximas etapas
+## 7. Objeto usado nas etapas seguintes
 
-Os mesmos splits serão usados pelo baseline e pelo Data Augmentation. Eles são
-salvos uma única vez para impedir que etapas posteriores façam novos sorteios.
+Os índices de treinamento e validação são armazenados em um único objeto. Dessa
+forma, as etapas de construção da matriz genômica, ajuste do GBLUP e aumento de
+dados utilizam exatamente o mesmo desenho amostral.
 
 ```{r salvar-splits}
 saveRDS(
@@ -302,5 +321,5 @@ saveRDS(
 )
 ```
 
-Na próxima etapa construiremos a matriz de relacionamento genômico `G`. A
-matriz será calculada uma única vez e também será reutilizada pelos modelos.
+Na próxima etapa construiremos a matriz de relacionamento genômico `G` para os
+1.379 indivíduos genotipados.
