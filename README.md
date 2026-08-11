@@ -90,7 +90,7 @@ analysis/05_equivalence.Rmd
 analysis/06_data_augmentation.Rmd
 ```
 
-Os objetos intermediários leves são salvos localmente em `output/` e reutilizados pela etapa seguinte. O baseline completo de 120 ajustes e o resumo auditado dos 360 ajustes de Data Augmentation ficam em `results/`, permitindo reconstruir o tutorial sem repetir a modelagem pesada. O hash do checkpoint completo de DA também é registrado para preservar a rastreabilidade da execução auditada.
+Os objetos intermediários leves são salvos localmente em `output/` e reutilizados pela etapa seguinte. Os resultados primários dos 120 ajustes do baseline e dos 360 ajustes de Data Augmentation são versionados em `results/`. Todas as tabelas derivadas e os testes de equivalência são reconstruídos diretamente nos `.Rmd`, permitindo acompanhar como cada conclusão é obtida sem repetir a modelagem pesada.
 
 ## Como reproduzir
 
