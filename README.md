@@ -1,17 +1,29 @@
 # Predição genômica com aumento de dados
 
-Este repositório é um tutorial reproduzível em `workflowr` para mostrar, passo a passo, como avaliar se uma amostra menor de indivíduos reais pode manter a capacidade preditiva do conjunto completo de treinamento e se o aumento de dados (*Data Augmentation*) via Mixup consegue reduzir ainda mais a quantidade de indivíduos que precisam ser fenotipados.
+Este repositório apresenta um tutorial didático em `workflowr` sobre predição
+genômica com GBLUP, redução do tamanho da amostra real e aumento de dados
+(*Data Augmentation*) via Mixup.
 
-## Pergunta principal
+O objetivo é acompanhar o raciocínio analítico passo a passo: compreender os
+dados, definir treinamento e validação, construir a matriz de relacionamento
+genômico, avaliar o GBLUP com diferentes tamanhos de amostra e, por fim,
+verificar se pseudoindivíduos podem reduzir a quantidade de indivíduos reais
+necessários para manter o desempenho preditivo.
 
-O conjunto analítico possui 1.379 indivíduos genotipados. Em cada repetição, 276 indivíduos são separados para validação externa e os 1.103 restantes formam o conjunto completo de treinamento, chamado `T100`.
+## Perguntas do estudo
 
-O tutorial responde duas perguntas:
+O conjunto analítico possui 1.379 indivíduos genotipados. Em cada repetição, 276
+indivíduos são separados para validação externa e os 1.103 restantes formam o
+conjunto completo de treinamento, denominado `T100`.
 
-1. Qual é o menor número de indivíduos reais que produz desempenho equivalente a T100?
-2. Ao completar uma amostra real reduzida com pseudoindivíduos Mixup, conseguimos usar menos indivíduos reais sem perder desempenho preditivo?
+O tutorial responde duas perguntas principais:
 
-## Fluxo do tutorial
+1. Qual é o menor número de indivíduos reais que produz desempenho praticamente
+   equivalente a T100?
+2. Ao completar uma amostra real reduzida com pseudoindivíduos Mixup, é possível
+   utilizar menos indivíduos reais sem perder desempenho preditivo?
+
+## Pipeline analítico
 
 ```text
 Dados
@@ -26,10 +38,13 @@ Dados
   ↓
 5. Equivalência com T100
   ↓
-6. Aumento de dados e comparação final
+6. Aumento de dados com Mixup e comparação final
 ```
 
-Cada módulo explica primeiro **o que será feito**, **por que a etapa é necessária** e **como o resultado se conecta à etapa seguinte**. O código metodologicamente relevante fica visível no próprio `.Rmd`; não são usados arquivos de funções auxiliares para esconder a lógica da análise.
+Cada módulo apresenta primeiro a pergunta científica e a motivação da etapa.
+Depois, o código é mostrado em blocos curtos e comentados, seguido pela
+interpretação dos resultados. A lógica metodológica permanece visível nos
+próprios `.Rmd`, sem funções auxiliares que escondam as etapas principais.
 
 ## Desenho experimental
 
@@ -37,24 +52,27 @@ Cada módulo explica primeiro **o que será feito**, **por que a etapa é necess
 - 4.325 SNPs;
 - 276 indivíduos de validação por repetição;
 - 30 repetições de validação externa aleatória;
-- conjuntos reais aninhados dentro de cada repetição:
+- conjuntos reais aninhados em cada repetição:
   - T25 = 275 indivíduos;
   - T50 = 551 indivíduos;
   - T75 = 827 indivíduos;
   - T100 = 1.103 indivíduos;
-- uma matriz genômica global `G` calculada com todos os indivíduos genotipados;
+- matriz genômica global `G` calculada com os 1.379 indivíduos genotipados;
 - GBLUP ajustado com `BGLR`, componente `RKHS` e `K = G`;
-- 10.000 iterações MCMC e período de burn-in de 5.000;
+- 10.000 iterações MCMC e período de *burn-in* de 5.000;
 - correlação preditiva como métrica principal;
 - RMSE, MAE e inclinação de calibração como métricas complementares;
-- margem de equivalência `delta = 0.05`, definida como uma margem prática específica deste estudo;
+- margem de equivalência `delta = 0.05`, definida como uma margem prática
+  específica deste estudo;
 - TOST com correção de Nadeau-Bengio para as repetições de validação externa.
 
-## Aumento de dados
+## Aumento de dados com Mixup
 
-Os indivíduos reais e os doadores do Mixup são escolhidos aleatoriamente, sem ranking fenotípico.
+Os indivíduos reais e os pares de doadores são selecionados aleatoriamente,
+sem ranking fenotípico.
 
-Cada amostra reduzida recebe exatamente o número de pseudoindivíduos necessário para completar o tamanho de T100:
+Cada amostra reduzida recebe exatamente o número de pseudoindivíduos necessário
+para completar o tamanho de T100:
 
 | Cenário | Reais | Sintéticos | Total |
 |---|---:|---:|---:|
@@ -62,12 +80,17 @@ Cada amostra reduzida recebe exatamente o número de pseudoindivíduos necessár
 | T50 + DA | 551 | 552 | 1.103 |
 | T75 + DA | 827 | 276 | 1.103 |
 
-As regras de mistura avaliadas são:
+O peso de cada doador é controlado por `lambda`. Foram avaliadas quatro regras:
 
 - `lambda = 0.5`;
 - `lambda ~ Beta(0.1, 0.1)`;
 - `lambda ~ Beta(0.2, 0.2)`;
 - `lambda ~ Beta(0.4, 0.4)`.
+
+As distribuições Beta são simétricas e possuem média 0,5. Como os três valores
+de `alpha` são menores que 1, as distribuições favorecem pesos próximos de 0 e
+1 em diferentes intensidades, permitindo avaliar pseudoindivíduos mais ou menos
+próximos de um dos doadores.
 
 ## Resultado principal
 
@@ -77,9 +100,11 @@ Sem aumento de dados, T75 foi a menor amostra real equivalente a T100:
 827 indivíduos reais ≈ 1.103 indivíduos reais
 ```
 
-Nenhuma configuração de Mixup fez T25 ou T50 atingir equivalência com T100. Portanto, para as estratégias avaliadas, o aumento de dados não reduziu o número mínimo de indivíduos reais necessário.
+Nenhuma configuração de Mixup tornou T25 ou T50 equivalente a T100. Portanto,
+para as estratégias avaliadas, o aumento de dados não reduziu o número mínimo
+de indivíduos reais necessário.
 
-## Arquivos principais
+## Módulos do tutorial
 
 ```text
 analysis/01_data_audit.Rmd
@@ -90,51 +115,27 @@ analysis/05_equivalence.Rmd
 analysis/06_data_augmentation.Rmd
 ```
 
-Os objetos intermediários leves são salvos localmente em `output/` e reutilizados pela etapa seguinte. Os resultados primários dos 120 ajustes com dados reais e dos 360 ajustes com aumento de dados são versionados em `results/`. Todas as tabelas derivadas, figuras e testes de equivalência são reconstruídos diretamente nos `.Rmd`, permitindo acompanhar como cada conclusão é obtida sem repetir a modelagem pesada.
+Os objetos intermediários usados entre etapas são armazenados em `output/`. As
+tabelas primárias de desempenho estão em `results/`, enquanto resumos,
+diferenças pareadas, figuras e testes de equivalência são calculados diretamente
+nos módulos correspondentes.
 
-## Como reproduzir
+## Pacotes utilizados
 
-Instale os pacotes necessários:
+Os principais pacotes empregados no tutorial são:
 
-```r
-install.packages("workflowr")
-install.packages("BGLR")
-install.packages("ggplot2")
-install.packages("ggthemes")
-```
+- `workflowr` — organização e apresentação do tutorial;
+- `BGLR` — ajuste do modelo genômico;
+- `ggplot2` — construção das figuras;
+- `ggthemes` — identidade visual baseada no tema GDocs.
 
-Coloque o arquivo analítico em:
+## Dados
+
+O arquivo analítico esperado pelos módulos é:
 
 ```text
 data/dados_gblup.csv
 ```
 
-Na configuração padrão, os módulos de modelagem usam os resultados pesados já auditados (`RUN_MODELS <- FALSE`). Assim, o site completo pode ser construído diretamente com:
-
-```r
-workflowr::wflow_build()
-```
-
-Esse comando constrói as páginas do tutorial que ainda estiverem desatualizadas, incluindo `analysis/index.Rmd`, e salva os HTML em `docs/`.
-
-Se quiser reconstruir apenas os seis módulos analíticos sem abrir automaticamente a página inicial ao final, use:
-
-```r
-workflowr::wflow_build(
-  c(
-    "analysis/01_data_audit.Rmd",
-    "analysis/02_sampling_splits.Rmd",
-    "analysis/03_genomic_matrix.Rmd",
-    "analysis/04_gblup_baseline.Rmd",
-    "analysis/05_equivalence.Rmd",
-    "analysis/06_data_augmentation.Rmd"
-  ),
-  view = FALSE
-)
-```
-
-Nos módulos 4 e 6, o código completo dos ajustes permanece visível para fins didáticos, mas a execução pesada fica desativada por padrão. Para reproduzir os modelos do zero, altere `RUN_MODELS <- FALSE` para `TRUE` no módulo correspondente.
-
-## Dados
-
-O arquivo analítico não é versionado no repositório até que a fonte original, o procedimento de preparação e os termos de redistribuição sejam documentados e confirmados. Consulte `data/README.md`.
+A estrutura esperada do arquivo e a situação atual da documentação de origem e
+redistribuição estão descritas em `data/README.md`.
