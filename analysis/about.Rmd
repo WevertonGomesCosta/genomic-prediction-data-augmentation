@@ -1,5 +1,5 @@
 ---
-title: "About"
+title: "Sobre"
 author: "Weverton Gomes da Costa"
 date: "`r Sys.Date()`"
 site: workflowr::wflow_site
@@ -17,14 +17,18 @@ editor_options:
 ## Projeto
 
 Tutorial reproduzível em `workflowr` para estudar predição genômica com GBLUP,
-tamanho de amostra real e Data Augmentation via Mixup na população SoyNAM.
+tamanho de amostra real e aumento de dados (*Data Augmentation*) via Mixup.
 
 O repositório foi organizado para priorizar leitura didática: o código
 metodologicamente relevante aparece diretamente nos módulos analíticos, sem
 arquivos de funções auxiliares que escondam as etapas principais.
 
+A fonte original e o procedimento de preparação do conjunto analítico serão
+documentados separadamente após a conclusão da auditoria de proveniência dos
+dados.
+
 ## Contato
 
 Weverton Gomes da Costa  
-Department of Statistics, Federal University of Viçosa  
+Departamento de Estatística, Universidade Federal de Viçosa  
 weverton.costa@ufv.br
