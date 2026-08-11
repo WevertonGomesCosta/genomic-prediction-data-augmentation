@@ -23,6 +23,7 @@ knitr::opts_chunk$set(
   fig.align = "center",
   out.width = "100%"
 )
+dir.create("output/figures", showWarnings = FALSE, recursive = TRUE)
 ```
 
 ## 1. Objetivo
@@ -39,6 +40,10 @@ margem de diferença considerada pequena para este estudo:
 \[
 \delta = 0.05.
 \]
+
+Neste tutorial, `delta = 0.05` é uma margem de equivalência prática definida
+especificamente para este estudo (SESOI) e não um limiar universal para estudos
+de predição genômica.
 
 Uma estratégia será considerada equivalente quando o intervalo de confiança do
 efeito estiver totalmente dentro de:
@@ -231,7 +236,103 @@ knitr::kable(
 O resultado identifica T75 como a menor amostra real cujo intervalo de 90%
 permanece completamente dentro da margem de equivalência.
 
-## 6. Análise de sensibilidade usando o tamanho real de treinamento
+## 6. Visualização da equivalência
+
+A figura mostra a mesma análise da tabela anterior. O ponto representa a
+diferença média de correlação em relação a T100 e a barra vertical representa o
+intervalo de confiança de 90% corrigido por Nadeau-Bengio.
+
+As linhas tracejadas em `-0.05` e `+0.05` delimitam a região de equivalência. Um
+cenário só é equivalente quando todo o seu intervalo permanece dentro dessa
+região.
+
+```{r figura-equivalencia, fig.height=5.5, fig.width=8, fig.cap="Diferença de correlação em relação a T100 e intervalos de confiança de 90% corrigidos por Nadeau-Bengio."}
+if (!requireNamespace("ggplot2", quietly = TRUE)) {
+  stop("Instale o pacote ggplot2 para gerar as figuras do tutorial.")
+}
+
+if (!requireNamespace("ggthemes", quietly = TRUE)) {
+  stop("Instale o pacote ggthemes para usar o padrão gráfico GDocs.")
+}
+
+dados_equivalencia <- resultado_equivalencia
+
+dados_equivalencia$Cenario <- factor(
+  dados_equivalencia$Proporcao,
+  levels = c(0.25, 0.50, 0.75),
+  labels = c("T25", "T50", "T75")
+)
+
+dados_equivalencia$Status <- factor(
+  ifelse(
+    dados_equivalencia$Equivalente,
+    "Equivalente",
+    "Não equivalente"
+  ),
+  levels = c("Não equivalente", "Equivalente")
+)
+
+figura_equivalencia <- ggplot2::ggplot(
+  dados_equivalencia,
+  ggplot2::aes(
+    x = Cenario,
+    y = Delta_cor_media,
+    color = Status
+  )
+) +
+  ggplot2::geom_hline(
+    yintercept = 0,
+    color = "grey40",
+    linewidth = 0.6
+  ) +
+  ggplot2::geom_hline(
+    yintercept = c(-DELTA, DELTA),
+    color = "grey45",
+    linetype = "dashed",
+    linewidth = 0.7
+  ) +
+  ggplot2::geom_errorbar(
+    ggplot2::aes(
+      ymin = IC90_inf,
+      ymax = IC90_sup
+    ),
+    width = 0.12,
+    linewidth = 0.8
+  ) +
+  ggplot2::geom_point(
+    size = 3.5
+  ) +
+  ggthemes::scale_color_gdocs() +
+  ggplot2::labs(
+    title = "Equivalência preditiva em relação a T100",
+    x = "Conjunto real de treinamento",
+    y = expression(Delta * " correlação em relação a T100"),
+    color = "Resultado"
+  ) +
+  ggthemes::theme_gdocs() +
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(
+      face = "bold",
+      hjust = 0.5
+    ),
+    legend.position = "top"
+  )
+
+figura_equivalencia
+
+ggplot2::ggsave(
+  filename = "output/figures/05_equivalencia_vs_T100.png",
+  plot = figura_equivalencia,
+  width = 8,
+  height = 5.5,
+  dpi = 300
+)
+```
+
+Visualmente, T25 e T50 permanecem fora da região de equivalência, enquanto o
+intervalo de T75 está inteiramente entre `-0.05` e `+0.05`.
+
+## 7. Análise de sensibilidade usando o tamanho real de treinamento
 
 Na análise principal usamos `n_train = 1103`, correspondente ao pool externo de
 treinamento. Como verificação de sensibilidade, repetimos a correção usando o
@@ -317,7 +418,7 @@ knitr::kable(
 
 A conclusão não muda: T75 permanece equivalente e T25/T50 não são equivalentes.
 
-## 7. Conclusão desta etapa
+## 8. Conclusão desta etapa
 
 Sem Data Augmentation, o menor conjunto real equivalente a T100 é:
 
