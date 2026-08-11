@@ -1,5 +1,5 @@
 ---
-title: "4. Baseline GBLUP — dados reais"
+title: "4. GBLUP com dados reais"
 author: "Weverton Gomes da Costa"
 date: "`r Sys.Date()`"
 site: workflowr::wflow_site
@@ -9,6 +9,7 @@ output:
     toc_depth: 3
     toc_float: true
     code_download: true
+    code_folding: show
 editor_options:
   chunk_output_type: console
 ---
@@ -22,40 +23,96 @@ knitr::opts_chunk$set(
   fig.align = "center",
   out.width = "100%"
 )
-source("R/functions.R")
-dir.create("output", showWarnings = FALSE, recursive = TRUE)
 dir.create("output/checkpoints", showWarnings = FALSE, recursive = TRUE)
 dir.create("results", showWarnings = FALSE, recursive = TRUE)
 ```
 
-## Objetivo
+## 1. Objetivo
 
-Estimar a learning curve real em 25%, 50%, 75% e 100% do pool, utilizando a
-mesma validação dentro de cada repetição.
+Antes de testar Data Augmentation, precisamos descobrir quanto dado real já é
+necessário para obter boa predição.
 
-Os resultados aprovados das 30 repetições são versionados em
-`results/04_baseline_results.csv`. Assim, a página não refaz os 120 modelos
-quando o arquivo final já existe.
+Em cada uma das 30 repetições ajustamos o mesmo GBLUP usando:
 
-```{r baseline-load-or-run}
+- T25 = 275 indivíduos reais;
+- T50 = 551 indivíduos reais;
+- T75 = 827 indivíduos reais;
+- T100 = 1.103 indivíduos reais.
+
+A validação contém sempre 276 indivíduos e é exatamente a mesma para os quatro
+tamanhos de treinamento dentro de cada repetição.
+
+## 2. Como o GBLUP é avaliado
+
+O ponto mais importante é que os fenótipos da validação **não podem ser vistos
+pelo modelo**.
+
+Para isso criamos um vetor cheio de `NA` e copiamos para ele somente os
+fenótipos dos indivíduos de treinamento:
+
+```r
+# Exemplo conceitual
+y_modelo <- rep(NA_real_, length(y))
+y_modelo[treino] <- y[treino]
+```
+
+Os genótipos continuam representados em `G`, mas somente o conjunto de
+treinamento fornece fenótipos ao BGLR.
+
+## 3. Resultados pesados e reprodução
+
+Os 120 ajustes já foram executados, auditados e estão versionados em
+`results/04_baseline_results.csv`. Assim, o site pode ser reconstruído sem
+refazer os modelos.
+
+O código completo da execução continua visível abaixo. Por padrão ele não é
+executado. Para reproduzir os 120 ajustes do zero, altere:
+
+```r
+RUN_MODELS <- FALSE
+```
+
+para `TRUE`.
+
+```{r configuracao-execucao}
+RUN_MODELS <- FALSE
+
 FINAL_FILE <- "results/04_baseline_results.csv"
 CHECKPOINT <- "output/checkpoints/04_baseline_progress.csv"
+```
 
-if (file.exists(FINAL_FILE) && nrow(read.csv(FINAL_FILE)) == 120) {
-  resultados_baseline <- read.csv(FINAL_FILE)
-  cat("Resultados finais existentes carregados; nenhum modelo foi reajustado.\n")
-} else {
-  assert_file("output/01_data_objects.rds")
-  assert_file("output/02_splits_mestre_30rep.rds")
-  assert_file("output/03_genomic_objects.rds")
+## 4. Código completo dos 120 ajustes
+
+Esta seção mostra explicitamente cada etapa do ajuste: carregamento dos objetos,
+mascaramento dos fenótipos, especificação do GBLUP, predição e cálculo das
+métricas.
+
+```{r executar-baseline}
+if (RUN_MODELS) {
+  arquivos_necessarios <- c(
+    "output/01_data_objects.rds",
+    "output/02_splits_mestre_30rep.rds",
+    "output/03_genomic_objects.rds"
+  )
+
+  if (!all(file.exists(arquivos_necessarios))) {
+    stop("Execute primeiro as Etapas 1, 2 e 3.")
+  }
+
+  if (!requireNamespace("BGLR", quietly = TRUE)) {
+    stop("Instale o pacote BGLR antes de reproduzir os modelos.")
+  }
 
   obj <- readRDS("output/01_data_objects.rds")
   splits_mestre <- readRDS("output/02_splits_mestre_30rep.rds")
   gobj <- readRDS("output/03_genomic_objects.rds")
 
+  y <- obj$y
+  G <- gobj$G
+
+  PROPORCOES <- c(0.25, 0.50, 0.75, 1.00)
   N_ITER <- 10000
   BURN_IN <- 5000
-  props <- c(0.25, 0.50, 0.75, 1.00)
 
   if (file.exists(CHECKPOINT)) {
     resultados_baseline <- read.csv(CHECKPOINT)
@@ -63,89 +120,252 @@ if (file.exists(FINAL_FILE) && nrow(read.csv(FINAL_FILE)) == 120) {
     resultados_baseline <- data.frame()
   }
 
-  for (v in seq_len(30)) {
-    for (i in seq_along(props)) {
-      prop <- props[i]
+  for (rep in seq_len(30)) {
+    for (i in seq_along(PROPORCOES)) {
+      proporcao <- PROPORCOES[i]
 
-      already <- nrow(resultados_baseline) > 0 &&
-        any(resultados_baseline$repeticao == v &
-              resultados_baseline$proporcao_pool == prop)
-      if (already) next
+      ja_executado <-
+        nrow(resultados_baseline) > 0 &&
+        any(
+          resultados_baseline$repeticao == rep &
+          resultados_baseline$proporcao_pool == proporcao
+        )
 
-      s <- splits_mestre[[as.character(prop)]][[v]]
-      met <- fit_gblup(
-        y = obj$y,
-        G = gobj$G,
-        train_index = s$treino,
-        valid_index = s$valid,
+      if (ja_executado) next
+
+      split <- splits_mestre[[as.character(proporcao)]][[rep]]
+      treino <- split$treino
+      validacao <- split$valid
+
+      # Somente os indivíduos de treinamento mantêm fenótipo observado.
+      y_modelo <- rep(
+        NA_real_,
+        length(y)
+      )
+
+      y_modelo[treino] <- y[treino]
+
+      stopifnot(
+        all(
+          is.na(
+            y_modelo[setdiff(seq_along(y), treino)]
+          )
+        )
+      )
+
+      # GBLUP no BGLR: a matriz G entra como kernel RKHS.
+      ETA <- list(
+        list(
+          K = G,
+          model = "RKHS"
+        )
+      )
+
+      set.seed(
+        50000 + rep * 100 + i
+      )
+
+      ajuste <- BGLR::BGLR(
+        y = y_modelo,
+        ETA = ETA,
         nIter = N_ITER,
         burnIn = BURN_IN,
-        seed = 50000 + v * 100 + i
+        verbose = FALSE
       )
 
-      row <- cbind(
-        data.frame(
-          repeticao = v,
-          proporcao_pool = prop,
-          n_treino = length(s$treino),
-          n_validacao = length(s$valid)
-        ),
-        met
+      predicao <- ajuste$yHat[validacao]
+      observado <- y[validacao]
+
+      correlacao <- cor(
+        observado,
+        predicao
       )
-      resultados_baseline <- rbind(resultados_baseline, row)
-      write.csv(resultados_baseline, CHECKPOINT, row.names = FALSE)
+
+      RMSE <- sqrt(
+        mean(
+          (observado - predicao)^2
+        )
+      )
+
+      MAE <- mean(
+        abs(
+          observado - predicao
+        )
+      )
+
+      calibracao <- lm(
+        observado ~ predicao
+      )
+
+      slope_calibracao <- unname(
+        coef(calibracao)[2]
+      )
+
+      nova_linha <- data.frame(
+        repeticao = rep,
+        proporcao_pool = proporcao,
+        n_treino = length(treino),
+        n_validacao = length(validacao),
+        correlacao = correlacao,
+        RMSE = RMSE,
+        MAE = MAE,
+        slope_calibracao = slope_calibracao
+      )
+
+      resultados_baseline <- rbind(
+        resultados_baseline,
+        nova_linha
+      )
+
+      # O checkpoint permite retomar uma execução interrompida.
+      write.csv(
+        resultados_baseline,
+        CHECKPOINT,
+        row.names = FALSE
+      )
     }
   }
 
-  stopifnot(nrow(resultados_baseline) == 120)
-  write.csv(resultados_baseline, FINAL_FILE, row.names = FALSE)
+  write.csv(
+    resultados_baseline,
+    FINAL_FILE,
+    row.names = FALSE
+  )
 }
-
-stopifnot(nrow(resultados_baseline) == 120)
 ```
 
-## Learning curve
+## 5. Carregando os resultados aprovados
 
-```{r baseline-summary}
-resumo <- aggregate(
-  cbind(correlacao, RMSE, MAE, slope_calibracao) ~ proporcao_pool + n_treino,
-  data = resultados_baseline,
-  FUN = function(x) c(media = mean(x), sd = sd(x))
+A partir daqui usamos apenas o arquivo final já auditado.
+
+```{r carregar-resultados}
+if (!file.exists(FINAL_FILE)) {
+  stop("Arquivo ausente: results/04_baseline_results.csv")
+}
+
+baseline <- read.csv(FINAL_FILE)
+
+chaves <- paste(
+  baseline$repeticao,
+  baseline$proporcao_pool,
+  sep = "__"
 )
-resumo
 
-means <- aggregate(correlacao ~ proporcao_pool, resultados_baseline, mean)
+stopifnot(nrow(baseline) == 120)
+stopifnot(anyDuplicated(chaves) == 0)
+stopifnot(all(baseline$repeticao %in% 1:30))
+stopifnot(all(baseline$n_validacao == 276))
+stopifnot(!anyNA(baseline[, c("correlacao", "RMSE", "MAE", "slope_calibracao")]))
+```
+
+## 6. Curva de aprendizado
+
+Calculamos a média e o desvio-padrão das quatro métricas para cada tamanho de
+treinamento.
+
+```{r resumo-baseline}
+resumo_baseline <- aggregate(
+  cbind(
+    correlacao,
+    RMSE,
+    MAE,
+    slope_calibracao
+  ) ~ proporcao_pool + n_treino,
+  data = baseline,
+  FUN = mean
+)
+
+sd_cor <- aggregate(
+  correlacao ~ proporcao_pool,
+  data = baseline,
+  FUN = sd
+)
+
+resumo_baseline$sd_correlacao <- sd_cor$correlacao[
+  match(
+    resumo_baseline$proporcao_pool,
+    sd_cor$proporcao_pool
+  )
+]
+
+knitr::kable(
+  resumo_baseline,
+  digits = 4,
+  caption = "Desempenho médio do GBLUP com dados reais"
+)
+```
+
+```{r curva-aprendizado, fig.height=4.5}
 plot(
-  means$proporcao_pool * 100,
-  means$correlacao,
+  resumo_baseline$proporcao_pool * 100,
+  resumo_baseline$correlacao,
   type = "b",
   pch = 19,
   xlab = "Proporção do pool real (%)",
-  ylab = "Correlação preditiva média"
+  ylab = "Correlação preditiva média",
+  main = "Curva de aprendizado do GBLUP"
 )
 ```
 
-## Diferenças pareadas contra T100
+A correlação média aumenta de aproximadamente 0,53 em T25 para 0,67 em T100.
+O ganho, porém, fica progressivamente menor à medida que mais indivíduos são
+adicionados.
 
-```{r paired-differences}
-diff_rows <- list()
-k <- 0L
-for (v in seq_len(30)) {
-  d <- resultados_baseline[resultados_baseline$repeticao == v, ]
-  ref <- d[d$proporcao_pool == 1, ]
-  for (prop in c(0.25, 0.50, 0.75)) {
-    p <- d[d$proporcao_pool == prop, ]
-    k <- k + 1L
-    diff_rows[[k]] <- data.frame(
-      repeticao = v,
-      proporcao_pool = prop,
-      delta_cor_vs_100 = p$correlacao - ref$correlacao,
-      delta_RMSE_vs_100 = p$RMSE - ref$RMSE,
-      delta_MAE_vs_100 = p$MAE - ref$MAE
-    )
-  }
-}
-diferencas <- do.call(rbind, diff_rows)
-write.csv(diferencas, "results/04_paired_differences_vs_T100.csv", row.names = FALSE)
-aggregate(delta_cor_vs_100 ~ proporcao_pool, diferencas, function(x) c(mean=mean(x), sd=sd(x)))
+## 7. Diferenças pareadas em relação a T100
+
+Como T25, T50, T75 e T100 usam a mesma validação dentro de uma repetição,
+podemos comparar diretamente cada amostra reduzida com T100 na mesma
+repetição.
+
+```{r diferencas-pareadas}
+t100 <- baseline[
+  baseline$proporcao_pool == 1,
+  c(
+    "repeticao",
+    "correlacao",
+    "RMSE",
+    "MAE"
+  )
+]
+
+names(t100)[-1] <- c(
+  "correlacao_T100",
+  "RMSE_T100",
+  "MAE_T100"
+)
+
+diferencas <- merge(
+  baseline[baseline$proporcao_pool < 1, ],
+  t100,
+  by = "repeticao"
+)
+
+diferencas$delta_cor_vs_T100 <-
+  diferencas$correlacao -
+  diferencas$correlacao_T100
+
+diferencas$delta_RMSE_vs_T100 <-
+  diferencas$RMSE -
+  diferencas$RMSE_T100
+
+diferencas$delta_MAE_vs_T100 <-
+  diferencas$MAE -
+  diferencas$MAE_T100
+
+aggregate(
+  cbind(
+    delta_cor_vs_T100,
+    delta_RMSE_vs_T100,
+    delta_MAE_vs_T100
+  ) ~ proporcao_pool,
+  data = diferencas,
+  FUN = mean
+) |>
+  knitr::kable(
+    digits = 4,
+    caption = "Diferença média das amostras reduzidas em relação a T100"
+  )
 ```
+
+A próxima etapa usa essas diferenças pareadas para responder formalmente se
+alguma amostra menor pode ser considerada equivalente a T100.
