@@ -24,6 +24,7 @@ knitr::opts_chunk$set(
   out.width = "100%"
 )
 dir.create("output", showWarnings = FALSE, recursive = TRUE)
+dir.create("output/figures", showWarnings = FALSE, recursive = TRUE)
 ```
 
 ## 1. Objetivo
@@ -227,12 +228,55 @@ knitr::kable(
 )
 ```
 
-```{r histograma-yield, fig.height=4.5}
-hist(
-  y,
-  breaks = 30,
-  xlab = "Produtividade (yield)",
-  main = "Distribuição da produtividade"
+A distribuição também é apresentada graficamente. A figura usa o padrão
+`GDocs` diretamente no código para manter a identidade visual do projeto sem
+esconder a formatação em funções auxiliares.
+
+```{r histograma-yield, fig.height=4.8, fig.width=8, fig.cap="Distribuição da produtividade dos 1.379 indivíduos."}
+if (!requireNamespace("ggplot2", quietly = TRUE)) {
+  stop("Instale o pacote ggplot2 para gerar as figuras do tutorial.")
+}
+
+if (!requireNamespace("ggthemes", quietly = TRUE)) {
+  stop("Instale o pacote ggthemes para usar o padrão gráfico GDocs.")
+}
+
+dados_yield <- data.frame(
+  Produtividade = y
+)
+
+figura_yield <- ggplot2::ggplot(
+  dados_yield,
+  ggplot2::aes(x = Produtividade)
+) +
+  ggplot2::geom_histogram(
+    bins = 30,
+    fill = ggthemes::gdocs_pal()(1),
+    color = "white",
+    linewidth = 0.25
+  ) +
+  ggplot2::labs(
+    title = "Distribuição da produtividade",
+    x = "Produtividade (yield)",
+    y = "Frequência"
+  ) +
+  ggthemes::theme_gdocs(
+    base_size = 12
+  ) +
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(
+      face = "bold"
+    )
+  )
+
+figura_yield
+
+ggplot2::ggsave(
+  filename = "output/figures/01_distribuicao_produtividade.png",
+  plot = figura_yield,
+  width = 8,
+  height = 4.8,
+  dpi = 300
 )
 ```
 
