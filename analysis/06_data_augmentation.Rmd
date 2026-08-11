@@ -1089,7 +1089,7 @@ figura_equivalencia_da <- ggplot2::ggplot(
   ggplot2::facet_wrap(
     ~ Cenario_real,
     ncol = 1,
-    scales = "free_y"
+    scales = "fixed"
   ) +
   ggplot2::scale_color_manual(
     values = cores_equivalencia
