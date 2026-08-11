@@ -1,6 +1,6 @@
 # Dados do tutorial
 
-O arquivo analítico utilizado pelos módulos deve ser colocado localmente em:
+O arquivo analítico utilizado pelos módulos é identificado como:
 
 ```text
 data/dados_gblup.csv
@@ -8,36 +8,34 @@ data/dados_gblup.csv
 
 ## Estrutura esperada
 
-O arquivo validado contém:
+O conjunto analítico utilizado neste estudo contém:
 
 - 1.379 indivíduos;
 - uma coluna fenotípica chamada `yield`;
 - 4.325 colunas de SNPs;
 - SNPs codificados como `0`, `1` ou `2`;
 - nenhum valor ausente nos SNPs;
-- nenhum marcador monomórfico no arquivo analítico final.
+- nenhum marcador monomórfico na matriz analítica final.
 
-O recurso SoyNAM original utiliza um painel de aproximadamente 5K SNPs. Depois
-do processamento que originou o arquivo usado neste projeto, 4.325 SNPs estão
-presentes na matriz analítica efetivamente modelada.
+A primeira etapa do tutorial descreve essas características diretamente a
+partir do arquivo e mostra como o fenótipo e a matriz de marcadores são
+organizados para as análises seguintes.
 
-## Por que o CSV não está no GitHub?
+## Origem e preparação dos dados
 
-Os termos de redistribuição da fonte original devem ser confirmados antes de
-publicar o arquivo analítico. Por segurança, `data/dados_gblup.csv` está listado
-no `.gitignore`.
+A fonte original do conjunto, o procedimento completo de preparação e a
+sequência de filtros que resultaram nos 1.379 indivíduos e 4.325 SNPs ainda
+devem ser documentados de forma verificável antes da versão final do projeto.
+Por esse motivo, esta página não atribui uma origem específica ao arquivo sem a
+respectiva referência e descrição metodológica.
 
-Isso não impede a reprodução do tutorial: depois de obter e preparar os dados,
-basta colocar o CSV nesta pasta e executar os módulos na ordem indicada no
-`README.md`.
+## Redistribuição
 
-## Primeiro passo depois de adicionar os dados
+O arquivo analítico não é versionado no repositório enquanto a origem, o
+procedimento de preparação e os termos de redistribuição não estiverem
+formalmente documentados. Por isso, `data/dados_gblup.csv` permanece listado no
+`.gitignore`.
 
-Execute:
-
-```r
-workflowr::wflow_build("analysis/01_data_audit.Rmd")
-```
-
-A Etapa 1 verifica se o arquivo possui exatamente a estrutura esperada antes de
-qualquer modelagem.
+Essa separação permite manter no repositório o pipeline analítico e os
+resultados do estudo sem publicar um conjunto de dados cuja condição de
+redistribuição ainda precisa ser confirmada.
