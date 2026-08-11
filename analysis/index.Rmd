@@ -10,45 +10,89 @@ output:
     toc_depth: 3
     toc_float: true
     code_download: true
+    code_folding: show
 ---
 
-# Projeto
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  cache = FALSE,
+  fig.align = "center",
+  out.width = "100%"
+)
+```
 
-Este projeto avalia se uma amostra aleatória reduzida de indivíduos reais pode
-atingir capacidade preditiva equivalente ao conjunto completo de treinamento
-(T100), e se Data Augmentation via mixup permite reduzir adicionalmente o
-número de indivíduos reais necessários.
+# Sobre este tutorial
 
-## Contrato metodológico
+Este projeto mostra, passo a passo, como avaliar o efeito do tamanho da amostra
+real em predição genômica com GBLUP e como testar se Data Augmentation via
+Mixup consegue substituir parte dos indivíduos reais de treinamento.
+
+O objetivo é que cada página possa ser lida como uma aula prática: primeiro o
+conceito é apresentado, depois o código que realiza a operação é mostrado e,
+por fim, o resultado é interpretado.
+
+## Perguntas do projeto
+
+1. Qual é o menor número de indivíduos reais necessário para obter desempenho
+praticamente equivalente ao conjunto completo de treinamento?
+2. Podemos reduzir ainda mais esse número usando pseudoindivíduos criados por
+Mixup?
+
+## População e desenho
 
 - 1.379 indivíduos genotipados;
 - 4.325 SNPs;
-- validação externa: 276 indivíduos;
-- T100: 1.103 indivíduos;
-- 30 repetições;
-- T25 = 275;
-- T50 = 551;
-- T75 = 827;
-- T100 = 1.103;
-- G global;
-- GBLUP via BGLR/RKHS;
-- 10.000 iterações, burn-in 5.000;
-- margem de equivalência `delta = 0.05`;
-- TOST com correção de Nadeau–Bengio;
-- DA sem ranking fenotípico;
-- `n_syn = 1103 - n_real`.
+- 276 indivíduos de validação por repetição;
+- T100 = 1.103 indivíduos reais de treinamento;
+- 30 repetições de holdout aleatório;
+- T25, T50, T75 e T100 aninhados;
+- uma matriz genômica global `G`;
+- GBLUP via `BGLR`/`RKHS`;
+- 10.000 iterações e burn-in de 5.000;
+- equivalência avaliada com margem `delta = 0.05` e correção de Nadeau-Bengio.
 
-## Etapas
+## Caminho recomendado
 
-1. [Auditoria dos dados](01_data_audit.html)
-2. [Amostragem e splits aninhados](02_sampling_splits.html)
-3. [Matriz genômica e diagnóstico](03_genomic_matrix_diagnostics.html)
-4. [Baseline GBLUP](04_gblup_baseline.html)
-5. [Equivalência com T100](05_equivalence.html)
-6. [Data Augmentation](06_data_augmentation.html)
+```text
+1. Conhecer e auditar os dados
+          ↓
+2. Separar treinamento e validação
+          ↓
+3. Construir a matriz genômica G
+          ↓
+4. Ajustar o GBLUP com dados reais
+          ↓
+5. Testar equivalência com T100
+          ↓
+6. Criar pseudoindivíduos e avaliar o Data Augmentation
+```
 
-## Execução modular
+## Módulos
 
-Cada etapa salva os objetos necessários para a etapa seguinte. Os ajustes
-pesados possuem checkpoints, de modo que uma execução interrompida não precisa
-recomeçar do primeiro modelo.
+1. [Auditoria dos dados](01_data_audit.html) — o que existe no arquivo e como
+validamos sua estrutura.
+2. [Amostragem e conjuntos aninhados](02_sampling_splits.html) — como separar
+treinamento e validação sem confundir os cenários.
+3. [Matriz de relacionamento genômico](03_genomic_matrix.html) — como os SNPs
+são transformados na matriz `G`.
+4. [GBLUP com dados reais](04_gblup_baseline.html) — como o modelo é ajustado e
+como a curva de aprendizado é obtida.
+5. [Equivalência com T100](05_equivalence.html) — como decidir se uma amostra
+menor já é suficiente.
+6. [Data Augmentation](06_data_augmentation.html) — como o Mixup cria
+pseudoindivíduos e se isso reduz a necessidade de dados reais.
+
+## Resultado principal
+
+Sem Data Augmentation, T75 foi a menor amostra equivalente a T100:
+
+\[
+827\text{ indivíduos reais} \approx 1103\text{ indivíduos reais}.
+\]
+
+Nenhuma estratégia de Mixup tornou T25 ou T50 equivalente a T100. Portanto, nas
+configurações avaliadas, o Data Augmentation não reduziu o número mínimo de
+indivíduos reais necessário.
