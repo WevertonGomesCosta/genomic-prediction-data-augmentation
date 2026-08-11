@@ -9,6 +9,7 @@ output:
     toc_depth: 3
     toc_float: true
     code_download: true
+    code_folding: show
 editor_options:
   chunk_output_type: console
 ---
@@ -22,56 +23,226 @@ knitr::opts_chunk$set(
   fig.align = "center",
   out.width = "100%"
 )
-source("R/functions.R")
 dir.create("output", showWarnings = FALSE, recursive = TRUE)
-dir.create("output/checkpoints", showWarnings = FALSE, recursive = TRUE)
-dir.create("results", showWarnings = FALSE, recursive = TRUE)
 ```
 
-## Objetivo
+## 1. Objetivo
 
-Auditar o arquivo analítico antes de qualquer modelagem e salvar os objetos
-básicos para reutilização nas etapas posteriores.
+Antes de ajustar qualquer modelo de predição genômica, precisamos conhecer o
+arquivo analítico e verificar se sua estrutura corresponde ao que será usado no
+restante do tutorial.
 
-```{r data-audit}
+Neste conjunto de dados:
+
+- cada **linha** representa um indivíduo;
+- a coluna `yield` contém o fenótipo de produtividade;
+- as demais colunas representam SNPs;
+- cada SNP é codificado como `0`, `1` ou `2`, correspondendo ao número de cópias
+do alelo contado naquele marcador.
+
+A auditoria não modifica os dados. Ela apenas verifica a estrutura do arquivo e
+salva os objetos que serão usados na próxima etapa.
+
+## 2. Leitura do arquivo
+
+O arquivo analítico deve estar em `data/dados_gblup.csv`.
+
+```{r leitura-dados}
 DATA_FILE <- "data/dados_gblup.csv"
-assert_file(DATA_FILE)
 
-df_R <- read.csv(DATA_FILE, check.names = FALSE)
-stopifnot(nrow(df_R) > 1)
-stopifnot(sum(colnames(df_R) == "yield") == 1)
-stopifnot(sum(duplicated(colnames(df_R))) == 0)
+if (!file.exists(DATA_FILE)) {
+  stop(
+    "Arquivo não encontrado: ", DATA_FILE,
+    ". Coloque dados_gblup.csv dentro da pasta data/."
+  )
+}
 
-marker_names <- setdiff(colnames(df_R), "yield")
-pattern_snp <- "^Gm[0-9]{2}_[0-9]+_[ACGT]_[ACGT]$"
-stopifnot(all(grepl(pattern_snp, marker_names)))
-
-is_numeric <- vapply(df_R[, marker_names, drop = FALSE],
-                     function(x) is.numeric(x) || is.integer(x),
-                     logical(1))
-stopifnot(all(is_numeric))
-
-valid_code <- vapply(
-  df_R[, marker_names, drop = FALSE],
-  function(x) all(is.na(x) | x %in% c(0, 1, 2)),
-  logical(1)
+dados <- read.csv(
+  DATA_FILE,
+  check.names = FALSE
 )
-stopifnot(all(valid_code))
 
-M <- as.matrix(df_R[, marker_names, drop = FALSE])
+dim(dados)
+```
+
+O projeto validado possui 1.379 indivíduos e 4.326 colunas: uma coluna
+fenotípica e 4.325 SNPs.
+
+## 3. Identificação do fenótipo e dos SNPs
+
+Primeiro separamos o nome da característica fenotípica dos nomes dos
+marcadores.
+
+```{r identificar-colunas}
+if (sum(names(dados) == "yield") != 1) {
+  stop("O arquivo deve possuir exatamente uma coluna chamada yield.")
+}
+
+if (anyDuplicated(names(dados)) > 0) {
+  stop("Existem nomes de colunas duplicados.")
+}
+
+marker_names <- setdiff(
+  names(dados),
+  "yield"
+)
+
+length(marker_names)
+```
+
+Os nomes dos SNPs seguem o padrão adotado no arquivo analítico, por exemplo
+`Gm01_..._A_G`.
+
+```{r conferir-nomes-snp}
+pattern_snp <- "^Gm[0-9]{2}_[0-9]+_[ACGT]_[ACGT]$"
+
+if (!all(grepl(pattern_snp, marker_names))) {
+  stop("Há marcadores com nomes fora do padrão esperado.")
+}
+```
+
+## 4. Construção da matriz de marcadores e do vetor fenotípico
+
+A matriz `M` contém apenas os SNPs. O vetor `y` contém a produtividade.
+
+```{r construir-objetos}
+M <- as.matrix(
+  dados[, marker_names, drop = FALSE]
+)
+
 storage.mode(M) <- "numeric"
-y <- as.numeric(df_R$yield)
 
-stopifnot(!anyNA(M))
-stopifnot(!anyNA(y))
-stopifnot(all(vapply(seq_len(ncol(M)),
-                     function(j) length(unique(M[, j])) > 1,
-                     logical(1))))
-stopifnot(sum(duplicated(df_R)) == 0)
-stopifnot(sum(duplicated(as.data.frame(M))) == 0)
+y <- as.numeric(
+  dados$yield
+)
 
+dim(M)
+length(y)
+```
+
+## 5. Valores ausentes e codificação dos SNPs
+
+Os modelos deste tutorial utilizam o arquivo analítico já filtrado. Por isso,
+não esperamos valores ausentes nos SNPs nem no fenótipo.
+
+Também verificamos se todos os genótipos estão codificados como `0`, `1` ou
+`2`.
+
+```{r conferir-valores}
+auditoria_valores <- data.frame(
+  Verificacao = c(
+    "Fenótipos ausentes",
+    "Genótipos ausentes",
+    "Valores SNP fora de 0/1/2"
+  ),
+  Valor = c(
+    sum(is.na(y)),
+    sum(is.na(M)),
+    sum(!(M %in% c(0, 1, 2)))
+  )
+)
+
+knitr::kable(
+  auditoria_valores,
+  caption = "Verificações básicas do arquivo analítico"
+)
+
+if (anyNA(y)) stop("Existem fenótipos ausentes no arquivo analítico.")
+if (anyNA(M)) stop("Existem SNPs ausentes no arquivo analítico.")
+if (!all(M %in% c(0, 1, 2))) stop("Os SNPs devem estar codificados como 0, 1 ou 2.")
+```
+
+## 6. Marcadores sem variação e registros duplicados
+
+Um marcador monomórfico apresenta o mesmo valor para todos os indivíduos e não
+contribui para diferenciar geneticamente a população. Também verificamos se há
+linhas ou perfis genômicos exatamente duplicados.
+
+```{r duplicatas-e-variacao}
+n_classes <- integer(ncol(M))
+
+for (j in seq_len(ncol(M))) {
+  n_classes[j] <- length(
+    unique(M[, j])
+  )
+}
+
+n_monomorficos <- sum(n_classes <= 1)
+n_linhas_duplicadas <- sum(duplicated(dados))
+n_perfis_duplicados <- sum(
+  duplicated(
+    as.data.frame(M)
+  )
+)
+
+auditoria_estrutura <- data.frame(
+  Verificacao = c(
+    "Indivíduos",
+    "SNPs",
+    "Marcadores monomórficos",
+    "Linhas duplicadas",
+    "Perfis genômicos duplicados"
+  ),
+  Valor = c(
+    nrow(M),
+    ncol(M),
+    n_monomorficos,
+    n_linhas_duplicadas,
+    n_perfis_duplicados
+  )
+)
+
+knitr::kable(
+  auditoria_estrutura,
+  caption = "Estrutura validada dos dados"
+)
+
+stopifnot(nrow(M) == 1379)
+stopifnot(ncol(M) == 4325)
+stopifnot(n_monomorficos == 0)
+stopifnot(n_linhas_duplicadas == 0)
+stopifnot(n_perfis_duplicados == 0)
+```
+
+## 7. Resumo do fenótipo
+
+O resumo abaixo permite conhecer a escala da produtividade antes da modelagem.
+
+```{r resumo-fenotipo}
+resumo_yield <- data.frame(
+  N = length(y),
+  Media = mean(y),
+  Desvio_padrao = sd(y),
+  Minimo = min(y),
+  Q1 = unname(quantile(y, 0.25)),
+  Mediana = median(y),
+  Q3 = unname(quantile(y, 0.75)),
+  Maximo = max(y)
+)
+
+knitr::kable(
+  resumo_yield,
+  digits = 2,
+  caption = "Resumo da produtividade"
+)
+```
+
+```{r histograma-yield, fig.height=4.5}
+hist(
+  y,
+  breaks = 30,
+  xlab = "Produtividade (yield)",
+  main = "Distribuição da produtividade"
+)
+```
+
+## 8. Objeto salvo para a próxima etapa
+
+Não precisamos reler e reorganizar o CSV em todos os módulos. Salvamos apenas o
+objeto já auditado em `output/01_data_objects.rds`.
+
+```{r salvar-objetos}
 data_objects <- list(
-  df_R = df_R,
   y = y,
   M = M,
   n = nrow(M),
@@ -79,21 +250,11 @@ data_objects <- list(
   marker_names = marker_names
 )
 
-saveRDS(data_objects, "output/01_data_objects.rds")
-
-audit <- data.frame(
-  individuos = nrow(M),
-  snps = ncol(M),
-  yield_na = sum(is.na(y)),
-  snp_na = sum(is.na(M)),
-  duplicate_rows = sum(duplicated(df_R)),
-  duplicate_genomic_profiles = sum(duplicated(as.data.frame(M)))
+saveRDS(
+  data_objects,
+  "output/01_data_objects.rds"
 )
-write.csv(audit, "results/01_data_audit.csv", row.names = FALSE)
-audit
 ```
 
-## Contrato validado
-
-O pipeline espera 1.379 indivíduos, uma coluna `yield` e 4.325 SNPs codificados
-como 0/1/2. Nenhum filtro é repetido dentro das repetições de validação.
+Na próxima etapa, esse objeto será usado para separar aleatoriamente os
+indivíduos de treinamento e validação.
