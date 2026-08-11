@@ -4,8 +4,9 @@
 .Ruserdata
 .Renviron
 
-# Analytical data kept local until redistribution terms are confirmed
+# Analytical data and reference files kept local until redistribution terms are confirmed
 data/dados_gblup.csv
+data/*.pdf
 
 # Local renv library/caches
 renv/library/
