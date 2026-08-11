@@ -24,6 +24,7 @@ knitr::opts_chunk$set(
   out.width = "100%"
 )
 dir.create("output/checkpoints", showWarnings = FALSE, recursive = TRUE)
+dir.create("output/figures", showWarnings = FALSE, recursive = TRUE)
 dir.create("results", showWarnings = FALSE, recursive = TRUE)
 ```
 
@@ -705,6 +706,145 @@ Nas 12 combinações, a diferença média de correlação é negativa. Portanto,
 nenhuma regra de Mixup melhorou em média o GBLUP correspondente usando somente
 os mesmos indivíduos reais.
 
+### 9.1. Evolução da correlação com Data Augmentation
+
+A figura abaixo restaura a visualização da evolução da correlação presente no
+script original, agora usando os 360 resultados definitivos. A linha de dados
+reais serve como referência e as quatro linhas de Data Augmentation mostram o
+desempenho médio ao aumentar a quantidade de indivíduos reais.
+
+```{r figura-evolucao-da, fig.height=6, fig.width=9, fig.cap="Evolução da correlação preditiva com dados reais e com as quatro estratégias de Data Augmentation."}
+if (!requireNamespace("ggplot2", quietly = TRUE)) {
+  stop("Instale o pacote ggplot2 para gerar as figuras do tutorial.")
+}
+
+if (!requireNamespace("ggthemes", quietly = TRUE)) {
+  stop("Instale o pacote ggthemes para usar o padrão gráfico GDocs.")
+}
+
+rotulos_config <- c(
+  "lambda_fixo_0.5" = "DA: lambda = 0,5",
+  "beta_alpha_0.1" = "DA: Beta(0,1; 0,1)",
+  "beta_alpha_0.2" = "DA: Beta(0,2; 0,2)",
+  "beta_alpha_0.4" = "DA: Beta(0,4; 0,4)"
+)
+
+baseline_media <- aggregate(
+  correlacao ~ proporcao_pool,
+  data = baseline,
+  FUN = mean
+)
+
+baseline_sd <- aggregate(
+  correlacao ~ proporcao_pool,
+  data = baseline,
+  FUN = sd
+)
+
+baseline_media$sd_cor <- baseline_sd$correlacao[
+  match(
+    baseline_media$proporcao_pool,
+    baseline_sd$proporcao_pool
+  )
+]
+
+plot_real <- data.frame(
+  Proporcao = baseline_media$proporcao_pool,
+  Media = baseline_media$correlacao,
+  SD = baseline_media$sd_cor,
+  Estrategia = "Somente dados reais"
+)
+
+plot_da <- data.frame(
+  Proporcao = resumo_da$proporcao_pool,
+  Media = resumo_da$mean_cor,
+  SD = resumo_da$sd_cor,
+  Estrategia = unname(
+    rotulos_config[resumo_da$config_mistura]
+  )
+)
+
+dados_evolucao <- rbind(
+  plot_real,
+  plot_da
+)
+
+dados_evolucao$Proporcao_percentual <- dados_evolucao$Proporcao * 100
+
+dados_evolucao$Estrategia <- factor(
+  dados_evolucao$Estrategia,
+  levels = c(
+    "Somente dados reais",
+    "DA: lambda = 0,5",
+    "DA: Beta(0,1; 0,1)",
+    "DA: Beta(0,2; 0,2)",
+    "DA: Beta(0,4; 0,4)"
+  )
+)
+
+cores_evolucao <- ggthemes::gdocs_pal()(5)
+
+figura_evolucao_da <- ggplot2::ggplot(
+  dados_evolucao,
+  ggplot2::aes(
+    x = Proporcao_percentual,
+    y = Media,
+    color = Estrategia,
+    group = Estrategia
+  )
+) +
+  ggplot2::geom_errorbar(
+    ggplot2::aes(
+      ymin = Media - SD,
+      ymax = Media + SD
+    ),
+    width = 2.5,
+    linewidth = 0.45,
+    alpha = 0.65
+  ) +
+  ggplot2::geom_line(
+    linewidth = 0.9
+  ) +
+  ggplot2::geom_point(
+    size = 2.6
+  ) +
+  ggplot2::scale_color_manual(
+    values = cores_evolucao
+  ) +
+  ggplot2::scale_x_continuous(
+    breaks = c(25, 50, 75, 100),
+    labels = c("25%", "50%", "75%", "100%")
+  ) +
+  ggplot2::labs(
+    title = "Evolução da correlação preditiva com Data Augmentation",
+    x = "Proporção de indivíduos reais no treinamento",
+    y = "Correlação preditiva média",
+    color = "Estratégia"
+  ) +
+  ggthemes::theme_gdocs() +
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(
+      face = "bold",
+      hjust = 0.5
+    ),
+    legend.position = "bottom"
+  )
+
+figura_evolucao_da
+
+ggplot2::ggsave(
+  filename = "output/figures/06a_evolucao_correlacao_da.png",
+  plot = figura_evolucao_da,
+  width = 9,
+  height = 6,
+  dpi = 300
+)
+```
+
+A referência real cresce até T100. As estratégias de DA são avaliadas apenas em
+T25, T50 e T75 porque o objetivo é verificar se pseudoindivíduos conseguem
+substituir parte dos indivíduos reais de treinamento.
+
 ## 10. DA versus T100
 
 A pergunta principal do projeto exige uma segunda comparação: uma amostra
@@ -869,6 +1009,118 @@ knitr::kable(
   ],
   digits = 4,
   caption = "Equivalência das estratégias de Data Augmentation com T100"
+)
+```
+
+### 11.1. Equivalência das estratégias de Data Augmentation
+
+A figura abaixo restaura o gráfico de equivalência do script original, mas usa
+exclusivamente o TOST definitivo acima. Cada ponto representa a diferença média
+de correlação em relação a T100 e cada barra corresponde ao IC de 90% com a
+correção de Nadeau-Bengio.
+
+```{r figura-equivalencia-da, fig.height=8.5, fig.width=9, fig.cap="Diferenças de correlação das estratégias de Data Augmentation em relação a T100, com IC90% corrigido por Nadeau-Bengio e margem de equivalência de ±0,05."}
+rotulos_config_equiv <- c(
+  "lambda_fixo_0.5" = "lambda = 0,5",
+  "beta_alpha_0.1" = "Beta(0,1; 0,1)",
+  "beta_alpha_0.2" = "Beta(0,2; 0,2)",
+  "beta_alpha_0.4" = "Beta(0,4; 0,4)"
+)
+
+dados_equiv_da <- resultado_equivalencia_da
+
+dados_equiv_da$Configuracao_rotulo <- unname(
+  rotulos_config_equiv[dados_equiv_da$Configuracao]
+)
+
+dados_equiv_da$Cenario_real <- factor(
+  dados_equiv_da$Proporcao,
+  levels = c(0.25, 0.50, 0.75),
+  labels = c(
+    "T25 — 275 reais + 828 sintéticos",
+    "T50 — 551 reais + 552 sintéticos",
+    "T75 — 827 reais + 276 sintéticos"
+  )
+)
+
+dados_equiv_da$Situacao <- ifelse(
+  dados_equiv_da$Equivalente,
+  "Equivalente",
+  "Não equivalente"
+)
+
+dados_equiv_da$Situacao <- factor(
+  dados_equiv_da$Situacao,
+  levels = c("Não equivalente", "Equivalente")
+)
+
+cores_equivalencia <- ggthemes::gdocs_pal()(2)
+
+figura_equivalencia_da <- ggplot2::ggplot(
+  dados_equiv_da,
+  ggplot2::aes(
+    x = Configuracao_rotulo,
+    y = Delta_cor_media,
+    color = Situacao
+  )
+) +
+  ggplot2::geom_hline(
+    yintercept = c(-DELTA, DELTA),
+    linetype = "dashed",
+    linewidth = 0.6,
+    color = "grey45"
+  ) +
+  ggplot2::geom_hline(
+    yintercept = 0,
+    linewidth = 0.45,
+    color = "grey25"
+  ) +
+  ggplot2::geom_errorbar(
+    ggplot2::aes(
+      ymin = IC90_inf,
+      ymax = IC90_sup
+    ),
+    width = 0.18,
+    linewidth = 0.65
+  ) +
+  ggplot2::geom_point(
+    size = 3
+  ) +
+  ggplot2::facet_wrap(
+    ~ Cenario_real,
+    ncol = 1,
+    scales = "free_y"
+  ) +
+  ggplot2::scale_color_manual(
+    values = cores_equivalencia
+  ) +
+  ggplot2::coord_flip() +
+  ggplot2::labs(
+    title = "Equivalência das estratégias de Data Augmentation com T100",
+    x = "Regra de mistura",
+    y = expression(Delta * " correlação em relação a T100"),
+    color = "Resultado"
+  ) +
+  ggthemes::theme_gdocs() +
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(
+      face = "bold",
+      hjust = 0.5
+    ),
+    strip.text = ggplot2::element_text(
+      face = "bold"
+    ),
+    legend.position = "bottom"
+  )
+
+figura_equivalencia_da
+
+ggplot2::ggsave(
+  filename = "output/figures/06b_equivalencia_da_vs_T100.png",
+  plot = figura_equivalencia_da,
+  width = 9,
+  height = 8.5,
+  dpi = 300
 )
 ```
 
