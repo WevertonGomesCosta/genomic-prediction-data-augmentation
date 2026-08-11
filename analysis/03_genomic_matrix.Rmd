@@ -266,7 +266,13 @@ dados_offdiag <- data.frame(
   Relacionamento = G_offdiag
 )
 
-cores_percentis <- ggthemes::gdocs_pal()(3)
+linhas_percentis <- data.frame(
+  Percentil = factor(
+    c("P90", "P95", "P99"),
+    levels = c("P90", "P95", "P99")
+  ),
+  Relacionamento = unname(percentis_G)
+)
 
 figura_offdiag <- ggplot2::ggplot(
   dados_offdiag,
@@ -279,22 +285,37 @@ figura_offdiag <- ggplot2::ggplot(
     linewidth = 0.2
   ) +
   ggplot2::geom_vline(
-    xintercept = unname(percentis_G),
-    color = cores_percentis,
-    linetype = c("dashed", "dotdash", "dotted"),
-    linewidth = 0.8
+    data = linhas_percentis,
+    ggplot2::aes(
+      xintercept = Relacionamento,
+      color = Percentil,
+      linetype = Percentil
+    ),
+    linewidth = 0.8,
+    show.legend = TRUE
+  ) +
+  ggthemes::scale_color_gdocs() +
+  ggplot2::scale_linetype_manual(
+    values = c(
+      P90 = "dashed",
+      P95 = "dotdash",
+      P99 = "dotted"
+    )
   ) +
   ggplot2::labs(
     title = "Distribuição dos relacionamentos genômicos",
     x = "Relacionamento genômico fora da diagonal",
-    y = "Frequência"
+    y = "Frequência",
+    color = "Percentil",
+    linetype = "Percentil"
   ) +
   ggthemes::theme_gdocs() +
   ggplot2::theme(
     plot.title = ggplot2::element_text(
       face = "bold",
       hjust = 0.5
-    )
+    ),
+    legend.position = "top"
   )
 
 figura_offdiag
