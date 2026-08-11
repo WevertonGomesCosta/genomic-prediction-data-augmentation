@@ -562,15 +562,15 @@ project makes it easier to run your code on other machines.</p>
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomWevertonGomesCostagenomicpredictiondataaugmentationtree8882e17925ebda15e830b9767f2d76126b5caf78targetblank8882e17a">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomWevertonGomesCostagenomicpredictiondataaugmentationtree3da6d12cfb35da4c48daed6ab1c5eec1e2dbe61atargetblank3da6d12a">
 <span class="glyphicon glyphicon-ok text-success"
 aria-hidden="true"></span> <strong>Repository version:</strong>
-<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/tree/8882e17925ebda15e830b9767f2d76126b5caf78" target="_blank">8882e17</a>
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/tree/3da6d12cfb35da4c48daed6ab1c5eec1e2dbe61a" target="_blank">3da6d12</a>
 </a>
 </p>
 </div>
 <div
-id="strongRepositoryversionstrongahrefhttpsgithubcomWevertonGomesCostagenomicpredictiondataaugmentationtree8882e17925ebda15e830b9767f2d76126b5caf78targetblank8882e17a"
+id="strongRepositoryversionstrongahrefhttpsgithubcomWevertonGomesCostagenomicpredictiondataaugmentationtree3da6d12cfb35da4c48daed6ab1c5eec1e2dbe61atargetblank3da6d12a"
 class="panel-collapse collapse">
 <div class="panel-body">
 <p>
@@ -580,7 +580,7 @@ reproducibility.
 </p>
 <p>
 The results in this page were generated with repository version
-<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/tree/8882e17925ebda15e830b9767f2d76126b5caf78" target="_blank">8882e17</a>.
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/tree/3da6d12cfb35da4c48daed6ab1c5eec1e2dbe61a" target="_blank">3da6d12</a>.
 See the <em>Past versions</em> tab to see a history of the changes made
 to the R Markdown and HTML files.
 </p>
@@ -605,6 +605,9 @@ Ignored files:
     Ignored:    output/checkpoints/06_da_progress.csv
     Ignored:    output/figures/
     Ignored:    varE.dat
+
+Untracked files:
+    Untracked:  data/artigo_submissãoCBA_26_1_nias_licae_.pdf
 
 </code></pre>
 <p>
@@ -649,6 +652,40 @@ Message
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/blob/f040b0c70ecb2990fb7a15af260a0ea4d72595f1/analysis/04_gblup_baseline.Rmd" target="_blank">f040b0c</a>
+</td>
+<td>
+Weverton Gomes da Costa
+</td>
+<td>
+2026-08-11
+</td>
+<td>
+Reorganize GBLUP module as a scientific tutorial
+</td>
+</tr>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/WevertonGomesCosta/genomic-prediction-data-augmentation/db45d13e26a47d0fb6981c58229aad355d09def9/docs/04_gblup_baseline.html" target="_blank">db45d13</a>
+</td>
+<td>
+WevertonGomesCosta
+</td>
+<td>
+2026-08-11
+</td>
+<td>
+Publish revised tutorial site
+</td>
+</tr>
 <tr>
 <td>
 Rmd
@@ -743,10 +780,10 @@ Add stage 4 GBLUP baseline
 </div>
 <div id="objetivo" class="section level2">
 <h2>1. Objetivo</h2>
-<p>Antes de testar Data Augmentation, precisamos descobrir como o
-desempenho do GBLUP muda quando aumentamos a quantidade de indivíduos
-reais usados no treinamento.</p>
-<p>Em cada uma das 30 repetições ajustamos o mesmo modelo usando:</p>
+<p>Agora que os conjuntos de treinamento estão definidos e a matriz de
+relacionamento genômico <code>G</code> foi construída, podemos avaliar
+como o tamanho da amostra real influencia a predição genômica.</p>
+<p>Em cada uma das 30 repetições ajustamos o mesmo GBLUP usando:</p>
 <ul>
 <li>T25 = 275 indivíduos reais;</li>
 <li>T50 = 551 indivíduos reais;</li>
@@ -754,199 +791,188 @@ reais usados no treinamento.</p>
 <li>T100 = 1.103 indivíduos reais.</li>
 </ul>
 <p>A validação contém sempre 276 indivíduos e é exatamente a mesma para
-os quatro tamanhos de treinamento dentro de cada repetição.</p>
-<p>Esta etapa responde apenas à pergunta:</p>
+os quatro tamanhos de treinamento dentro de cada repetição. Portanto, as
+diferenças entre T25, T50, T75 e T100 refletem principalmente a
+quantidade de informação fenotípica disponível para o treinamento.</p>
+<p>Esta etapa responde à pergunta:</p>
 <blockquote>
-<p>Como a capacidade preditiva muda quando aumentamos o tamanho da
-amostra real?</p>
+<p><strong>Como o desempenho preditivo do GBLUP muda quando aumentamos o
+número de indivíduos reais no treinamento?</strong></p>
 </blockquote>
-<p>A comparação formal de T25, T50 e T75 com T100 será feita somente na
-Etapa 5.</p>
+<p>A equivalência estatística entre os tamanhos reduzidos e T100 será
+avaliada na Etapa 5.</p>
 </div>
-<div id="como-o-gblup-é-avaliado" class="section level2">
-<h2>2. Como o GBLUP é avaliado</h2>
-<p>O ponto mais importante é que os fenótipos da validação <strong>não
-podem ser vistos pelo modelo</strong>.</p>
-<p>Para isso criamos um vetor cheio de <code>NA</code> e copiamos para
-ele somente os fenótipos dos indivíduos de treinamento:</p>
-<pre class="r"><code># Exemplo conceitual
+<div id="como-o-gblup-usa-treinamento-e-validação"
+class="section level2">
+<h2>2. Como o GBLUP usa treinamento e validação</h2>
+<p>A matriz <code>G</code> contém os relacionamentos genômicos dos 1.379
+indivíduos, mas o fenótipo é fornecido ao modelo somente para os
+indivíduos do conjunto de treinamento.</p>
+<p>Para representar essa estrutura, criamos um vetor fenotípico com
+<code>NA</code> para todos os indivíduos e preenchemos apenas as
+posições pertencentes ao Treinamento:</p>
+<pre class="r"><code># Estrutura conceitual do vetor fenotípico usado pelo modelo.
 y_modelo &lt;- rep(NA_real_, length(y))
 y_modelo[treino] &lt;- y[treino]</code></pre>
-<p>Os genótipos continuam representados em <code>G</code>, mas somente o
-conjunto de treinamento fornece fenótipos ao BGLR.</p>
+<p>Assim, os indivíduos da validação participam da matriz genômica, mas
+seus fenótipos não são utilizados no ajuste. As predições obtidas nessas
+posições podem então ser comparadas aos valores observados para avaliar
+o modelo.</p>
 </div>
-<div id="resultados-pesados-e-reprodução" class="section level2">
-<h2>3. Resultados pesados e reprodução</h2>
-<p>Os 120 ajustes já foram executados, auditados e estão versionados em
-<code>results/04_baseline_results.csv</code>. Assim, o site pode ser
-reconstruído sem refazer os modelos.</p>
-<p>O código completo da execução continua visível abaixo. Por padrão ele
-não é executado. Para reproduzir os 120 ajustes do zero, altere:</p>
-<pre class="r"><code>RUN_MODELS &lt;- FALSE</code></pre>
-<p>para <code>TRUE</code>.</p>
-<pre class="r"><code>RUN_MODELS &lt;- FALSE
+<div id="modelo-e-parâmetros" class="section level2">
+<h2>3. Modelo e parâmetros</h2>
+<p>O componente genômico é especificado no <code>BGLR</code> usando
+<code>G</code> como kernel <code>RKHS</code>:</p>
+<p><span class="math display">\[
+y = \mu + g + \varepsilon,
+\]</span></p>
+<p>em que <code>g</code> representa o efeito genômico associado à matriz
+de relacionamento. O mesmo modelo e os mesmos parâmetros são mantidos em
+todos os tamanhos de Treinamento, permitindo uma comparação direta entre
+T25, T50, T75 e T100.</p>
+<pre class="r"><code>PROPORCOES &lt;- c(0.25, 0.50, 0.75, 1.00)
+N_REP &lt;- 30
+N_ITER &lt;- 10000
+BURN_IN &lt;- 5000
 
-FINAL_FILE &lt;- &quot;results/04_baseline_results.csv&quot;
-CHECKPOINT &lt;- &quot;output/checkpoints/04_baseline_progress.csv&quot;</code></pre>
+FINAL_FILE &lt;- &quot;results/04_baseline_results.csv&quot;</code></pre>
+<p>Utilizamos 10.000 iterações MCMC, com as primeiras 5.000 descartadas
+como período de <em>burn-in</em>.</p>
 </div>
-<div id="código-completo-dos-120-ajustes" class="section level2">
-<h2>4. Código completo dos 120 ajustes</h2>
-<p>Esta seção mostra explicitamente cada etapa do ajuste: carregamento
-dos objetos, mascaramento dos fenótipos, especificação do GBLUP,
-predição e cálculo das métricas.</p>
-<pre class="r"><code>if (RUN_MODELS) {
-  arquivos_necessarios &lt;- c(
-    &quot;output/01_data_objects.rds&quot;,
-    &quot;output/02_splits_mestre_30rep.rds&quot;,
-    &quot;output/03_genomic_objects.rds&quot;
-  )
+<div id="pipeline-do-gblup" class="section level2">
+<h2>4. Pipeline do GBLUP</h2>
+<p>O código abaixo reúne o pipeline analítico aplicado a cada repetição
+e a cada tamanho de treinamento. Os comentários destacam as etapas
+essenciais: seleção do split, mascaramento dos fenótipos, especificação
+do modelo, predição e cálculo das métricas.</p>
+<pre class="r"><code># Objetos produzidos nas etapas anteriores.
+obj &lt;- readRDS(&quot;output/01_data_objects.rds&quot;)
+splits_mestre &lt;- readRDS(&quot;output/02_splits_mestre_30rep.rds&quot;)
+gobj &lt;- readRDS(&quot;output/03_genomic_objects.rds&quot;)
 
-  if (!all(file.exists(arquivos_necessarios))) {
-    stop(&quot;Execute primeiro as Etapas 1, 2 e 3.&quot;)
+y &lt;- obj$y
+G &lt;- gobj$G
+
+resultados_baseline &lt;- data.frame()
+
+for (rep in seq_len(N_REP)) {
+  for (i in seq_along(PROPORCOES)) {
+    proporcao &lt;- PROPORCOES[i]
+
+    # 1. Recupera treinamento e validação da repetição atual.
+    split &lt;- splits_mestre[[as.character(proporcao)]][[rep]]
+    treino &lt;- split$treino
+    validacao &lt;- split$valid
+
+    # 2. Mantém fenótipos somente nos indivíduos de treinamento.
+    y_modelo &lt;- rep(
+      NA_real_,
+      length(y)
+    )
+
+    y_modelo[treino] &lt;- y[treino]
+
+    # 3. Define o componente genômico usando G como kernel.
+    ETA &lt;- list(
+      list(
+        K = G,
+        model = &quot;RKHS&quot;
+      )
+    )
+
+    # 4. Ajusta o mesmo modelo em todos os cenários.
+    set.seed(
+      50000 + rep * 100 + i
+    )
+
+    ajuste &lt;- BGLR::BGLR(
+      y = y_modelo,
+      ETA = ETA,
+      nIter = N_ITER,
+      burnIn = BURN_IN,
+      verbose = FALSE
+    )
+
+    # 5. Obtém predições apenas para os indivíduos da validação.
+    predicao &lt;- ajuste$yHat[validacao]
+    observado &lt;- y[validacao]
+
+    # 6. Calcula as métricas de desempenho preditivo.
+    correlacao &lt;- cor(
+      observado,
+      predicao
+    )
+
+    RMSE &lt;- sqrt(
+      mean(
+        (observado - predicao)^2
+      )
+    )
+
+    MAE &lt;- mean(
+      abs(
+        observado - predicao
+      )
+    )
+
+    calibracao &lt;- lm(
+      observado ~ predicao
+    )
+
+    slope_calibracao &lt;- unname(
+      coef(calibracao)[2]
+    )
+
+    # 7. Armazena uma linha para a combinação repetição × tamanho.
+    nova_linha &lt;- data.frame(
+      repeticao = rep,
+      proporcao_pool = proporcao,
+      n_treino = length(treino),
+      n_validacao = length(validacao),
+      correlacao = correlacao,
+      RMSE = RMSE,
+      MAE = MAE,
+      slope_calibracao = slope_calibracao
+    )
+
+    resultados_baseline &lt;- rbind(
+      resultados_baseline,
+      nova_linha
+    )
   }
-
-  if (!requireNamespace(&quot;BGLR&quot;, quietly = TRUE)) {
-    stop(&quot;Instale o pacote BGLR antes de reproduzir os modelos.&quot;)
-  }
-
-  obj &lt;- readRDS(&quot;output/01_data_objects.rds&quot;)
-  splits_mestre &lt;- readRDS(&quot;output/02_splits_mestre_30rep.rds&quot;)
-  gobj &lt;- readRDS(&quot;output/03_genomic_objects.rds&quot;)
-
-  y &lt;- obj$y
-  G &lt;- gobj$G
-
-  PROPORCOES &lt;- c(0.25, 0.50, 0.75, 1.00)
-  N_ITER &lt;- 10000
-  BURN_IN &lt;- 5000
-
-  if (file.exists(CHECKPOINT)) {
-    resultados_baseline &lt;- read.csv(CHECKPOINT)
-  } else {
-    resultados_baseline &lt;- data.frame()
-  }
-
-  for (rep in seq_len(30)) {
-    for (i in seq_along(PROPORCOES)) {
-      proporcao &lt;- PROPORCOES[i]
-
-      ja_executado &lt;-
-        nrow(resultados_baseline) &gt; 0 &amp;&amp;
-        any(
-          resultados_baseline$repeticao == rep &amp;
-          resultados_baseline$proporcao_pool == proporcao
-        )
-
-      if (ja_executado) next
-
-      split &lt;- splits_mestre[[as.character(proporcao)]][[rep]]
-      treino &lt;- split$treino
-      validacao &lt;- split$valid
-
-      # Somente os indivíduos de treinamento mantêm fenótipo observado.
-      y_modelo &lt;- rep(
-        NA_real_,
-        length(y)
-      )
-
-      y_modelo[treino] &lt;- y[treino]
-
-      stopifnot(
-        all(
-          is.na(
-            y_modelo[setdiff(seq_along(y), treino)]
-          )
-        )
-      )
-
-      # GBLUP no BGLR: a matriz G entra como kernel RKHS.
-      ETA &lt;- list(
-        list(
-          K = G,
-          model = &quot;RKHS&quot;
-        )
-      )
-
-      set.seed(
-        50000 + rep * 100 + i
-      )
-
-      ajuste &lt;- BGLR::BGLR(
-        y = y_modelo,
-        ETA = ETA,
-        nIter = N_ITER,
-        burnIn = BURN_IN,
-        verbose = FALSE
-      )
-
-      predicao &lt;- ajuste$yHat[validacao]
-      observado &lt;- y[validacao]
-
-      correlacao &lt;- cor(
-        observado,
-        predicao
-      )
-
-      RMSE &lt;- sqrt(
-        mean(
-          (observado - predicao)^2
-        )
-      )
-
-      MAE &lt;- mean(
-        abs(
-          observado - predicao
-        )
-      )
-
-      calibracao &lt;- lm(
-        observado ~ predicao
-      )
-
-      slope_calibracao &lt;- unname(
-        coef(calibracao)[2]
-      )
-
-      nova_linha &lt;- data.frame(
-        repeticao = rep,
-        proporcao_pool = proporcao,
-        n_treino = length(treino),
-        n_validacao = length(validacao),
-        correlacao = correlacao,
-        RMSE = RMSE,
-        MAE = MAE,
-        slope_calibracao = slope_calibracao
-      )
-
-      resultados_baseline &lt;- rbind(
-        resultados_baseline,
-        nova_linha
-      )
-
-      # O checkpoint permite retomar uma execução interrompida.
-      write.csv(
-        resultados_baseline,
-        CHECKPOINT,
-        row.names = FALSE
-      )
-    }
-  }
-
-  write.csv(
-    resultados_baseline,
-    FINAL_FILE,
-    row.names = FALSE
-  )
-}</code></pre>
-</div>
-<div id="carregando-os-resultados-aprovados" class="section level2">
-<h2>5. Carregando os resultados aprovados</h2>
-<p>A partir daqui usamos apenas o arquivo final já auditado.</p>
-<pre class="r"><code>if (!file.exists(FINAL_FILE)) {
-  stop(&quot;Arquivo ausente: results/04_baseline_results.csv&quot;)
 }
 
-baseline &lt;- read.csv(FINAL_FILE)
+write.csv(
+  resultados_baseline,
+  FINAL_FILE,
+  row.names = FALSE
+)</code></pre>
+</div>
+<div id="métricas-de-avaliação" class="section level2">
+<h2>5. Métricas de avaliação</h2>
+<p>Quatro medidas complementares são utilizadas:</p>
+<ul>
+<li><strong>correlação preditiva</strong>: mede a associação linear
+entre valores observados e preditos; valores maiores indicam melhor
+capacidade de ordenar os indivíduos;</li>
+<li><strong>RMSE</strong>: resume a magnitude dos erros e dá maior peso
+a erros grandes;</li>
+<li><strong>MAE</strong>: representa o erro absoluto médio em uma escala
+de interpretação direta;</li>
+<li><strong>inclinação de calibração</strong>: é obtida da regressão
+<code>observado ~ predito</code> e ajuda a avaliar a escala das
+predições; valores próximos de 1 indicam melhor calibração.</li>
+</ul>
+<p>A correlação é a métrica principal para a comparação de equivalência,
+enquanto as demais descrevem aspectos adicionais do comportamento
+preditivo.</p>
+</div>
+<div id="resultados-do-gblup-com-dados-reais" class="section level2">
+<h2>6. Resultados do GBLUP com dados reais</h2>
+<p>A tabela primária contém uma linha para cada combinação entre as 30
+repetições e os quatro tamanhos de treinamento, totalizando 120
+resultados.</p>
+<pre class="r"><code>baseline &lt;- read.csv(FINAL_FILE)
 
 chaves &lt;- paste(
   baseline$repeticao,
@@ -961,10 +987,13 @@ stopifnot(all(baseline$n_validacao == 276))
 stopifnot(!anyNA(baseline[, c(&quot;correlacao&quot;, &quot;RMSE&quot;, &quot;MAE&quot;, &quot;slope_calibracao&quot;)]))</code></pre>
 </div>
 <div id="curva-de-aprendizado" class="section level2">
-<h2>6. Curva de aprendizado</h2>
-<p>Calculamos a média das quatro métricas e o desvio-padrão da
-correlação para cada tamanho de treinamento.</p>
-<pre class="r"><code>resumo_baseline &lt;- aggregate(
+<h2>7. Curva de aprendizado</h2>
+<p>Para cada tamanho de treinamento calculamos a média das quatro
+métricas e o desvio-padrão da correlação. A curva de aprendizado permite
+visualizar quanto o desempenho aumenta quando mais indivíduos reais são
+adicionados ao treinamento.</p>
+<pre class="r"><code># Médias das quatro métricas em cada tamanho de treinamento.
+resumo_baseline &lt;- aggregate(
   cbind(
     correlacao,
     RMSE,
@@ -975,6 +1004,7 @@ correlação para cada tamanho de treinamento.</p>
   FUN = mean
 )
 
+# Variabilidade da correlação entre as 30 repetições.
 sd_cor &lt;- aggregate(
   correlacao ~ proporcao_pool,
   data = baseline,
@@ -1054,10 +1084,10 @@ knitr::kable(
 </tr>
 </tbody>
 </table>
-<p>A figura mantém a informação das 30 repetições. Cada linha fina
-representa uma repetição completa de T25 a T100. A linha destacada
-mostra a correlação média e a faixa representa média ± 1 desvio-padrão
-em cada tamanho de treinamento.</p>
+<p>A figura preserva a informação das 30 repetições. Cada linha fina
+representa a trajetória de uma repetição de T25 até T100. A linha
+destacada mostra a correlação média e a faixa representa média ± 1
+desvio-padrão em cada tamanho de treinamento.</p>
 <pre class="r"><code>if (!requireNamespace(&quot;ggplot2&quot;, quietly = TRUE)) {
   stop(&quot;Instale o pacote ggplot2 para gerar as figuras do tutorial.&quot;)
 }
@@ -1176,6 +1206,17 @@ Date
 <tbody>
 <tr>
 <td>
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/blob/db45d13e26a47d0fb6981c58229aad355d09def9/docs/figure/04_gblup_baseline.Rmd/curva-aprendizado-1.png" target="_blank">db45d13</a>
+</td>
+<td>
+WevertonGomesCosta
+</td>
+<td>
+2026-08-11
+</td>
+</tr>
+<tr>
+<td>
 <a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/blob/d32edc6ed8258adf2f831660fd3d0f69f4caf78e/docs/figure/04_gblup_baseline.Rmd/curva-aprendizado-1.png" target="_blank">d32edc6</a>
 </td>
 <td>
@@ -1198,7 +1239,9 @@ WevertonGomesCosta
 )</code></pre>
 <p>A correlação média aumenta de aproximadamente 0,53 em T25 para 0,67
 em T100. O ganho, porém, fica progressivamente menor à medida que mais
-indivíduos são adicionados.</p>
+indivíduos são adicionados. A curva sugere que T75 já se aproxima de
+T100, mas proximidade visual não é suficiente para declarar
+equivalência.</p>
 <p>Na próxima etapa, T25, T50 e T75 serão comparados formalmente com
 T100 usando as diferenças pareadas das mesmas 30 repetições.</p>
 <br>
@@ -1251,7 +1294,7 @@ loaded via a namespace (and not attached):
 </div>
 </div>
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIjQuIEdCTFVQIGNvbSBkYWRvcyByZWFpcyINCmF1dGhvcjogIldldmVydG9uIEdvbWVzIGRhIENvc3RhIg0KZGF0ZTogImByIFN5cy5EYXRlKClgIg0Kc2l0ZTogd29ya2Zsb3dyOjp3Zmxvd19zaXRlDQpvdXRwdXQ6DQogIHdvcmtmbG93cjo6d2Zsb3dfaHRtbDoNCiAgICB0b2M6IHRydWUNCiAgICB0b2NfZGVwdGg6IDMNCiAgICB0b2NfZmxvYXQ6IHRydWUNCiAgICBjb2RlX2Rvd25sb2FkOiB0cnVlDQogICAgY29kZV9mb2xkaW5nOiBzaG93DQplZGl0b3Jfb3B0aW9uczoNCiAgY2h1bmtfb3V0cHV0X3R5cGU6IGNvbnNvbGUNCi0tLQ0KDQpgYGB7ciBzZXR1cCwgaW5jbHVkZT1GQUxTRX0NCmtuaXRyOjpvcHRzX2NodW5rJHNldCgNCiAgZWNobyA9IFRSVUUsDQogIHdhcm5pbmcgPSBGQUxTRSwNCiAgbWVzc2FnZSA9IEZBTFNFLA0KICBjYWNoZSA9IEZBTFNFLA0KICBmaWcuYWxpZ24gPSAiY2VudGVyIiwNCiAgb3V0LndpZHRoID0gIjEwMCUiDQopDQpkaXIuY3JlYXRlKCJvdXRwdXQvY2hlY2twb2ludHMiLCBzaG93V2FybmluZ3MgPSBGQUxTRSwgcmVjdXJzaXZlID0gVFJVRSkNCmRpci5jcmVhdGUoIm91dHB1dC9maWd1cmVzIiwgc2hvd1dhcm5pbmdzID0gRkFMU0UsIHJlY3Vyc2l2ZSA9IFRSVUUpDQpkaXIuY3JlYXRlKCJyZXN1bHRzIiwgc2hvd1dhcm5pbmdzID0gRkFMU0UsIHJlY3Vyc2l2ZSA9IFRSVUUpDQpgYGANCg0KIyMgMS4gT2JqZXRpdm8NCg0KQW50ZXMgZGUgdGVzdGFyIERhdGEgQXVnbWVudGF0aW9uLCBwcmVjaXNhbW9zIGRlc2NvYnJpciBjb21vIG8gZGVzZW1wZW5obyBkbw0KR0JMVVAgbXVkYSBxdWFuZG8gYXVtZW50YW1vcyBhIHF1YW50aWRhZGUgZGUgaW5kaXbDrWR1b3MgcmVhaXMgdXNhZG9zIG5vDQp0cmVpbmFtZW50by4NCg0KRW0gY2FkYSB1bWEgZGFzIDMwIHJlcGV0acOnw7VlcyBhanVzdGFtb3MgbyBtZXNtbyBtb2RlbG8gdXNhbmRvOg0KDQotIFQyNSA9IDI3NSBpbmRpdsOtZHVvcyByZWFpczsNCi0gVDUwID0gNTUxIGluZGl2w61kdW9zIHJlYWlzOw0KLSBUNzUgPSA4MjcgaW5kaXbDrWR1b3MgcmVhaXM7DQotIFQxMDAgPSAxLjEwMyBpbmRpdsOtZHVvcyByZWFpcy4NCg0KQSB2YWxpZGHDp8OjbyBjb250w6ltIHNlbXByZSAyNzYgaW5kaXbDrWR1b3MgZSDDqSBleGF0YW1lbnRlIGEgbWVzbWEgcGFyYSBvcyBxdWF0cm8NCnRhbWFuaG9zIGRlIHRyZWluYW1lbnRvIGRlbnRybyBkZSBjYWRhIHJlcGV0acOnw6NvLg0KDQpFc3RhIGV0YXBhIHJlc3BvbmRlIGFwZW5hcyDDoCBwZXJndW50YToNCg0KPiBDb21vIGEgY2FwYWNpZGFkZSBwcmVkaXRpdmEgbXVkYSBxdWFuZG8gYXVtZW50YW1vcyBvIHRhbWFuaG8gZGEgYW1vc3RyYSByZWFsPw0KDQpBIGNvbXBhcmHDp8OjbyBmb3JtYWwgZGUgVDI1LCBUNTAgZSBUNzUgY29tIFQxMDAgc2Vyw6EgZmVpdGEgc29tZW50ZSBuYSBFdGFwYSA1Lg0KDQojIyAyLiBDb21vIG8gR0JMVVAgw6kgYXZhbGlhZG8NCg0KTyBwb250byBtYWlzIGltcG9ydGFudGUgw6kgcXVlIG9zIGZlbsOzdGlwb3MgZGEgdmFsaWRhw6fDo28gKipuw6NvIHBvZGVtIHNlciB2aXN0b3MNCnBlbG8gbW9kZWxvKiouDQoNClBhcmEgaXNzbyBjcmlhbW9zIHVtIHZldG9yIGNoZWlvIGRlIGBOQWAgZSBjb3BpYW1vcyBwYXJhIGVsZSBzb21lbnRlIG9zDQpmZW7Ds3RpcG9zIGRvcyBpbmRpdsOtZHVvcyBkZSB0cmVpbmFtZW50bzoNCg0KYGBgcg0KIyBFeGVtcGxvIGNvbmNlaXR1YWwNCnlfbW9kZWxvIDwtIHJlcChOQV9yZWFsXywgbGVuZ3RoKHkpKQ0KeV9tb2RlbG9bdHJlaW5vXSA8LSB5W3RyZWlub10NCmBgYA0KDQpPcyBnZW7Ds3RpcG9zIGNvbnRpbnVhbSByZXByZXNlbnRhZG9zIGVtIGBHYCwgbWFzIHNvbWVudGUgbyBjb25qdW50byBkZQ0KdHJlaW5hbWVudG8gZm9ybmVjZSBmZW7Ds3RpcG9zIGFvIEJHTFIuDQoNCiMjIDMuIFJlc3VsdGFkb3MgcGVzYWRvcyBlIHJlcHJvZHXDp8Ojbw0KDQpPcyAxMjAgYWp1c3RlcyBqw6EgZm9yYW0gZXhlY3V0YWRvcywgYXVkaXRhZG9zIGUgZXN0w6NvIHZlcnNpb25hZG9zIGVtDQpgcmVzdWx0cy8wNF9iYXNlbGluZV9yZXN1bHRzLmNzdmAuIEFzc2ltLCBvIHNpdGUgcG9kZSBzZXIgcmVjb25zdHJ1w61kbyBzZW0NCnJlZmF6ZXIgb3MgbW9kZWxvcy4NCg0KTyBjw7NkaWdvIGNvbXBsZXRvIGRhIGV4ZWN1w6fDo28gY29udGludWEgdmlzw612ZWwgYWJhaXhvLiBQb3IgcGFkcsOjbyBlbGUgbsOjbyDDqQ0KZXhlY3V0YWRvLiBQYXJhIHJlcHJvZHV6aXIgb3MgMTIwIGFqdXN0ZXMgZG8gemVybywgYWx0ZXJlOg0KDQpgYGByDQpSVU5fTU9ERUxTIDwtIEZBTFNFDQpgYGANCg0KcGFyYSBgVFJVRWAuDQoNCmBgYHtyIGNvbmZpZ3VyYWNhby1leGVjdWNhb30NClJVTl9NT0RFTFMgPC0gRkFMU0UNCg0KRklOQUxfRklMRSA8LSAicmVzdWx0cy8wNF9iYXNlbGluZV9yZXN1bHRzLmNzdiINCkNIRUNLUE9JTlQgPC0gIm91dHB1dC9jaGVja3BvaW50cy8wNF9iYXNlbGluZV9wcm9ncmVzcy5jc3YiDQpgYGANCg0KIyMgNC4gQ8OzZGlnbyBjb21wbGV0byBkb3MgMTIwIGFqdXN0ZXMNCg0KRXN0YSBzZcOnw6NvIG1vc3RyYSBleHBsaWNpdGFtZW50ZSBjYWRhIGV0YXBhIGRvIGFqdXN0ZTogY2FycmVnYW1lbnRvIGRvcyBvYmpldG9zLA0KbWFzY2FyYW1lbnRvIGRvcyBmZW7Ds3RpcG9zLCBlc3BlY2lmaWNhw6fDo28gZG8gR0JMVVAsIHByZWRpw6fDo28gZSBjw6FsY3VsbyBkYXMNCm3DqXRyaWNhcy4NCg0KYGBge3IgZXhlY3V0YXItYmFzZWxpbmV9DQppZiAoUlVOX01PREVMUykgew0KICBhcnF1aXZvc19uZWNlc3NhcmlvcyA8LSBjKA0KICAgICJvdXRwdXQvMDFfZGF0YV9vYmplY3RzLnJkcyIsDQogICAgIm91dHB1dC8wMl9zcGxpdHNfbWVzdHJlXzMwcmVwLnJkcyIsDQogICAgIm91dHB1dC8wM19nZW5vbWljX29iamVjdHMucmRzIg0KICApDQoNCiAgaWYgKCFhbGwoZmlsZS5leGlzdHMoYXJxdWl2b3NfbmVjZXNzYXJpb3MpKSkgew0KICAgIHN0b3AoIkV4ZWN1dGUgcHJpbWVpcm8gYXMgRXRhcGFzIDEsIDIgZSAzLiIpDQogIH0NCg0KICBpZiAoIXJlcXVpcmVOYW1lc3BhY2UoIkJHTFIiLCBxdWlldGx5ID0gVFJVRSkpIHsNCiAgICBzdG9wKCJJbnN0YWxlIG8gcGFjb3RlIEJHTFIgYW50ZXMgZGUgcmVwcm9kdXppciBvcyBtb2RlbG9zLiIpDQogIH0NCg0KICBvYmogPC0gcmVhZFJEUygib3V0cHV0LzAxX2RhdGFfb2JqZWN0cy5yZHMiKQ0KICBzcGxpdHNfbWVzdHJlIDwtIHJlYWRSRFMoIm91dHB1dC8wMl9zcGxpdHNfbWVzdHJlXzMwcmVwLnJkcyIpDQogIGdvYmogPC0gcmVhZFJEUygib3V0cHV0LzAzX2dlbm9taWNfb2JqZWN0cy5yZHMiKQ0KDQogIHkgPC0gb2JqJHkNCiAgRyA8LSBnb2JqJEcNCg0KICBQUk9QT1JDT0VTIDwtIGMoMC4yNSwgMC41MCwgMC43NSwgMS4wMCkNCiAgTl9JVEVSIDwtIDEwMDAwDQogIEJVUk5fSU4gPC0gNTAwMA0KDQogIGlmIChmaWxlLmV4aXN0cyhDSEVDS1BPSU5UKSkgew0KICAgIHJlc3VsdGFkb3NfYmFzZWxpbmUgPC0gcmVhZC5jc3YoQ0hFQ0tQT0lOVCkNCiAgfSBlbHNlIHsNCiAgICByZXN1bHRhZG9zX2Jhc2VsaW5lIDwtIGRhdGEuZnJhbWUoKQ0KICB9DQoNCiAgZm9yIChyZXAgaW4gc2VxX2xlbigzMCkpIHsNCiAgICBmb3IgKGkgaW4gc2VxX2Fsb25nKFBST1BPUkNPRVMpKSB7DQogICAgICBwcm9wb3JjYW8gPC0gUFJPUE9SQ09FU1tpXQ0KDQogICAgICBqYV9leGVjdXRhZG8gPC0NCiAgICAgICAgbnJvdyhyZXN1bHRhZG9zX2Jhc2VsaW5lKSA+IDAgJiYNCiAgICAgICAgYW55KA0KICAgICAgICAgIHJlc3VsdGFkb3NfYmFzZWxpbmUkcmVwZXRpY2FvID09IHJlcCAmDQogICAgICAgICAgcmVzdWx0YWRvc19iYXNlbGluZSRwcm9wb3JjYW9fcG9vbCA9PSBwcm9wb3JjYW8NCiAgICAgICAgKQ0KDQogICAgICBpZiAoamFfZXhlY3V0YWRvKSBuZXh0DQoNCiAgICAgIHNwbGl0IDwtIHNwbGl0c19tZXN0cmVbW2FzLmNoYXJhY3Rlcihwcm9wb3JjYW8pXV1bW3JlcF1dDQogICAgICB0cmVpbm8gPC0gc3BsaXQkdHJlaW5vDQogICAgICB2YWxpZGFjYW8gPC0gc3BsaXQkdmFsaWQNCg0KICAgICAgIyBTb21lbnRlIG9zIGluZGl2w61kdW9zIGRlIHRyZWluYW1lbnRvIG1hbnTDqm0gZmVuw7N0aXBvIG9ic2VydmFkby4NCiAgICAgIHlfbW9kZWxvIDwtIHJlcCgNCiAgICAgICAgTkFfcmVhbF8sDQogICAgICAgIGxlbmd0aCh5KQ0KICAgICAgKQ0KDQogICAgICB5X21vZGVsb1t0cmVpbm9dIDwtIHlbdHJlaW5vXQ0KDQogICAgICBzdG9waWZub3QoDQogICAgICAgIGFsbCgNCiAgICAgICAgICBpcy5uYSgNCiAgICAgICAgICAgIHlfbW9kZWxvW3NldGRpZmYoc2VxX2Fsb25nKHkpLCB0cmVpbm8pXQ0KICAgICAgICAgICkNCiAgICAgICAgKQ0KICAgICAgKQ0KDQogICAgICAjIEdCTFVQIG5vIEJHTFI6IGEgbWF0cml6IEcgZW50cmEgY29tbyBrZXJuZWwgUktIUy4NCiAgICAgIEVUQSA8LSBsaXN0KA0KICAgICAgICBsaXN0KA0KICAgICAgICAgIEsgPSBHLA0KICAgICAgICAgIG1vZGVsID0gIlJLSFMiDQogICAgICAgICkNCiAgICAgICkNCg0KICAgICAgc2V0LnNlZWQoDQogICAgICAgIDUwMDAwICsgcmVwICogMTAwICsgaQ0KICAgICAgKQ0KDQogICAgICBhanVzdGUgPC0gQkdMUjo6QkdMUigNCiAgICAgICAgeSA9IHlfbW9kZWxvLA0KICAgICAgICBFVEEgPSBFVEEsDQogICAgICAgIG5JdGVyID0gTl9JVEVSLA0KICAgICAgICBidXJuSW4gPSBCVVJOX0lOLA0KICAgICAgICB2ZXJib3NlID0gRkFMU0UNCiAgICAgICkNCg0KICAgICAgcHJlZGljYW8gPC0gYWp1c3RlJHlIYXRbdmFsaWRhY2FvXQ0KICAgICAgb2JzZXJ2YWRvIDwtIHlbdmFsaWRhY2FvXQ0KDQogICAgICBjb3JyZWxhY2FvIDwtIGNvcigNCiAgICAgICAgb2JzZXJ2YWRvLA0KICAgICAgICBwcmVkaWNhbw0KICAgICAgKQ0KDQogICAgICBSTVNFIDwtIHNxcnQoDQogICAgICAgIG1lYW4oDQogICAgICAgICAgKG9ic2VydmFkbyAtIHByZWRpY2FvKV4yDQogICAgICAgICkNCiAgICAgICkNCg0KICAgICAgTUFFIDwtIG1lYW4oDQogICAgICAgIGFicygNCiAgICAgICAgICBvYnNlcnZhZG8gLSBwcmVkaWNhbw0KICAgICAgICApDQogICAgICApDQoNCiAgICAgIGNhbGlicmFjYW8gPC0gbG0oDQogICAgICAgIG9ic2VydmFkbyB+IHByZWRpY2FvDQogICAgICApDQoNCiAgICAgIHNsb3BlX2NhbGlicmFjYW8gPC0gdW5uYW1lKA0KICAgICAgICBjb2VmKGNhbGlicmFjYW8pWzJdDQogICAgICApDQoNCiAgICAgIG5vdmFfbGluaGEgPC0gZGF0YS5mcmFtZSgNCiAgICAgICAgcmVwZXRpY2FvID0gcmVwLA0KICAgICAgICBwcm9wb3JjYW9fcG9vbCA9IHByb3BvcmNhbywNCiAgICAgICAgbl90cmVpbm8gPSBsZW5ndGgodHJlaW5vKSwNCiAgICAgICAgbl92YWxpZGFjYW8gPSBsZW5ndGgodmFsaWRhY2FvKSwNCiAgICAgICAgY29ycmVsYWNhbyA9IGNvcnJlbGFjYW8sDQogICAgICAgIFJNU0UgPSBSTVNFLA0KICAgICAgICBNQUUgPSBNQUUsDQogICAgICAgIHNsb3BlX2NhbGlicmFjYW8gPSBzbG9wZV9jYWxpYnJhY2FvDQogICAgICApDQoNCiAgICAgIHJlc3VsdGFkb3NfYmFzZWxpbmUgPC0gcmJpbmQoDQogICAgICAgIHJlc3VsdGFkb3NfYmFzZWxpbmUsDQogICAgICAgIG5vdmFfbGluaGENCiAgICAgICkNCg0KICAgICAgIyBPIGNoZWNrcG9pbnQgcGVybWl0ZSByZXRvbWFyIHVtYSBleGVjdcOnw6NvIGludGVycm9tcGlkYS4NCiAgICAgIHdyaXRlLmNzdigNCiAgICAgICAgcmVzdWx0YWRvc19iYXNlbGluZSwNCiAgICAgICAgQ0hFQ0tQT0lOVCwNCiAgICAgICAgcm93Lm5hbWVzID0gRkFMU0UNCiAgICAgICkNCiAgICB9DQogIH0NCg0KICB3cml0ZS5jc3YoDQogICAgcmVzdWx0YWRvc19iYXNlbGluZSwNCiAgICBGSU5BTF9GSUxFLA0KICAgIHJvdy5uYW1lcyA9IEZBTFNFDQogICkNCn0NCmBgYA0KDQojIyA1LiBDYXJyZWdhbmRvIG9zIHJlc3VsdGFkb3MgYXByb3ZhZG9zDQoNCkEgcGFydGlyIGRhcXVpIHVzYW1vcyBhcGVuYXMgbyBhcnF1aXZvIGZpbmFsIGrDoSBhdWRpdGFkby4NCg0KYGBge3IgY2FycmVnYXItcmVzdWx0YWRvc30NCmlmICghZmlsZS5leGlzdHMoRklOQUxfRklMRSkpIHsNCiAgc3RvcCgiQXJxdWl2byBhdXNlbnRlOiByZXN1bHRzLzA0X2Jhc2VsaW5lX3Jlc3VsdHMuY3N2IikNCn0NCg0KYmFzZWxpbmUgPC0gcmVhZC5jc3YoRklOQUxfRklMRSkNCg0KY2hhdmVzIDwtIHBhc3RlKA0KICBiYXNlbGluZSRyZXBldGljYW8sDQogIGJhc2VsaW5lJHByb3BvcmNhb19wb29sLA0KICBzZXAgPSAiX18iDQopDQoNCnN0b3BpZm5vdChucm93KGJhc2VsaW5lKSA9PSAxMjApDQpzdG9waWZub3QoYW55RHVwbGljYXRlZChjaGF2ZXMpID09IDApDQpzdG9waWZub3QoYWxsKGJhc2VsaW5lJHJlcGV0aWNhbyAlaW4lIDE6MzApKQ0Kc3RvcGlmbm90KGFsbChiYXNlbGluZSRuX3ZhbGlkYWNhbyA9PSAyNzYpKQ0Kc3RvcGlmbm90KCFhbnlOQShiYXNlbGluZVssIGMoImNvcnJlbGFjYW8iLCAiUk1TRSIsICJNQUUiLCAic2xvcGVfY2FsaWJyYWNhbyIpXSkpDQpgYGANCg0KIyMgNi4gQ3VydmEgZGUgYXByZW5kaXphZG8NCg0KQ2FsY3VsYW1vcyBhIG3DqWRpYSBkYXMgcXVhdHJvIG3DqXRyaWNhcyBlIG8gZGVzdmlvLXBhZHLDo28gZGEgY29ycmVsYcOnw6NvIHBhcmEgY2FkYQ0KdGFtYW5obyBkZSB0cmVpbmFtZW50by4NCg0KYGBge3IgcmVzdW1vLWJhc2VsaW5lfQ0KcmVzdW1vX2Jhc2VsaW5lIDwtIGFnZ3JlZ2F0ZSgNCiAgY2JpbmQoDQogICAgY29ycmVsYWNhbywNCiAgICBSTVNFLA0KICAgIE1BRSwNCiAgICBzbG9wZV9jYWxpYnJhY2FvDQogICkgfiBwcm9wb3JjYW9fcG9vbCArIG5fdHJlaW5vLA0KICBkYXRhID0gYmFzZWxpbmUsDQogIEZVTiA9IG1lYW4NCikNCg0Kc2RfY29yIDwtIGFnZ3JlZ2F0ZSgNCiAgY29ycmVsYWNhbyB+IHByb3BvcmNhb19wb29sLA0KICBkYXRhID0gYmFzZWxpbmUsDQogIEZVTiA9IHNkDQopDQoNCnJlc3Vtb19iYXNlbGluZSRzZF9jb3JyZWxhY2FvIDwtIHNkX2NvciRjb3JyZWxhY2FvWw0KICBtYXRjaCgNCiAgICByZXN1bW9fYmFzZWxpbmUkcHJvcG9yY2FvX3Bvb2wsDQogICAgc2RfY29yJHByb3BvcmNhb19wb29sDQogICkNCl0NCg0Ka25pdHI6OmthYmxlKA0KICByZXN1bW9fYmFzZWxpbmUsDQogIGRpZ2l0cyA9IDQsDQogIGNhcHRpb24gPSAiRGVzZW1wZW5obyBtw6lkaW8gZG8gR0JMVVAgY29tIGRhZG9zIHJlYWlzIg0KKQ0KYGBgDQoNCkEgZmlndXJhIG1hbnTDqW0gYSBpbmZvcm1hw6fDo28gZGFzIDMwIHJlcGV0acOnw7Vlcy4gQ2FkYSBsaW5oYSBmaW5hIHJlcHJlc2VudGEgdW1hDQpyZXBldGnDp8OjbyBjb21wbGV0YSBkZSBUMjUgYSBUMTAwLiBBIGxpbmhhIGRlc3RhY2FkYSBtb3N0cmEgYSBjb3JyZWxhw6fDo28gbcOpZGlhIGUNCmEgZmFpeGEgcmVwcmVzZW50YSBtw6lkaWEgwrEgMSBkZXN2aW8tcGFkcsOjbyBlbSBjYWRhIHRhbWFuaG8gZGUgdHJlaW5hbWVudG8uDQoNCmBgYHtyIGN1cnZhLWFwcmVuZGl6YWRvLCBmaWcuaGVpZ2h0PTUuNSwgZmlnLndpZHRoPTguNSwgZmlnLmNhcD0iQ3VydmEgZGUgYXByZW5kaXphZG8gZG8gR0JMVVAgbmFzIDMwIHJlcGV0acOnw7VlcywgY29tIG3DqWRpYSBlIGZhaXhhIGRlIMKxMSBkZXN2aW8tcGFkcsOjby4ifQ0KaWYgKCFyZXF1aXJlTmFtZXNwYWNlKCJnZ3Bsb3QyIiwgcXVpZXRseSA9IFRSVUUpKSB7DQogIHN0b3AoIkluc3RhbGUgbyBwYWNvdGUgZ2dwbG90MiBwYXJhIGdlcmFyIGFzIGZpZ3VyYXMgZG8gdHV0b3JpYWwuIikNCn0NCg0KaWYgKCFyZXF1aXJlTmFtZXNwYWNlKCJnZ3RoZW1lcyIsIHF1aWV0bHkgPSBUUlVFKSkgew0KICBzdG9wKCJJbnN0YWxlIG8gcGFjb3RlIGdndGhlbWVzIHBhcmEgdXNhciBvIHBhZHLDo28gZ3LDoWZpY28gR0RvY3MuIikNCn0NCg0KYmFzZWxpbmVfcGxvdCA8LSBiYXNlbGluZQ0KYmFzZWxpbmVfcGxvdCRQcm9wb3JjYW9fcGVyY2VudHVhbCA8LSBiYXNlbGluZV9wbG90JHByb3BvcmNhb19wb29sICogMTAwDQoNCnJlc3Vtb19wbG90IDwtIHJlc3Vtb19iYXNlbGluZQ0KcmVzdW1vX3Bsb3QkUHJvcG9yY2FvX3BlcmNlbnR1YWwgPC0gcmVzdW1vX3Bsb3QkcHJvcG9yY2FvX3Bvb2wgKiAxMDANCnJlc3Vtb19wbG90JExpbWl0ZV9pbmZlcmlvciA8LQ0KICByZXN1bW9fcGxvdCRjb3JyZWxhY2FvIC0gcmVzdW1vX3Bsb3Qkc2RfY29ycmVsYWNhbw0KcmVzdW1vX3Bsb3QkTGltaXRlX3N1cGVyaW9yIDwtDQogIHJlc3Vtb19wbG90JGNvcnJlbGFjYW8gKyByZXN1bW9fcGxvdCRzZF9jb3JyZWxhY2FvDQoNCmNvcl9tZWRpYSA8LSBnZ3RoZW1lczo6Z2RvY3NfcGFsKCkoMSkNCg0KZmlndXJhX2xlYXJuaW5nX2N1cnZlIDwtIGdncGxvdDI6OmdncGxvdCgNCiAgYmFzZWxpbmVfcGxvdCwNCiAgZ2dwbG90Mjo6YWVzKA0KICAgIHggPSBQcm9wb3JjYW9fcGVyY2VudHVhbCwNCiAgICB5ID0gY29ycmVsYWNhbywNCiAgICBncm91cCA9IHJlcGV0aWNhbw0KICApDQopICsNCiAgZ2dwbG90Mjo6Z2VvbV9saW5lKA0KICAgIGNvbG9yID0gImdyZXk2NSIsDQogICAgYWxwaGEgPSAwLjQ1LA0KICAgIGxpbmV3aWR0aCA9IDAuNDUNCiAgKSArDQogIGdncGxvdDI6Omdlb21fcG9pbnQoDQogICAgY29sb3IgPSAiZ3JleTY1IiwNCiAgICBhbHBoYSA9IDAuNDUsDQogICAgc2l6ZSA9IDEuMg0KICApICsNCiAgZ2dwbG90Mjo6Z2VvbV9yaWJib24oDQogICAgZGF0YSA9IHJlc3Vtb19wbG90LA0KICAgIGdncGxvdDI6OmFlcygNCiAgICAgIHggPSBQcm9wb3JjYW9fcGVyY2VudHVhbCwNCiAgICAgIHltaW4gPSBMaW1pdGVfaW5mZXJpb3IsDQogICAgICB5bWF4ID0gTGltaXRlX3N1cGVyaW9yDQogICAgKSwNCiAgICBpbmhlcml0LmFlcyA9IEZBTFNFLA0KICAgIGZpbGwgPSBjb3JfbWVkaWEsDQogICAgYWxwaGEgPSAwLjE1DQogICkgKw0KICBnZ3Bsb3QyOjpnZW9tX2xpbmUoDQogICAgZGF0YSA9IHJlc3Vtb19wbG90LA0KICAgIGdncGxvdDI6OmFlcygNCiAgICAgIHggPSBQcm9wb3JjYW9fcGVyY2VudHVhbCwNCiAgICAgIHkgPSBjb3JyZWxhY2FvDQogICAgKSwNCiAgICBpbmhlcml0LmFlcyA9IEZBTFNFLA0KICAgIGNvbG9yID0gY29yX21lZGlhLA0KICAgIGxpbmV3aWR0aCA9IDEuMTUNCiAgKSArDQogIGdncGxvdDI6Omdlb21fcG9pbnQoDQogICAgZGF0YSA9IHJlc3Vtb19wbG90LA0KICAgIGdncGxvdDI6OmFlcygNCiAgICAgIHggPSBQcm9wb3JjYW9fcGVyY2VudHVhbCwNCiAgICAgIHkgPSBjb3JyZWxhY2FvDQogICAgKSwNCiAgICBpbmhlcml0LmFlcyA9IEZBTFNFLA0KICAgIGNvbG9yID0gY29yX21lZGlhLA0KICAgIHNpemUgPSAzDQogICkgKw0KICBnZ3Bsb3QyOjpzY2FsZV94X2NvbnRpbnVvdXMoDQogICAgYnJlYWtzID0gYygyNSwgNTAsIDc1LCAxMDApLA0KICAgIGxhYmVscyA9IGMoIjI1JSIsICI1MCUiLCAiNzUlIiwgIjEwMCUiKQ0KICApICsNCiAgZ2dwbG90Mjo6bGFicygNCiAgICB0aXRsZSA9ICJDdXJ2YSBkZSBhcHJlbmRpemFkbyBkbyBHQkxVUCIsDQogICAgeCA9ICJQcm9wb3LDp8OjbyBkbyBwb29sIHJlYWwgdXNhZGEgbm8gdHJlaW5hbWVudG8iLA0KICAgIHkgPSAiQ29ycmVsYcOnw6NvIHByZWRpdGl2YSINCiAgKSArDQogIGdndGhlbWVzOjp0aGVtZV9nZG9jcygpICsNCiAgZ2dwbG90Mjo6dGhlbWUoDQogICAgcGxvdC50aXRsZSA9IGdncGxvdDI6OmVsZW1lbnRfdGV4dCgNCiAgICAgIGZhY2UgPSAiYm9sZCIsDQogICAgICBoanVzdCA9IDAuNQ0KICAgICkNCiAgKQ0KDQpmaWd1cmFfbGVhcm5pbmdfY3VydmUNCg0KZ2dwbG90Mjo6Z2dzYXZlKA0KICBmaWxlbmFtZSA9ICJvdXRwdXQvZmlndXJlcy8wNF9jdXJ2YV9hcHJlbmRpemFkb19nYmx1cC5wbmciLA0KICBwbG90ID0gZmlndXJhX2xlYXJuaW5nX2N1cnZlLA0KICB3aWR0aCA9IDguNSwNCiAgaGVpZ2h0ID0gNS41LA0KICBkcGkgPSAzMDANCikNCmBgYA0KDQpBIGNvcnJlbGHDp8OjbyBtw6lkaWEgYXVtZW50YSBkZSBhcHJveGltYWRhbWVudGUgMCw1MyBlbSBUMjUgcGFyYSAwLDY3IGVtIFQxMDAuDQpPIGdhbmhvLCBwb3LDqW0sIGZpY2EgcHJvZ3Jlc3NpdmFtZW50ZSBtZW5vciDDoCBtZWRpZGEgcXVlIG1haXMgaW5kaXbDrWR1b3Mgc8Ojbw0KYWRpY2lvbmFkb3MuDQoNCk5hIHByw7N4aW1hIGV0YXBhLCBUMjUsIFQ1MCBlIFQ3NSBzZXLDo28gY29tcGFyYWRvcyBmb3JtYWxtZW50ZSBjb20gVDEwMCB1c2FuZG8gYXMNCmRpZmVyZW7Dp2FzIHBhcmVhZGFzIGRhcyBtZXNtYXMgMzAgcmVwZXRpw6fDtWVzLg0K</div>
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIjQuIEdCTFVQIGNvbSBkYWRvcyByZWFpcyINCmF1dGhvcjogIldldmVydG9uIEdvbWVzIGRhIENvc3RhIg0KZGF0ZTogImByIFN5cy5EYXRlKClgIg0Kc2l0ZTogd29ya2Zsb3dyOjp3Zmxvd19zaXRlDQpvdXRwdXQ6DQogIHdvcmtmbG93cjo6d2Zsb3dfaHRtbDoNCiAgICB0b2M6IHRydWUNCiAgICB0b2NfZGVwdGg6IDMNCiAgICB0b2NfZmxvYXQ6IHRydWUNCiAgICBjb2RlX2Rvd25sb2FkOiB0cnVlDQogICAgY29kZV9mb2xkaW5nOiBzaG93DQplZGl0b3Jfb3B0aW9uczoNCiAgY2h1bmtfb3V0cHV0X3R5cGU6IGNvbnNvbGUNCi0tLQ0KDQpgYGB7ciBzZXR1cCwgaW5jbHVkZT1GQUxTRX0NCmtuaXRyOjpvcHRzX2NodW5rJHNldCgNCiAgZWNobyA9IFRSVUUsDQogIHdhcm5pbmcgPSBGQUxTRSwNCiAgbWVzc2FnZSA9IEZBTFNFLA0KICBjYWNoZSA9IEZBTFNFLA0KICBmaWcuYWxpZ24gPSAiY2VudGVyIiwNCiAgb3V0LndpZHRoID0gIjEwMCUiDQopDQpkaXIuY3JlYXRlKCJvdXRwdXQvZmlndXJlcyIsIHNob3dXYXJuaW5ncyA9IEZBTFNFLCByZWN1cnNpdmUgPSBUUlVFKQ0KYGBgDQoNCiMjIDEuIE9iamV0aXZvDQoNCkFnb3JhIHF1ZSBvcyBjb25qdW50b3MgZGUgdHJlaW5hbWVudG8gZXN0w6NvIGRlZmluaWRvcyBlIGEgbWF0cml6IGRlDQpyZWxhY2lvbmFtZW50byBnZW7DtG1pY28gYEdgIGZvaSBjb25zdHJ1w61kYSwgcG9kZW1vcyBhdmFsaWFyIGNvbW8gbyB0YW1hbmhvIGRhDQphbW9zdHJhIHJlYWwgaW5mbHVlbmNpYSBhIHByZWRpw6fDo28gZ2Vuw7RtaWNhLg0KDQpFbSBjYWRhIHVtYSBkYXMgMzAgcmVwZXRpw6fDtWVzIGFqdXN0YW1vcyBvIG1lc21vIEdCTFVQIHVzYW5kbzoNCg0KLSBUMjUgPSAyNzUgaW5kaXbDrWR1b3MgcmVhaXM7DQotIFQ1MCA9IDU1MSBpbmRpdsOtZHVvcyByZWFpczsNCi0gVDc1ID0gODI3IGluZGl2w61kdW9zIHJlYWlzOw0KLSBUMTAwID0gMS4xMDMgaW5kaXbDrWR1b3MgcmVhaXMuDQoNCkEgdmFsaWRhw6fDo28gY29udMOpbSBzZW1wcmUgMjc2IGluZGl2w61kdW9zIGUgw6kgZXhhdGFtZW50ZSBhIG1lc21hIHBhcmEgb3MgcXVhdHJvDQp0YW1hbmhvcyBkZSB0cmVpbmFtZW50byBkZW50cm8gZGUgY2FkYSByZXBldGnDp8Ojby4gUG9ydGFudG8sIGFzIGRpZmVyZW7Dp2FzIGVudHJlDQpUMjUsIFQ1MCwgVDc1IGUgVDEwMCByZWZsZXRlbSBwcmluY2lwYWxtZW50ZSBhIHF1YW50aWRhZGUgZGUgaW5mb3JtYcOnw6NvDQpmZW5vdMOtcGljYSBkaXNwb27DrXZlbCBwYXJhIG8gdHJlaW5hbWVudG8uDQoNCkVzdGEgZXRhcGEgcmVzcG9uZGUgw6AgcGVyZ3VudGE6DQoNCj4gKipDb21vIG8gZGVzZW1wZW5obyBwcmVkaXRpdm8gZG8gR0JMVVAgbXVkYSBxdWFuZG8gYXVtZW50YW1vcyBvIG7Dum1lcm8gZGUNCj4gaW5kaXbDrWR1b3MgcmVhaXMgbm8gdHJlaW5hbWVudG8/KioNCg0KQSBlcXVpdmFsw6puY2lhIGVzdGF0w61zdGljYSBlbnRyZSBvcyB0YW1hbmhvcyByZWR1emlkb3MgZSBUMTAwIHNlcsOhIGF2YWxpYWRhIG5hDQpFdGFwYSA1Lg0KDQojIyAyLiBDb21vIG8gR0JMVVAgdXNhIHRyZWluYW1lbnRvIGUgdmFsaWRhw6fDo28NCg0KQSBtYXRyaXogYEdgIGNvbnTDqW0gb3MgcmVsYWNpb25hbWVudG9zIGdlbsO0bWljb3MgZG9zIDEuMzc5IGluZGl2w61kdW9zLCBtYXMgbw0KZmVuw7N0aXBvIMOpIGZvcm5lY2lkbyBhbyBtb2RlbG8gc29tZW50ZSBwYXJhIG9zIGluZGl2w61kdW9zIGRvIGNvbmp1bnRvIGRlDQp0cmVpbmFtZW50by4NCg0KUGFyYSByZXByZXNlbnRhciBlc3NhIGVzdHJ1dHVyYSwgY3JpYW1vcyB1bSB2ZXRvciBmZW5vdMOtcGljbyBjb20gYE5BYCBwYXJhDQp0b2RvcyBvcyBpbmRpdsOtZHVvcyBlIHByZWVuY2hlbW9zIGFwZW5hcyBhcyBwb3Npw6fDtWVzIHBlcnRlbmNlbnRlcyBhbw0KVHJlaW5hbWVudG86DQoNCmBgYHINCiMgRXN0cnV0dXJhIGNvbmNlaXR1YWwgZG8gdmV0b3IgZmVub3TDrXBpY28gdXNhZG8gcGVsbyBtb2RlbG8uDQp5X21vZGVsbyA8LSByZXAoTkFfcmVhbF8sIGxlbmd0aCh5KSkNCnlfbW9kZWxvW3RyZWlub10gPC0geVt0cmVpbm9dDQpgYGANCg0KQXNzaW0sIG9zIGluZGl2w61kdW9zIGRhIHZhbGlkYcOnw6NvIHBhcnRpY2lwYW0gZGEgbWF0cml6IGdlbsO0bWljYSwgbWFzIHNldXMNCmZlbsOzdGlwb3MgbsOjbyBzw6NvIHV0aWxpemFkb3Mgbm8gYWp1c3RlLiBBcyBwcmVkacOnw7VlcyBvYnRpZGFzIG5lc3NhcyBwb3Npw6fDtWVzDQpwb2RlbSBlbnTDo28gc2VyIGNvbXBhcmFkYXMgYW9zIHZhbG9yZXMgb2JzZXJ2YWRvcyBwYXJhIGF2YWxpYXIgbyBtb2RlbG8uDQoNCiMjIDMuIE1vZGVsbyBlIHBhcsOibWV0cm9zDQoNCk8gY29tcG9uZW50ZSBnZW7DtG1pY28gw6kgZXNwZWNpZmljYWRvIG5vIGBCR0xSYCB1c2FuZG8gYEdgIGNvbW8ga2VybmVsIGBSS0hTYDoNCg0KXFsNCnkgPSBcbXUgKyBnICsgXHZhcmVwc2lsb24sDQpcXQ0KDQplbSBxdWUgYGdgIHJlcHJlc2VudGEgbyBlZmVpdG8gZ2Vuw7RtaWNvIGFzc29jaWFkbyDDoCBtYXRyaXogZGUgcmVsYWNpb25hbWVudG8uDQpPIG1lc21vIG1vZGVsbyBlIG9zIG1lc21vcyBwYXLDom1ldHJvcyBzw6NvIG1hbnRpZG9zIGVtIHRvZG9zIG9zIHRhbWFuaG9zIGRlDQpUcmVpbmFtZW50bywgcGVybWl0aW5kbyB1bWEgY29tcGFyYcOnw6NvIGRpcmV0YSBlbnRyZSBUMjUsIFQ1MCwgVDc1IGUgVDEwMC4NCg0KYGBge3IgcGFyYW1ldHJvcy1nYmx1cH0NClBST1BPUkNPRVMgPC0gYygwLjI1LCAwLjUwLCAwLjc1LCAxLjAwKQ0KTl9SRVAgPC0gMzANCk5fSVRFUiA8LSAxMDAwMA0KQlVSTl9JTiA8LSA1MDAwDQoNCkZJTkFMX0ZJTEUgPC0gInJlc3VsdHMvMDRfYmFzZWxpbmVfcmVzdWx0cy5jc3YiDQpgYGANCg0KVXRpbGl6YW1vcyAxMC4wMDAgaXRlcmHDp8O1ZXMgTUNNQywgY29tIGFzIHByaW1laXJhcyA1LjAwMCBkZXNjYXJ0YWRhcyBjb21vDQpwZXLDrW9kbyBkZSAqYnVybi1pbiouDQoNCiMjIDQuIFBpcGVsaW5lIGRvIEdCTFVQDQoNCk8gY8OzZGlnbyBhYmFpeG8gcmXDum5lIG8gcGlwZWxpbmUgYW5hbMOtdGljbyBhcGxpY2FkbyBhIGNhZGEgcmVwZXRpw6fDo28gZSBhIGNhZGENCnRhbWFuaG8gZGUgdHJlaW5hbWVudG8uIE9zIGNvbWVudMOhcmlvcyBkZXN0YWNhbSBhcyBldGFwYXMgZXNzZW5jaWFpczogc2VsZcOnw6NvDQpkbyBzcGxpdCwgbWFzY2FyYW1lbnRvIGRvcyBmZW7Ds3RpcG9zLCBlc3BlY2lmaWNhw6fDo28gZG8gbW9kZWxvLCBwcmVkacOnw6NvIGUNCmPDoWxjdWxvIGRhcyBtw6l0cmljYXMuDQoNCmBgYHtyIHBpcGVsaW5lLWdibHVwLCBldmFsPUZBTFNFfQ0KIyBPYmpldG9zIHByb2R1emlkb3MgbmFzIGV0YXBhcyBhbnRlcmlvcmVzLg0Kb2JqIDwtIHJlYWRSRFMoIm91dHB1dC8wMV9kYXRhX29iamVjdHMucmRzIikNCnNwbGl0c19tZXN0cmUgPC0gcmVhZFJEUygib3V0cHV0LzAyX3NwbGl0c19tZXN0cmVfMzByZXAucmRzIikNCmdvYmogPC0gcmVhZFJEUygib3V0cHV0LzAzX2dlbm9taWNfb2JqZWN0cy5yZHMiKQ0KDQp5IDwtIG9iaiR5DQpHIDwtIGdvYmokRw0KDQpyZXN1bHRhZG9zX2Jhc2VsaW5lIDwtIGRhdGEuZnJhbWUoKQ0KDQpmb3IgKHJlcCBpbiBzZXFfbGVuKE5fUkVQKSkgew0KICBmb3IgKGkgaW4gc2VxX2Fsb25nKFBST1BPUkNPRVMpKSB7DQogICAgcHJvcG9yY2FvIDwtIFBST1BPUkNPRVNbaV0NCg0KICAgICMgMS4gUmVjdXBlcmEgdHJlaW5hbWVudG8gZSB2YWxpZGHDp8OjbyBkYSByZXBldGnDp8OjbyBhdHVhbC4NCiAgICBzcGxpdCA8LSBzcGxpdHNfbWVzdHJlW1thcy5jaGFyYWN0ZXIocHJvcG9yY2FvKV1dW1tyZXBdXQ0KICAgIHRyZWlubyA8LSBzcGxpdCR0cmVpbm8NCiAgICB2YWxpZGFjYW8gPC0gc3BsaXQkdmFsaWQNCg0KICAgICMgMi4gTWFudMOpbSBmZW7Ds3RpcG9zIHNvbWVudGUgbm9zIGluZGl2w61kdW9zIGRlIHRyZWluYW1lbnRvLg0KICAgIHlfbW9kZWxvIDwtIHJlcCgNCiAgICAgIE5BX3JlYWxfLA0KICAgICAgbGVuZ3RoKHkpDQogICAgKQ0KDQogICAgeV9tb2RlbG9bdHJlaW5vXSA8LSB5W3RyZWlub10NCg0KICAgICMgMy4gRGVmaW5lIG8gY29tcG9uZW50ZSBnZW7DtG1pY28gdXNhbmRvIEcgY29tbyBrZXJuZWwuDQogICAgRVRBIDwtIGxpc3QoDQogICAgICBsaXN0KA0KICAgICAgICBLID0gRywNCiAgICAgICAgbW9kZWwgPSAiUktIUyINCiAgICAgICkNCiAgICApDQoNCiAgICAjIDQuIEFqdXN0YSBvIG1lc21vIG1vZGVsbyBlbSB0b2RvcyBvcyBjZW7DoXJpb3MuDQogICAgc2V0LnNlZWQoDQogICAgICA1MDAwMCArIHJlcCAqIDEwMCArIGkNCiAgICApDQoNCiAgICBhanVzdGUgPC0gQkdMUjo6QkdMUigNCiAgICAgIHkgPSB5X21vZGVsbywNCiAgICAgIEVUQSA9IEVUQSwNCiAgICAgIG5JdGVyID0gTl9JVEVSLA0KICAgICAgYnVybkluID0gQlVSTl9JTiwNCiAgICAgIHZlcmJvc2UgPSBGQUxTRQ0KICAgICkNCg0KICAgICMgNS4gT2J0w6ltIHByZWRpw6fDtWVzIGFwZW5hcyBwYXJhIG9zIGluZGl2w61kdW9zIGRhIHZhbGlkYcOnw6NvLg0KICAgIHByZWRpY2FvIDwtIGFqdXN0ZSR5SGF0W3ZhbGlkYWNhb10NCiAgICBvYnNlcnZhZG8gPC0geVt2YWxpZGFjYW9dDQoNCiAgICAjIDYuIENhbGN1bGEgYXMgbcOpdHJpY2FzIGRlIGRlc2VtcGVuaG8gcHJlZGl0aXZvLg0KICAgIGNvcnJlbGFjYW8gPC0gY29yKA0KICAgICAgb2JzZXJ2YWRvLA0KICAgICAgcHJlZGljYW8NCiAgICApDQoNCiAgICBSTVNFIDwtIHNxcnQoDQogICAgICBtZWFuKA0KICAgICAgICAob2JzZXJ2YWRvIC0gcHJlZGljYW8pXjINCiAgICAgICkNCiAgICApDQoNCiAgICBNQUUgPC0gbWVhbigNCiAgICAgIGFicygNCiAgICAgICAgb2JzZXJ2YWRvIC0gcHJlZGljYW8NCiAgICAgICkNCiAgICApDQoNCiAgICBjYWxpYnJhY2FvIDwtIGxtKA0KICAgICAgb2JzZXJ2YWRvIH4gcHJlZGljYW8NCiAgICApDQoNCiAgICBzbG9wZV9jYWxpYnJhY2FvIDwtIHVubmFtZSgNCiAgICAgIGNvZWYoY2FsaWJyYWNhbylbMl0NCiAgICApDQoNCiAgICAjIDcuIEFybWF6ZW5hIHVtYSBsaW5oYSBwYXJhIGEgY29tYmluYcOnw6NvIHJlcGV0acOnw6NvIMOXIHRhbWFuaG8uDQogICAgbm92YV9saW5oYSA8LSBkYXRhLmZyYW1lKA0KICAgICAgcmVwZXRpY2FvID0gcmVwLA0KICAgICAgcHJvcG9yY2FvX3Bvb2wgPSBwcm9wb3JjYW8sDQogICAgICBuX3RyZWlubyA9IGxlbmd0aCh0cmVpbm8pLA0KICAgICAgbl92YWxpZGFjYW8gPSBsZW5ndGgodmFsaWRhY2FvKSwNCiAgICAgIGNvcnJlbGFjYW8gPSBjb3JyZWxhY2FvLA0KICAgICAgUk1TRSA9IFJNU0UsDQogICAgICBNQUUgPSBNQUUsDQogICAgICBzbG9wZV9jYWxpYnJhY2FvID0gc2xvcGVfY2FsaWJyYWNhbw0KICAgICkNCg0KICAgIHJlc3VsdGFkb3NfYmFzZWxpbmUgPC0gcmJpbmQoDQogICAgICByZXN1bHRhZG9zX2Jhc2VsaW5lLA0KICAgICAgbm92YV9saW5oYQ0KICAgICkNCiAgfQ0KfQ0KDQp3cml0ZS5jc3YoDQogIHJlc3VsdGFkb3NfYmFzZWxpbmUsDQogIEZJTkFMX0ZJTEUsDQogIHJvdy5uYW1lcyA9IEZBTFNFDQopDQpgYGANCg0KIyMgNS4gTcOpdHJpY2FzIGRlIGF2YWxpYcOnw6NvDQoNClF1YXRybyBtZWRpZGFzIGNvbXBsZW1lbnRhcmVzIHPDo28gdXRpbGl6YWRhczoNCg0KLSAqKmNvcnJlbGHDp8OjbyBwcmVkaXRpdmEqKjogbWVkZSBhIGFzc29jaWHDp8OjbyBsaW5lYXIgZW50cmUgdmFsb3JlcyBvYnNlcnZhZG9zIGUNCiAgcHJlZGl0b3M7IHZhbG9yZXMgbWFpb3JlcyBpbmRpY2FtIG1lbGhvciBjYXBhY2lkYWRlIGRlIG9yZGVuYXIgb3MgaW5kaXbDrWR1b3M7DQotICoqUk1TRSoqOiByZXN1bWUgYSBtYWduaXR1ZGUgZG9zIGVycm9zIGUgZMOhIG1haW9yIHBlc28gYSBlcnJvcyBncmFuZGVzOw0KLSAqKk1BRSoqOiByZXByZXNlbnRhIG8gZXJybyBhYnNvbHV0byBtw6lkaW8gZW0gdW1hIGVzY2FsYSBkZSBpbnRlcnByZXRhw6fDo28NCiAgZGlyZXRhOw0KLSAqKmluY2xpbmHDp8OjbyBkZSBjYWxpYnJhw6fDo28qKjogw6kgb2J0aWRhIGRhIHJlZ3Jlc3PDo28gYG9ic2VydmFkbyB+IHByZWRpdG9gIGUNCiAgYWp1ZGEgYSBhdmFsaWFyIGEgZXNjYWxhIGRhcyBwcmVkacOnw7VlczsgdmFsb3JlcyBwcsOzeGltb3MgZGUgMSBpbmRpY2FtIG1lbGhvcg0KICBjYWxpYnJhw6fDo28uDQoNCkEgY29ycmVsYcOnw6NvIMOpIGEgbcOpdHJpY2EgcHJpbmNpcGFsIHBhcmEgYSBjb21wYXJhw6fDo28gZGUgZXF1aXZhbMOqbmNpYSwgZW5xdWFudG8NCmFzIGRlbWFpcyBkZXNjcmV2ZW0gYXNwZWN0b3MgYWRpY2lvbmFpcyBkbyBjb21wb3J0YW1lbnRvIHByZWRpdGl2by4NCg0KIyMgNi4gUmVzdWx0YWRvcyBkbyBHQkxVUCBjb20gZGFkb3MgcmVhaXMNCg0KQSB0YWJlbGEgcHJpbcOhcmlhIGNvbnTDqW0gdW1hIGxpbmhhIHBhcmEgY2FkYSBjb21iaW5hw6fDo28gZW50cmUgYXMgMzAgcmVwZXRpw6fDtWVzIGUNCm9zIHF1YXRybyB0YW1hbmhvcyBkZSB0cmVpbmFtZW50bywgdG90YWxpemFuZG8gMTIwIHJlc3VsdGFkb3MuDQoNCmBgYHtyIGNhcnJlZ2FyLXJlc3VsdGFkb3N9DQpiYXNlbGluZSA8LSByZWFkLmNzdihGSU5BTF9GSUxFKQ0KDQpjaGF2ZXMgPC0gcGFzdGUoDQogIGJhc2VsaW5lJHJlcGV0aWNhbywNCiAgYmFzZWxpbmUkcHJvcG9yY2FvX3Bvb2wsDQogIHNlcCA9ICJfXyINCikNCg0Kc3RvcGlmbm90KG5yb3coYmFzZWxpbmUpID09IDEyMCkNCnN0b3BpZm5vdChhbnlEdXBsaWNhdGVkKGNoYXZlcykgPT0gMCkNCnN0b3BpZm5vdChhbGwoYmFzZWxpbmUkcmVwZXRpY2FvICVpbiUgMTozMCkpDQpzdG9waWZub3QoYWxsKGJhc2VsaW5lJG5fdmFsaWRhY2FvID09IDI3NikpDQpzdG9waWZub3QoIWFueU5BKGJhc2VsaW5lWywgYygiY29ycmVsYWNhbyIsICJSTVNFIiwgIk1BRSIsICJzbG9wZV9jYWxpYnJhY2FvIildKSkNCmBgYA0KDQojIyA3LiBDdXJ2YSBkZSBhcHJlbmRpemFkbw0KDQpQYXJhIGNhZGEgdGFtYW5obyBkZSB0cmVpbmFtZW50byBjYWxjdWxhbW9zIGEgbcOpZGlhIGRhcyBxdWF0cm8gbcOpdHJpY2FzIGUgbw0KZGVzdmlvLXBhZHLDo28gZGEgY29ycmVsYcOnw6NvLiBBIGN1cnZhIGRlIGFwcmVuZGl6YWRvIHBlcm1pdGUgdmlzdWFsaXphciBxdWFudG8gbw0KZGVzZW1wZW5obyBhdW1lbnRhIHF1YW5kbyBtYWlzIGluZGl2w61kdW9zIHJlYWlzIHPDo28gYWRpY2lvbmFkb3MgYW8gdHJlaW5hbWVudG8uDQoNCmBgYHtyIHJlc3Vtby1iYXNlbGluZX0NCiMgTcOpZGlhcyBkYXMgcXVhdHJvIG3DqXRyaWNhcyBlbSBjYWRhIHRhbWFuaG8gZGUgdHJlaW5hbWVudG8uDQpyZXN1bW9fYmFzZWxpbmUgPC0gYWdncmVnYXRlKA0KICBjYmluZCgNCiAgICBjb3JyZWxhY2FvLA0KICAgIFJNU0UsDQogICAgTUFFLA0KICAgIHNsb3BlX2NhbGlicmFjYW8NCiAgKSB+IHByb3BvcmNhb19wb29sICsgbl90cmVpbm8sDQogIGRhdGEgPSBiYXNlbGluZSwNCiAgRlVOID0gbWVhbg0KKQ0KDQojIFZhcmlhYmlsaWRhZGUgZGEgY29ycmVsYcOnw6NvIGVudHJlIGFzIDMwIHJlcGV0acOnw7Vlcy4NCnNkX2NvciA8LSBhZ2dyZWdhdGUoDQogIGNvcnJlbGFjYW8gfiBwcm9wb3JjYW9fcG9vbCwNCiAgZGF0YSA9IGJhc2VsaW5lLA0KICBGVU4gPSBzZA0KKQ0KDQpyZXN1bW9fYmFzZWxpbmUkc2RfY29ycmVsYWNhbyA8LSBzZF9jb3IkY29ycmVsYWNhb1sNCiAgbWF0Y2goDQogICAgcmVzdW1vX2Jhc2VsaW5lJHByb3BvcmNhb19wb29sLA0KICAgIHNkX2NvciRwcm9wb3JjYW9fcG9vbA0KICApDQpdDQoNCmtuaXRyOjprYWJsZSgNCiAgcmVzdW1vX2Jhc2VsaW5lLA0KICBkaWdpdHMgPSA0LA0KICBjYXB0aW9uID0gIkRlc2VtcGVuaG8gbcOpZGlvIGRvIEdCTFVQIGNvbSBkYWRvcyByZWFpcyINCikNCmBgYA0KDQpBIGZpZ3VyYSBwcmVzZXJ2YSBhIGluZm9ybWHDp8OjbyBkYXMgMzAgcmVwZXRpw6fDtWVzLiBDYWRhIGxpbmhhIGZpbmEgcmVwcmVzZW50YSBhDQp0cmFqZXTDs3JpYSBkZSB1bWEgcmVwZXRpw6fDo28gZGUgVDI1IGF0w6kgVDEwMC4gQSBsaW5oYSBkZXN0YWNhZGEgbW9zdHJhIGENCmNvcnJlbGHDp8OjbyBtw6lkaWEgZSBhIGZhaXhhIHJlcHJlc2VudGEgbcOpZGlhIMKxIDEgZGVzdmlvLXBhZHLDo28gZW0gY2FkYSB0YW1hbmhvDQpkZSB0cmVpbmFtZW50by4NCg0KYGBge3IgY3VydmEtYXByZW5kaXphZG8sIGZpZy5oZWlnaHQ9NS41LCBmaWcud2lkdGg9OC41LCBmaWcuY2FwPSJDdXJ2YSBkZSBhcHJlbmRpemFkbyBkbyBHQkxVUCBuYXMgMzAgcmVwZXRpw6fDtWVzLCBjb20gbcOpZGlhIGUgZmFpeGEgZGUgwrExIGRlc3Zpby1wYWRyw6NvLiJ9DQppZiAoIXJlcXVpcmVOYW1lc3BhY2UoImdncGxvdDIiLCBxdWlldGx5ID0gVFJVRSkpIHsNCiAgc3RvcCgiSW5zdGFsZSBvIHBhY290ZSBnZ3Bsb3QyIHBhcmEgZ2VyYXIgYXMgZmlndXJhcyBkbyB0dXRvcmlhbC4iKQ0KfQ0KDQppZiAoIXJlcXVpcmVOYW1lc3BhY2UoImdndGhlbWVzIiwgcXVpZXRseSA9IFRSVUUpKSB7DQogIHN0b3AoIkluc3RhbGUgbyBwYWNvdGUgZ2d0aGVtZXMgcGFyYSB1c2FyIG8gcGFkcsOjbyBncsOhZmljbyBHRG9jcy4iKQ0KfQ0KDQpiYXNlbGluZV9wbG90IDwtIGJhc2VsaW5lDQpiYXNlbGluZV9wbG90JFByb3BvcmNhb19wZXJjZW50dWFsIDwtIGJhc2VsaW5lX3Bsb3QkcHJvcG9yY2FvX3Bvb2wgKiAxMDANCg0KcmVzdW1vX3Bsb3QgPC0gcmVzdW1vX2Jhc2VsaW5lDQpyZXN1bW9fcGxvdCRQcm9wb3JjYW9fcGVyY2VudHVhbCA8LSByZXN1bW9fcGxvdCRwcm9wb3JjYW9fcG9vbCAqIDEwMA0KcmVzdW1vX3Bsb3QkTGltaXRlX2luZmVyaW9yIDwtDQogIHJlc3Vtb19wbG90JGNvcnJlbGFjYW8gLSByZXN1bW9fcGxvdCRzZF9jb3JyZWxhY2FvDQpyZXN1bW9fcGxvdCRMaW1pdGVfc3VwZXJpb3IgPC0NCiAgcmVzdW1vX3Bsb3QkY29ycmVsYWNhbyArIHJlc3Vtb19wbG90JHNkX2NvcnJlbGFjYW8NCg0KY29yX21lZGlhIDwtIGdndGhlbWVzOjpnZG9jc19wYWwoKSgxKQ0KDQpmaWd1cmFfbGVhcm5pbmdfY3VydmUgPC0gZ2dwbG90Mjo6Z2dwbG90KA0KICBiYXNlbGluZV9wbG90LA0KICBnZ3Bsb3QyOjphZXMoDQogICAgeCA9IFByb3BvcmNhb19wZXJjZW50dWFsLA0KICAgIHkgPSBjb3JyZWxhY2FvLA0KICAgIGdyb3VwID0gcmVwZXRpY2FvDQogICkNCikgKw0KICBnZ3Bsb3QyOjpnZW9tX2xpbmUoDQogICAgY29sb3IgPSAiZ3JleTY1IiwNCiAgICBhbHBoYSA9IDAuNDUsDQogICAgbGluZXdpZHRoID0gMC40NQ0KICApICsNCiAgZ2dwbG90Mjo6Z2VvbV9wb2ludCgNCiAgICBjb2xvciA9ICJncmV5NjUiLA0KICAgIGFscGhhID0gMC40NSwNCiAgICBzaXplID0gMS4yDQogICkgKw0KICBnZ3Bsb3QyOjpnZW9tX3JpYmJvbigNCiAgICBkYXRhID0gcmVzdW1vX3Bsb3QsDQogICAgZ2dwbG90Mjo6YWVzKA0KICAgICAgeCA9IFByb3BvcmNhb19wZXJjZW50dWFsLA0KICAgICAgeW1pbiA9IExpbWl0ZV9pbmZlcmlvciwNCiAgICAgIHltYXggPSBMaW1pdGVfc3VwZXJpb3INCiAgICApLA0KICAgIGluaGVyaXQuYWVzID0gRkFMU0UsDQogICAgZmlsbCA9IGNvcl9tZWRpYSwNCiAgICBhbHBoYSA9IDAuMTUNCiAgKSArDQogIGdncGxvdDI6Omdlb21fbGluZSgNCiAgICBkYXRhID0gcmVzdW1vX3Bsb3QsDQogICAgZ2dwbG90Mjo6YWVzKA0KICAgICAgeCA9IFByb3BvcmNhb19wZXJjZW50dWFsLA0KICAgICAgeSA9IGNvcnJlbGFjYW8NCiAgICApLA0KICAgIGluaGVyaXQuYWVzID0gRkFMU0UsDQogICAgY29sb3IgPSBjb3JfbWVkaWEsDQogICAgbGluZXdpZHRoID0gMS4xNQ0KICApICsNCiAgZ2dwbG90Mjo6Z2VvbV9wb2ludCgNCiAgICBkYXRhID0gcmVzdW1vX3Bsb3QsDQogICAgZ2dwbG90Mjo6YWVzKA0KICAgICAgeCA9IFByb3BvcmNhb19wZXJjZW50dWFsLA0KICAgICAgeSA9IGNvcnJlbGFjYW8NCiAgICApLA0KICAgIGluaGVyaXQuYWVzID0gRkFMU0UsDQogICAgY29sb3IgPSBjb3JfbWVkaWEsDQogICAgc2l6ZSA9IDMNCiAgKSArDQogIGdncGxvdDI6OnNjYWxlX3hfY29udGludW91cygNCiAgICBicmVha3MgPSBjKDI1LCA1MCwgNzUsIDEwMCksDQogICAgbGFiZWxzID0gYygiMjUlIiwgIjUwJSIsICI3NSUiLCAiMTAwJSIpDQogICkgKw0KICBnZ3Bsb3QyOjpsYWJzKA0KICAgIHRpdGxlID0gIkN1cnZhIGRlIGFwcmVuZGl6YWRvIGRvIEdCTFVQIiwNCiAgICB4ID0gIlByb3BvcsOnw6NvIGRvIHBvb2wgcmVhbCB1c2FkYSBubyB0cmVpbmFtZW50byIsDQogICAgeSA9ICJDb3JyZWxhw6fDo28gcHJlZGl0aXZhIg0KICApICsNCiAgZ2d0aGVtZXM6OnRoZW1lX2dkb2NzKCkgKw0KICBnZ3Bsb3QyOjp0aGVtZSgNCiAgICBwbG90LnRpdGxlID0gZ2dwbG90Mjo6ZWxlbWVudF90ZXh0KA0KICAgICAgZmFjZSA9ICJib2xkIiwNCiAgICAgIGhqdXN0ID0gMC41DQogICAgKQ0KICApDQoNCmZpZ3VyYV9sZWFybmluZ19jdXJ2ZQ0KDQpnZ3Bsb3QyOjpnZ3NhdmUoDQogIGZpbGVuYW1lID0gIm91dHB1dC9maWd1cmVzLzA0X2N1cnZhX2FwcmVuZGl6YWRvX2dibHVwLnBuZyIsDQogIHBsb3QgPSBmaWd1cmFfbGVhcm5pbmdfY3VydmUsDQogIHdpZHRoID0gOC41LA0KICBoZWlnaHQgPSA1LjUsDQogIGRwaSA9IDMwMA0KKQ0KYGBgDQoNCkEgY29ycmVsYcOnw6NvIG3DqWRpYSBhdW1lbnRhIGRlIGFwcm94aW1hZGFtZW50ZSAwLDUzIGVtIFQyNSBwYXJhIDAsNjcgZW0gVDEwMC4NCk8gZ2FuaG8sIHBvcsOpbSwgZmljYSBwcm9ncmVzc2l2YW1lbnRlIG1lbm9yIMOgIG1lZGlkYSBxdWUgbWFpcyBpbmRpdsOtZHVvcyBzw6NvDQphZGljaW9uYWRvcy4gQSBjdXJ2YSBzdWdlcmUgcXVlIFQ3NSBqw6Egc2UgYXByb3hpbWEgZGUgVDEwMCwgbWFzIHByb3hpbWlkYWRlDQp2aXN1YWwgbsOjbyDDqSBzdWZpY2llbnRlIHBhcmEgZGVjbGFyYXIgZXF1aXZhbMOqbmNpYS4NCg0KTmEgcHLDs3hpbWEgZXRhcGEsIFQyNSwgVDUwIGUgVDc1IHNlcsOjbyBjb21wYXJhZG9zIGZvcm1hbG1lbnRlIGNvbSBUMTAwIHVzYW5kbyBhcw0KZGlmZXJlbsOnYXMgcGFyZWFkYXMgZGFzIG1lc21hcyAzMCByZXBldGnDp8O1ZXMu</div>
 
 <!-- Adjust MathJax settings so that all math formulae are shown using
 TeX fonts only; see
