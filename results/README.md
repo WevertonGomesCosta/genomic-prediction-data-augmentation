@@ -1,15 +1,26 @@
-# Versioned results
+# Resultados versionados
 
-This directory stores lightweight, approved analytical results so that
-workflowr pages can be rebuilt without refitting every BGLR model.
+Esta pasta contém apenas resultados leves necessários para reconstruir o
+tutorial sem repetir os ajustes computacionalmente caros.
 
-Current approved files:
+## Arquivos mantidos
 
-- `04_baseline_results.csv`: 120 real-only GBLUP fits;
-- `04_baseline_summary.csv`;
-- `04_paired_differences_vs_T100.csv`;
-- `05_equivalence_primary.csv`;
-- `05_equivalence_NB_effective_ntrain.csv`.
+- `04_baseline_results.csv` — 120 ajustes GBLUP usando somente indivíduos reais;
+- `06_da_summary.csv` — resumo auditado dos 360 ajustes de Data Augmentation,
+  incluindo desempenho médio, comparação com o mesmo tamanho real e
+  equivalência com T100.
 
-The definitive Data Augmentation results will be added after the 360-fit stage
-is completed and audited.
+## Por que não guardar várias tabelas derivadas?
+
+Tabelas como médias do baseline, diferenças contra T100 e resultados do TOST
+são calculadas diretamente nos respectivos `.Rmd`. Isso evita manter múltiplos
+CSVs que representam apenas transformações do mesmo resultado primário.
+
+## Reprodução pesada
+
+Os módulos 4 e 6 mostram o código completo dos ajustes, mas usam
+`RUN_MODELS <- FALSE` por padrão para que o site possa ser reconstruído sem
+refazer 480 modelos BGLR.
+
+Ao reproduzir os modelos do zero, os checkpoints locais são gravados em
+`output/checkpoints/` e permanecem fora do Git.
