@@ -9,6 +9,7 @@ output:
     toc_depth: 3
     toc_float: true
     code_download: true
+    code_folding: show
 editor_options:
   chunk_output_type: console
 ---
@@ -22,57 +23,308 @@ knitr::opts_chunk$set(
   fig.align = "center",
   out.width = "100%"
 )
-source("R/functions.R")
-dir.create("output", showWarnings = FALSE, recursive = TRUE)
-dir.create("output/checkpoints", showWarnings = FALSE, recursive = TRUE)
-dir.create("results", showWarnings = FALSE, recursive = TRUE)
 ```
 
-## Contrato estatístico
+## 1. Objetivo
 
-A margem primária é `delta = 0.05`. Como as 30 repetições reutilizam indivíduos
-da mesma população, o TOST utiliza o erro-padrão corrigido de Nadeau–Bengio.
+A curva de aprendizado mostrou que T75 apresenta desempenho próximo de T100.
+Agora precisamos responder uma pergunta mais específica:
 
-```{r equivalence}
-assert_file("results/04_paired_differences_vs_T100.csv")
-diferencas <- read.csv("results/04_paired_differences_vs_T100.csv")
+> A diferença é pequena o suficiente para considerar uma amostra reduzida
+> praticamente equivalente a T100?
 
+Não procuramos provar que as correlações são exatamente iguais. Definimos uma
+margem de diferença considerada pequena para este estudo:
+
+\[
+\delta = 0.05.
+\]
+
+Uma estratégia será considerada equivalente quando o intervalo de confiança do
+efeito estiver totalmente dentro de:
+
+\[
+[-0.05,\,+0.05].
+\]
+
+## 2. Carregando o baseline
+
+Esta etapa utiliza apenas os 120 resultados reais já produzidos na Etapa 4.
+Nenhum GBLUP é reajustado.
+
+```{r carregar-baseline}
+BASELINE_FILE <- "results/04_baseline_results.csv"
+
+if (!file.exists(BASELINE_FILE)) {
+  stop("Arquivo ausente: results/04_baseline_results.csv")
+}
+
+baseline <- read.csv(BASELINE_FILE)
+
+stopifnot(nrow(baseline) == 120)
+```
+
+## 3. Diferenças pareadas contra T100
+
+Cada cenário reduzido é comparado com T100 **na mesma repetição**. Isso é
+possível porque ambos foram avaliados exatamente nos mesmos 276 indivíduos de
+validação.
+
+```{r diferencas-pareadas}
+t100 <- baseline[
+  baseline$proporcao_pool == 1,
+  c("repeticao", "correlacao")
+]
+
+names(t100)[2] <- "correlacao_T100"
+
+reduzidos <- baseline[
+  baseline$proporcao_pool < 1,
+  c(
+    "repeticao",
+    "proporcao_pool",
+    "n_treino",
+    "correlacao"
+  )
+]
+
+diferencas <- merge(
+  reduzidos,
+  t100,
+  by = "repeticao"
+)
+
+diferencas$delta_cor <-
+  diferencas$correlacao -
+  diferencas$correlacao_T100
+
+aggregate(
+  delta_cor ~ proporcao_pool,
+  data = diferencas,
+  FUN = mean
+) |>
+  knitr::kable(
+    digits = 4,
+    caption = "Diferença média de correlação em relação a T100"
+  )
+```
+
+Valores negativos indicam que a amostra reduzida teve correlação menor que
+T100.
+
+## 4. Por que corrigir o erro-padrão?
+
+As 30 repetições não são 30 experimentos completamente independentes. Os
+holdouts são sorteados da mesma população e um mesmo indivíduo pode aparecer em
+várias repetições.
+
+Por isso usamos a aproximação de Nadeau-Bengio para aumentar o erro-padrão em
+relação ao teste pareado ingênuo:
+
+\[
+SE_{NB}=
+\sqrt{
+\left(
+\frac{1}{R}+
+\frac{n_{test}}{n_{train}}
+\right)s_d^2
+}.
+\]
+
+Aqui:
+
+- `R = 30` repetições;
+- `n_test = 276` indivíduos de validação;
+- `n_train = 1103` para a análise primária;
+- `s_d` é o desvio-padrão das diferenças pareadas.
+
+## 5. TOST com correção de Nadeau-Bengio
+
+O TOST realiza dois testes unilaterais. Para declarar equivalência, precisamos
+rejeitar simultaneamente que a diferença seja menor ou igual a `-0.05` e que
+seja maior ou igual a `+0.05`.
+
+O código abaixo mostra a conta diretamente, sem função auxiliar.
+
+```{r tost-principal}
 DELTA <- 0.05
 ALPHA <- 0.05
+R <- 30
+N_TEST <- 276
+N_TRAIN <- 1103
 
-primary <- do.call(rbind, lapply(c(0.25, 0.50, 0.75), function(prop) {
-  d <- diferencas$delta_cor_vs_100[diferencas$proporcao_pool == prop]
-  cbind(
-    data.frame(proporcao_pool = prop),
-    tost_nb(d, delta = DELTA, alpha = ALPHA,
-            n_resamples = 30, n_train = 1103, n_test = 276)
+resultado_equivalencia <- data.frame()
+
+for (proporcao in c(0.25, 0.50, 0.75)) {
+  d <- diferencas$delta_cor[
+    diferencas$proporcao_pool == proporcao
+  ]
+
+  media_d <- mean(d)
+  sd_d <- sd(d)
+
+  fator_NB <-
+    1 / R +
+    N_TEST / N_TRAIN
+
+  se_NB <- sqrt(
+    fator_NB * sd_d^2
   )
-}))
-write.csv(primary, "results/05_equivalence_primary.csv", row.names = FALSE)
-primary
-```
 
-## Sensibilidade ao `n_train` efetivo
+  gl <- length(d) - 1
 
-```{r nb-effective}
-n_eff <- c("0.25" = 275, "0.5" = 551, "0.75" = 827)
+  p_inferior <- 1 - pt(
+    (media_d + DELTA) / se_NB,
+    df = gl
+  )
 
-effective <- do.call(rbind, lapply(c(0.25, 0.50, 0.75), function(prop) {
-  d <- diferencas$delta_cor_vs_100[diferencas$proporcao_pool == prop]
-  cbind(
+  p_superior <- pt(
+    (media_d - DELTA) / se_NB,
+    df = gl
+  )
+
+  t_critico <- qt(
+    1 - ALPHA,
+    df = gl
+  )
+
+  ic90_inf <- media_d - t_critico * se_NB
+  ic90_sup <- media_d + t_critico * se_NB
+
+  p_TOST <- max(
+    p_inferior,
+    p_superior
+  )
+
+  equivalente <-
+    p_inferior < ALPHA &&
+    p_superior < ALPHA &&
+    ic90_inf > -DELTA &&
+    ic90_sup < DELTA
+
+  resultado_equivalencia <- rbind(
+    resultado_equivalencia,
     data.frame(
-      proporcao_pool = prop,
-      n_train_efetivo = unname(n_eff[as.character(prop)])
-    ),
-    tost_nb(
-      d, delta = DELTA, alpha = ALPHA, n_resamples = 30,
-      n_train = unname(n_eff[as.character(prop)]), n_test = 276
+      Proporcao = proporcao,
+      N_real = unique(
+        diferencas$n_treino[
+          diferencas$proporcao_pool == proporcao
+        ]
+      ),
+      Delta_cor_media = media_d,
+      SE_NB = se_NB,
+      IC90_inf = ic90_inf,
+      IC90_sup = ic90_sup,
+      p_TOST = p_TOST,
+      Equivalente = equivalente
     )
   )
-}))
-write.csv(effective, "results/05_equivalence_NB_effective_ntrain.csv", row.names = FALSE)
-effective
+}
+
+knitr::kable(
+  resultado_equivalencia,
+  digits = 4,
+  caption = "Equivalência das amostras reais reduzidas com T100"
+)
 ```
 
-A análise aprovada identifica T75 (827 indivíduos reais) como a menor amostra
-equivalente a T100 sem Data Augmentation.
+O resultado identifica T75 como a menor amostra real cujo intervalo de 90%
+permanece completamente dentro da margem de equivalência.
+
+## 6. Análise de sensibilidade usando o tamanho real de treinamento
+
+Na análise principal usamos `n_train = 1103`, correspondente ao pool externo de
+treinamento. Como verificação de sensibilidade, repetimos a correção usando o
+tamanho efetivo de cada estratégia: 275, 551 ou 827.
+
+```{r sensibilidade-ntrain}
+tamanhos_efetivos <- c(
+  "0.25" = 275,
+  "0.5" = 551,
+  "0.75" = 827
+)
+
+sensibilidade <- data.frame()
+
+for (proporcao in c(0.25, 0.50, 0.75)) {
+  d <- diferencas$delta_cor[
+    diferencas$proporcao_pool == proporcao
+  ]
+
+  n_train_efetivo <- unname(
+    tamanhos_efetivos[
+      as.character(proporcao)
+    ]
+  )
+
+  media_d <- mean(d)
+  sd_d <- sd(d)
+
+  fator_NB <-
+    1 / R +
+    N_TEST / n_train_efetivo
+
+  se_NB <- sqrt(
+    fator_NB * sd_d^2
+  )
+
+  gl <- length(d) - 1
+
+  p_inferior <- 1 - pt(
+    (media_d + DELTA) / se_NB,
+    df = gl
+  )
+
+  p_superior <- pt(
+    (media_d - DELTA) / se_NB,
+    df = gl
+  )
+
+  t_critico <- qt(
+    1 - ALPHA,
+    df = gl
+  )
+
+  ic90_inf <- media_d - t_critico * se_NB
+  ic90_sup <- media_d + t_critico * se_NB
+
+  equivalente <-
+    p_inferior < ALPHA &&
+    p_superior < ALPHA &&
+    ic90_inf > -DELTA &&
+    ic90_sup < DELTA
+
+  sensibilidade <- rbind(
+    sensibilidade,
+    data.frame(
+      Proporcao = proporcao,
+      N_train_correcao = n_train_efetivo,
+      Delta_cor_media = media_d,
+      IC90_inf = ic90_inf,
+      IC90_sup = ic90_sup,
+      p_TOST = max(p_inferior, p_superior),
+      Equivalente = equivalente
+    )
+  )
+}
+
+knitr::kable(
+  sensibilidade,
+  digits = 4,
+  caption = "Sensibilidade da correção ao tamanho efetivo de treinamento"
+)
+```
+
+A conclusão não muda: T75 permanece equivalente e T25/T50 não são equivalentes.
+
+## 7. Conclusão desta etapa
+
+Sem Data Augmentation, o menor conjunto real equivalente a T100 é:
+
+\[
+\boxed{T75 = 827\text{ indivíduos reais}}.
+\]
+
+Esse valor será a referência da próxima etapa. O Data Augmentation só terá
+benefício prático se permitir que T50 ou T25 também se tornem equivalentes a
+T100.
