@@ -43,8 +43,8 @@ fornece seus fenótipos ao modelo.
 
 ## 2. Carregando a matriz de SNPs e os splits
 
-Reutilizamos diretamente os objetos produzidos nas Etapas 1 e 2. Nenhuma
-leitura, filtragem ou nova amostragem é realizada aqui.
+Reutilizamos os objetos produzidos nas Etapas 1 e 2. Nenhuma leitura,
+filtragem ou nova amostragem é realizada aqui.
 
 ```{r carregar-dados}
 DATA_OBJECTS <- "output/01_data_objects.rds"
@@ -92,8 +92,6 @@ genótipo para obter a matriz centralizada `Z`:
 Z_{ij}=M_{ij}-2p_j.
 \]
 
-Em R, `sweep()` aplica a subtração coluna a coluna.
-
 ```{r centralizar-marcadores}
 Z <- sweep(
   M,
@@ -114,9 +112,6 @@ Utilizamos a forma aditiva de VanRaden:
 \frac{\mathbf{Z}\mathbf{Z}^{\mathsf{T}}}
 {2\sum_j p_j(1-p_j)}.
 \]
-
-O denominador coloca os relacionamentos na escala da variabilidade genética
-esperada para os marcadores.
 
 ```{r construir-G}
 denominador <- 2 * sum(
@@ -166,8 +161,8 @@ stopifnot(erro_simetria < 1e-10)
 ## 7. Visualização da matriz G
 
 Para uma primeira leitura visual, mostramos os relacionamentos entre os
-primeiros 80 indivíduos. Esta figura é apenas ilustrativa e não participa dos
-cálculos de predição ou equivalência.
+primeiros 80 indivíduos. Esta figura é ilustrativa e não participa dos cálculos
+de predição ou equivalência.
 
 ```{r heatmap-G, fig.height=6, fig.width=7, fig.cap="Relacionamento genômico entre os primeiros 80 indivíduos."}
 if (!requireNamespace("ggplot2", quietly = TRUE)) {
@@ -210,10 +205,7 @@ figura_heatmap <- ggplot2::ggplot(
   ) +
   ggthemes::theme_gdocs() +
   ggplot2::theme(
-    plot.title = ggplot2::element_text(
-      face = "bold",
-      hjust = 0.5
-    ),
+    plot.title = ggplot2::element_text(face = "bold", hjust = 0.5),
     legend.position = "right"
   )
 
@@ -230,11 +222,8 @@ ggplot2::ggsave(
 
 ## 8. Distribuição de referência dos relacionamentos genômicos
 
-O script original também examinava todos os relacionamentos fora da diagonal
-principal de `G`. Esses valores descrevem a distribuição de relacionamento
-entre indivíduos diferentes da população.
-
-A construção original do vetor é mantida explicitamente:
+O script original examinava todos os relacionamentos fora da diagonal principal
+de `G`. A construção original do vetor é preservada:
 
 \[
 G_{offdiag}=\{G_{ij}:i\neq j\}.
@@ -291,8 +280,7 @@ figura_offdiag <- ggplot2::ggplot(
       color = Percentil,
       linetype = Percentil
     ),
-    linewidth = 0.8,
-    show.legend = TRUE
+    linewidth = 0.8
   ) +
   ggthemes::scale_color_gdocs() +
   ggplot2::scale_linetype_manual(
@@ -311,10 +299,7 @@ figura_offdiag <- ggplot2::ggplot(
   ) +
   ggthemes::theme_gdocs() +
   ggplot2::theme(
-    plot.title = ggplot2::element_text(
-      face = "bold",
-      hjust = 0.5
-    ),
+    plot.title = ggplot2::element_text(face = "bold", hjust = 0.5),
     legend.position = "top"
   )
 
@@ -329,22 +314,27 @@ ggplot2::ggsave(
 )
 ```
 
-Os percentis P90, P95 e P99 servem apenas como referências descritivas da
-estrutura de `G`. Eles não definem os testes de equivalência das etapas
-posteriores.
+Os percentis P90, P95 e P99 são referências descritivas da estrutura de `G`.
+Eles não definem os testes de equivalência das etapas posteriores.
 
-## 9. Relacionamento máximo entre validação e treinamento
+## 9. Relacionamento máximo e cobertura genômica
 
-Além da distribuição global de `G`, o script original verificava quão próximo
-cada indivíduo da validação estava dos indivíduos disponíveis para treinamento.
+O script original também verificava quão próximo cada indivíduo da validação
+estava dos indivíduos disponíveis para treinamento.
 
-Para cada repetição, primeiro ordenamos os 1.103 indivíduos do pool completo do
-mais relacionado para o menos relacionado com cada indivíduo da validação. Em
-seguida verificamos qual é o melhor indivíduo dessa ordenação que está presente
-em T25, T50, T75 ou T100.
+Para cada indivíduo de validação, os 1.103 indivíduos do pool completo são
+ordenados do maior para o menor relacionamento genômico. O rank 1 representa o
+vizinho mais relacionado. Depois verificamos qual é o melhor rank que permanece
+disponível em T25, T50, T75 e T100.
 
 ```{r calcular-ranking-genomico}
-ranking_individual <- data.frame()
+N_CENARIOS_RANK <- 30 * 276 * 4
+linhas_rank <- vector(
+  "list",
+  N_CENARIOS_RANK
+)
+
+k <- 0L
 
 for (rep in seq_len(30)) {
   validacao <- splits_mestre[["1"]][[rep]]$valid
@@ -371,11 +361,9 @@ for (rep in seq_len(30)) {
     )
 
     for (proporcao in c(0.25, 0.50, 0.75, 1.00)) {
-      treino_index <- splits_mestre[
-        [as.character(proporcao)]
-      ][[rep]]$treino
+      treino_index <- splits_mestre[[as.character(proporcao)]][[rep]]$treino
 
-      # Ranks dos indivíduos pertencentes ao treinamento atual.
+      # Ranks dos indivíduos que pertencem ao treinamento atual.
       ranks_treino <- nomes_rank[
         as.character(treino_index)
       ]
@@ -394,25 +382,29 @@ for (rep in seq_len(30)) {
       melhor_individuo_pool <- pool_ordenado[1]
       g_max_pool <- G[ind, melhor_individuo_pool]
 
-      ranking_individual <- rbind(
-        ranking_individual,
-        data.frame(
-          repeticao = rep,
-          proporcao_pool = proporcao,
-          individuo_validacao = ind,
-          melhor_rank_no_pool = melhor_rank,
-          melhor_individuo_treino = melhor_individuo,
-          melhor_individuo_pool = melhor_individuo_pool,
-          g_max_atual = g_max_atual,
-          g_max_pool = g_max_pool,
-          perda_g_max_vs_pool = g_max_pool - g_max_atual
-        )
+      k <- k + 1L
+
+      linhas_rank[[k]] <- data.frame(
+        repeticao = rep,
+        proporcao_pool = proporcao,
+        individuo_validacao = ind,
+        melhor_rank_no_pool = melhor_rank,
+        melhor_individuo_treino = melhor_individuo,
+        melhor_individuo_pool = melhor_individuo_pool,
+        g_max_atual = g_max_atual,
+        g_max_pool = g_max_pool,
+        perda_g_max_vs_pool = g_max_pool - g_max_atual
       )
     }
   }
 }
 
-stopifnot(nrow(ranking_individual) == 30 * 276 * 4)
+ranking_individual <- do.call(
+  rbind,
+  linhas_rank
+)
+
+stopifnot(nrow(ranking_individual) == N_CENARIOS_RANK)
 stopifnot(
   all(
     ranking_individual$melhor_rank_no_pool[
@@ -421,9 +413,6 @@ stopifnot(
   )
 )
 ```
-
-A tabela abaixo resume o melhor relacionamento disponível e o rank do melhor
-vizinho genômico em cada tamanho de treinamento.
 
 ```{r resumo-ranking-genomico}
 resumo_ranking <- aggregate(
@@ -444,9 +433,9 @@ knitr::kable(
 
 ### 9.1. Relacionamento genômico máximo
 
-Esta é uma das figuras presentes no script original. Ela mostra a distribuição
-do maior relacionamento genômico disponível para cada indivíduo da validação
-em cada tamanho de treinamento.
+Esta figura estava presente no script original. Ela mostra a distribuição do
+maior relacionamento genômico disponível para cada indivíduo da validação em
+cada tamanho de treinamento.
 
 ```{r figura-gmax, fig.height=5, fig.width=8, fig.cap="Distribuição do maior relacionamento genômico entre cada indivíduo de validação e o treinamento disponível."}
 dados_gmax <- ranking_individual
@@ -477,10 +466,7 @@ figura_gmax <- ggplot2::ggplot(
   ) +
   ggthemes::theme_gdocs() +
   ggplot2::theme(
-    plot.title = ggplot2::element_text(
-      face = "bold",
-      hjust = 0.5
-    ),
+    plot.title = ggplot2::element_text(face = "bold", hjust = 0.5),
     legend.position = "none"
   )
 
@@ -497,10 +483,9 @@ ggplot2::ggsave(
 
 ### 9.2. Cobertura dos vizinhos genômicos mais próximos
 
-A segunda figura original mostra a posição, no ranking do pool completo, do
-melhor vizinho genômico que permanece disponível em cada subconjunto de
-treinamento. Em T100, o melhor indivíduo do pool está sempre disponível e,
-portanto, o rank é sempre 1.
+Esta figura também estava presente no script original. Ela mostra a posição, no
+ranking do pool completo, do melhor vizinho genômico que permanece disponível
+em cada subconjunto de treinamento. Em T100, o rank é sempre 1.
 
 ```{r figura-rank-pool, fig.height=5, fig.width=8, fig.cap="Distribuição do melhor rank genômico disponível nos conjuntos T25, T50, T75 e T100."}
 dados_rank_plot <- ranking_individual
@@ -531,10 +516,7 @@ figura_rank <- ggplot2::ggplot(
   ) +
   ggthemes::theme_gdocs() +
   ggplot2::theme(
-    plot.title = ggplot2::element_text(
-      face = "bold",
-      hjust = 0.5
-    ),
+    plot.title = ggplot2::element_text(face = "bold", hjust = 0.5),
     legend.position = "none"
   )
 
@@ -549,9 +531,9 @@ ggplot2::ggsave(
 )
 ```
 
-Esses diagnósticos ajudam a interpretar como a redução do conjunto real afeta a
-cobertura genômica disponível para a validação. Eles são descritivos e não
-substituem a comparação preditiva formal realizada nas Etapas 4 e 5.
+Esses diagnósticos são descritivos. Eles ajudam a interpretar como a redução do
+conjunto real afeta a cobertura genômica disponível para a validação, mas não
+substituem a comparação preditiva formal das Etapas 4 e 5.
 
 ## 10. Objeto salvo para a modelagem
 
