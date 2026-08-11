@@ -24,6 +24,7 @@ knitr::opts_chunk$set(
   out.width = "100%"
 )
 dir.create("output", showWarnings = FALSE, recursive = TRUE)
+dir.create("output/figures", showWarnings = FALSE, recursive = TRUE)
 ```
 
 ## 1. Objetivo
@@ -215,9 +216,11 @@ head(resumo_splits, 8) |>
 ```
 
 O número de vezes em que cada indivíduo aparece na validação pode variar porque
-a validação é sorteada novamente em cada repetição.
+a validação é sorteada novamente em cada repetição. Essa visualização permite
+verificar se os 30 holdouts distribuem a participação na validação ao longo da
+população, sem alterar o desenho amostral.
 
-```{r frequencia-validacao, fig.height=4.5}
+```{r frequencia-validacao, fig.height=4.8, fig.width=8, fig.cap="Frequência com que cada indivíduo aparece na validação ao longo dos 30 holdouts."}
 validacoes <- unlist(
   lapply(
     splits_mestre[["1"]],
@@ -230,11 +233,60 @@ freq_validacao <- tabulate(
   nbins = n
 )
 
-hist(
-  freq_validacao,
-  breaks = seq(min(freq_validacao) - 0.5, max(freq_validacao) + 0.5, by = 1),
-  xlab = "Número de vezes na validação",
-  main = "Frequência dos indivíduos nos 30 holdouts"
+if (!requireNamespace("ggplot2", quietly = TRUE)) {
+  stop("Instale o pacote ggplot2 para gerar as figuras do tutorial.")
+}
+
+if (!requireNamespace("ggthemes", quietly = TRUE)) {
+  stop("Instale o pacote ggthemes para usar o padrão gráfico GDocs.")
+}
+
+dados_frequencia <- data.frame(
+  Frequencia = freq_validacao
+)
+
+figura_frequencia <- ggplot2::ggplot(
+  dados_frequencia,
+  ggplot2::aes(x = Frequencia)
+) +
+  ggplot2::geom_histogram(
+    binwidth = 1,
+    boundary = 0.5,
+    fill = ggthemes::gdocs_pal()(1),
+    color = "white",
+    linewidth = 0.25
+  ) +
+  ggplot2::scale_x_continuous(
+    breaks = seq(
+      min(freq_validacao),
+      max(freq_validacao),
+      by = 1
+    )
+  ) +
+  ggplot2::labs(
+    title = "Frequência dos indivíduos nos 30 holdouts",
+    x = "Número de vezes na validação",
+    y = "Número de indivíduos"
+  ) +
+  ggthemes::theme_gdocs() +
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(
+      face = "bold",
+      hjust = 0.5
+    ),
+    axis.title = ggplot2::element_text(
+      face = "bold"
+    )
+  )
+
+figura_frequencia
+
+ggplot2::ggsave(
+  filename = "output/figures/02_frequencia_validacao.png",
+  plot = figura_frequencia,
+  width = 8,
+  height = 4.8,
+  dpi = 300
 )
 ```
 
