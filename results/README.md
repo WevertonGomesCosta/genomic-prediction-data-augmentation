@@ -1,29 +1,26 @@
-# Resultados versionados
+# Resultados primários
 
-Esta pasta contém apenas os resultados primários necessários para reconstruir
-o tutorial sem repetir os ajustes computacionalmente caros.
+Esta pasta contém as tabelas primárias de desempenho utilizadas nos módulos de
+predição genômica e aumento de dados.
 
-## Arquivos mantidos
+## Arquivos
 
-- `04_baseline_results.csv` — resultados dos 120 ajustes GBLUP usando somente indivíduos reais;
-- `06_da_results.csv` — resultados completos dos 360 ajustes de Data Augmentation.
+- `04_baseline_results.csv` — 120 resultados do GBLUP com somente indivíduos
+  reais: 30 repetições × T25, T50, T75 e T100;
+- `06_da_results.csv` — 360 resultados do GBLUP com aumento de dados: 30
+  repetições × três tamanhos reais × quatro regras de Mixup.
 
-## Regra do tutorial
+## Organização das análises
 
-Os arquivos acima são as fontes canônicas dos resultados. Tabelas derivadas,
-como médias, desvios-padrão, diferenças contra T100, comparações DA versus real
-e resultados do TOST, são calculadas diretamente nos respectivos `.Rmd`.
+Esses dois arquivos concentram as medidas obtidas para cada combinação do
+desenho experimental. A partir deles, os módulos calculam diretamente:
 
-Isso evita manter múltiplos CSVs que representam apenas transformações dos
-mesmos resultados primários e permite que o leitor acompanhe no próprio
-tutorial como cada conclusão é obtida.
+- médias e desvios-padrão;
+- diferenças pareadas entre tamanhos de treinamento;
+- comparação entre aumento de dados e o mesmo conjunto real;
+- diferenças em relação a T100;
+- intervalos de confiança e testes TOST com correção de Nadeau-Bengio.
 
-## Reprodução pesada
-
-Os módulos 4 e 6 mostram o código completo dos ajustes, mas usam
-`RUN_MODELS <- FALSE` por padrão para que o site possa ser reconstruído sem
-refazer 480 modelos BGLR.
-
-Ao reproduzir os modelos do zero, os checkpoints locais são gravados em
-`output/checkpoints/`. Depois da execução completa, os resultados finais são
-gravados nos respectivos arquivos de `results/`.
+Dessa forma, os arquivos em `results/` representam os resultados elementares de
+cada cenário, enquanto as estatísticas derivadas permanecem explícitas no código
+dos módulos correspondentes.
