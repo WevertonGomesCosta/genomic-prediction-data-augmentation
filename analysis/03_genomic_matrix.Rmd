@@ -29,34 +29,37 @@ dir.create("output/figures", showWarnings = FALSE, recursive = TRUE)
 
 ## 1. Objetivo
 
-Os modelos GBLUP utilizam a semelhança genômica entre os indivíduos. Essa
-informação é resumida em uma matriz chamada `G`.
+O GBLUP utiliza a semelhança genômica entre os indivíduos para compartilhar
+informação ao longo da população. Essa semelhança é resumida pela matriz de
+relacionamento genômico, representada por `G`.
 
-Cada elemento de `G` representa o grau de relacionamento genômico entre dois
-indivíduos. Indivíduos com padrões de SNPs mais semelhantes tendem a apresentar
-maior relacionamento genômico.
+Se existem `n` indivíduos, `G` é uma matriz `n × n`. O elemento `G[i,j]`
+quantifica o relacionamento genômico entre os indivíduos `i` e `j` com base nos
+SNPs observados. Em termos gerais, indivíduos com perfis de marcadores mais
+semelhantes tendem a apresentar valores maiores de relacionamento genômico.
 
-Neste projeto, `G` é calculada uma única vez usando todos os indivíduos
-genotipados. Os fenótipos de validação continuarão mascarados durante cada
-ajuste; portanto, usar os genótipos dos indivíduos de validação em `G` não
-fornece seus fenótipos ao modelo.
+Neste estudo, `G` é construída com os **1.379 indivíduos genotipados**. Essa
+matriz será a estrutura genômica comum aos modelos das etapas seguintes. Os
+fenótipos dos indivíduos reservados para validação permanecem mascarados no
+GBLUP; portanto, a presença de seus genótipos em `G` não fornece ao modelo os
+valores fenotípicos que deverão ser preditos.
 
-## 2. Carregando a matriz de SNPs e os splits
+O módulo segue quatro passos principais:
 
-Reutilizamos os objetos produzidos nas Etapas 1 e 2. Nenhuma leitura,
-filtragem ou nova amostragem é realizada aqui.
+1. calcular as frequências alélicas;
+2. centralizar os marcadores;
+3. construir a matriz `G`;
+4. descrever a estrutura de relacionamento e a representatividade genômica dos
+   conjuntos de treinamento.
+
+## 2. Dados utilizados
+
+Reutilizamos a matriz de marcadores `M` e os conjuntos de treinamento e
+validação definidos nas etapas anteriores.
 
 ```{r carregar-dados}
 DATA_OBJECTS <- "output/01_data_objects.rds"
 SPLITS_FILE <- "output/02_splits_mestre_30rep.rds"
-
-if (!file.exists(DATA_OBJECTS)) {
-  stop("Execute primeiro analysis/01_data_audit.Rmd.")
-}
-
-if (!file.exists(SPLITS_FILE)) {
-  stop("Execute primeiro analysis/02_sampling_splits.Rmd.")
-}
 
 obj <- readRDS(DATA_OBJECTS)
 splits_mestre <- readRDS(SPLITS_FILE)
@@ -66,33 +69,42 @@ M <- obj$M
 dim(M)
 ```
 
-A matriz `M` possui indivíduos nas linhas e SNPs nas colunas.
+A matriz `M` possui os 1.379 indivíduos nas linhas e os 4.325 SNPs nas colunas.
+Cada marcador está codificado como 0, 1 ou 2, representando o número de cópias
+do alelo contado.
 
 ## 3. Frequência alélica
 
-Como os SNPs estão codificados como 0, 1 e 2, a média de uma coluna corresponde
-a duas vezes a frequência do alelo contado. Assim, para cada marcador:
+Como os SNPs estão codificados como 0, 1 e 2, a média da coluna `j` corresponde
+a duas vezes a frequência do alelo contado. Assim:
 
 \[
 p_j = \frac{\bar M_j}{2}.
 \]
 
 ```{r frequencia-alelica}
+# Frequência do alelo contado em cada SNP.
 p <- colMeans(M) / 2
 
 summary(p)
 ```
 
+O vetor `p` possui uma frequência para cada um dos 4.325 marcadores. Essas
+frequências são usadas tanto para centralizar os genótipos quanto para definir a
+escala da matriz de relacionamento.
+
 ## 4. Centralização dos marcadores
 
-A contribuição esperada do marcador `j` é `2p_j`. Subtraímos esse valor de cada
-genótipo para obter a matriz centralizada `Z`:
+Para o marcador `j`, o número esperado de cópias do alelo contado é `2p_j`.
+Subtraímos esse valor de todos os indivíduos para obter a matriz centralizada
+`Z`:
 
 \[
 Z_{ij}=M_{ij}-2p_j.
 \]
 
 ```{r centralizar-marcadores}
+# Centraliza cada SNP em torno de 2p_j.
 Z <- sweep(
   M,
   2,
@@ -102,6 +114,10 @@ Z <- sweep(
 
 dim(Z)
 ```
+
+A centralização faz com que o relacionamento seja calculado em relação às
+frequências alélicas observadas nesta população, em vez de utilizar diretamente
+as contagens brutas dos marcadores.
 
 ## 5. Construção da matriz G
 
@@ -113,27 +129,36 @@ Utilizamos a forma aditiva de VanRaden:
 {2\sum_j p_j(1-p_j)}.
 \]
 
+O produto `ZZᵀ` compara todos os indivíduos entre si. O denominador coloca esses
+produtos na mesma escala de variabilidade genômica definida pelas frequências
+alélicas.
+
 ```{r construir-G}
+# Denominador comum da matriz de relacionamento.
 denominador <- 2 * sum(
   p * (1 - p)
 )
 
+# Produto entre os perfis genômicos centralizados de todos os indivíduos.
 G <- tcrossprod(Z) / denominador
 ```
 
-Adicionamos um valor numérico muito pequeno à diagonal para evitar problemas de
-estabilidade computacional sem alterar de forma relevante os relacionamentos.
+Adicionamos um valor numérico muito pequeno à diagonal. Esse ajuste evita
+problemas de estabilidade numérica em operações matriciais posteriores, sem
+alterar de forma relevante os relacionamentos genômicos.
 
 ```{r estabilidade-numerica}
 diag(G) <- diag(G) + 1e-6
 ```
 
-## 6. Verificações da matriz
+## 6. Estrutura da matriz G
 
-Uma matriz de relacionamento deve ser quadrada, simétrica e formada por
-valores finitos.
+Antes de utilizar `G` nos modelos, verificamos suas propriedades básicas. A
+matriz deve ser quadrada, simétrica e formada por valores finitos. Como há
+1.379 indivíduos, sua dimensão deve ser `1379 × 1379`.
 
 ```{r validar-G}
+# Mede a maior diferença entre G e sua transposta.
 erro_simetria <- max(
   abs(G - t(G))
 )
@@ -158,13 +183,19 @@ stopifnot(all(is.finite(G)))
 stopifnot(erro_simetria < 1e-10)
 ```
 
-## 7. Visualização da matriz G
+## 7. Matriz de relacionamento dos 1.379 indivíduos
 
-Para uma primeira leitura visual, mostramos os relacionamentos entre os
-primeiros 80 indivíduos. Esta figura é ilustrativa e não participa dos cálculos
-de predição ou equivalência.
+A figura abaixo representa a **matriz `G` completa**. Cada ponto da grade
+corresponde ao relacionamento entre um par de indivíduos. A diagonal principal
+representa o relacionamento de cada indivíduo consigo mesmo; os valores fora
+da diagonal mostram os relacionamentos entre indivíduos diferentes.
 
-```{r heatmap-G, fig.height=6, fig.width=7, fig.cap="Relacionamento genômico entre os primeiros 80 indivíduos."}
+Como a matriz possui 1.379 linhas e 1.379 colunas, são representadas quase 1,9
+milhão de células. Por isso usamos `geom_raster()`, que é adequado para uma
+grade regular desse tamanho e permite visualizar toda a população sem selecionar
+apenas um subconjunto de indivíduos.
+
+```{r heatmap-G, fig.height=7, fig.width=8, fig.cap="Matriz de relacionamento genômico G completa para os 1.379 indivíduos."}
 if (!requireNamespace("ggplot2", quietly = TRUE)) {
   stop("Instale o pacote ggplot2 para gerar as figuras do tutorial.")
 }
@@ -173,14 +204,16 @@ if (!requireNamespace("ggthemes", quietly = TRUE)) {
   stop("Instale o pacote ggthemes para usar o padrão gráfico GDocs.")
 }
 
-G_80 <- G[1:80, 1:80]
+n_individuos <- nrow(G)
 
-dados_heatmap <- expand.grid(
-  Individuo_x = seq_len(ncol(G_80)),
-  Individuo_y = seq_len(nrow(G_80))
+# Converte todas as células de G para o formato usado pelo ggplot2.
+dados_heatmap <- data.frame(
+  Individuo_x = rep(seq_len(n_individuos), times = n_individuos),
+  Individuo_y = rep(seq_len(n_individuos), each = n_individuos),
+  Relacionamento = as.vector(G)
 )
 
-dados_heatmap$Relacionamento <- as.vector(G_80)
+quebras_eixos <- c(1, 250, 500, 750, 1000, 1250, 1379)
 
 figura_heatmap <- ggplot2::ggplot(
   dados_heatmap,
@@ -190,15 +223,24 @@ figura_heatmap <- ggplot2::ggplot(
     fill = Relacionamento
   )
 ) +
-  ggplot2::geom_tile() +
+  ggplot2::geom_raster() +
   ggplot2::scale_fill_gradient2(
     low = "#3366CC",
     mid = "white",
     high = "#DC3912",
     midpoint = 0
   ) +
+  ggplot2::scale_x_continuous(
+    breaks = quebras_eixos,
+    expand = c(0, 0)
+  ) +
+  ggplot2::scale_y_continuous(
+    breaks = quebras_eixos,
+    expand = c(0, 0)
+  ) +
+  ggplot2::coord_equal() +
   ggplot2::labs(
-    title = "Relacionamento genômico — primeiros 80 indivíduos",
+    title = "Matriz de relacionamento genômico — 1.379 indivíduos",
     x = "Indivíduo",
     y = "Indivíduo",
     fill = "G"
@@ -214,22 +256,32 @@ figura_heatmap
 ggplot2::ggsave(
   filename = "output/figures/03a_heatmap_G.png",
   plot = figura_heatmap,
-  width = 7,
-  height = 6,
+  width = 8,
+  height = 7,
   dpi = 300
 )
 ```
 
-## 8. Distribuição de referência dos relacionamentos genômicos
+A leitura dessa figura é global: regiões com valores mais intensos indicam
+pares ou grupos com relacionamentos genômicos mais pronunciados. Entretanto, o
+heatmap não informa sozinho quão frequentes são esses relacionamentos. Para
+isso, examinamos a distribuição dos elementos fora da diagonal.
 
-O script original examinava todos os relacionamentos fora da diagonal principal
-de `G`. A construção original do vetor é preservada:
+## 8. Distribuição dos relacionamentos entre indivíduos diferentes
+
+Para descrever os relacionamentos entre indivíduos diferentes, retiramos a
+diagonal principal de `G`:
 
 \[
 G_{offdiag}=\{G_{ij}:i\neq j\}.
 \]
 
+A distribuição resultante mostra onde se concentra a maior parte dos
+relacionamentos da população. Também calculamos os percentis P90, P95 e P99
+como referências para a cauda superior da distribuição.
+
 ```{r distribuicao-offdiag, fig.height=5, fig.width=8, fig.cap="Distribuição dos relacionamentos genômicos fora da diagonal de G, com os percentis 90, 95 e 99."}
+# Mantém somente relacionamentos entre indivíduos diferentes.
 G_offdiag <- G[
   row(G) != col(G)
 ]
@@ -237,6 +289,7 @@ G_offdiag <- G[
 stopifnot(length(G_offdiag) == nrow(G) * (nrow(G) - 1))
 stopifnot(!anyNA(G_offdiag))
 
+# Referências descritivas da cauda superior da distribuição.
 percentis_G <- quantile(
   G_offdiag,
   probs = c(0.90, 0.95, 0.99)
@@ -248,7 +301,7 @@ knitr::kable(
     Relacionamento = unname(percentis_G)
   ),
   digits = 6,
-  caption = "Percentis de referência dos relacionamentos off-diagonal de G"
+  caption = "Percentis de referência dos relacionamentos fora da diagonal de G"
 )
 
 dados_offdiag <- data.frame(
@@ -314,20 +367,55 @@ ggplot2::ggsave(
 )
 ```
 
-Os percentis P90, P95 e P99 são referências descritivas da estrutura de `G`.
-Eles não definem os testes de equivalência das etapas posteriores.
+P90, P95 e P99 não são limites de seleção nem critérios de equivalência. Eles
+apenas ajudam a localizar, dentro da distribuição completa, valores que
+pertencem à faixa superior de relacionamento genômico.
 
-## 9. Relacionamento máximo e cobertura genômica
+## 9. Representatividade genômica dos indivíduos de validação
 
-O script original também verificava quão próximo cada indivíduo da validação
-estava dos indivíduos disponíveis para treinamento.
+Além de conhecer a estrutura global de `G`, precisamos entender **quão bem os
+indivíduos de validação estão representados genomicamente pelo conjunto de
+treinamento**. Essa é uma pergunta diferente da acurácia preditiva: aqui não
+usamos fenótipos nem ajustamos o GBLUP. Utilizamos somente os relacionamentos de
+`G` para caracterizar a cobertura genômica disponível.
 
-Para cada indivíduo de validação, os 1.103 indivíduos do pool completo são
-ordenados do maior para o menor relacionamento genômico. O rank 1 representa o
-vizinho mais relacionado. Depois verificamos qual é o melhor rank que permanece
-disponível em T25, T50, T75 e T100.
+Para cada indivíduo de validação `v` e um conjunto de treinamento `T`, definimos
+o maior relacionamento disponível como:
+
+\[
+g_{\max}(v,T)=\max_{j\in T}G_{vj}.
+\]
+
+Essa medida responde à pergunta:
+
+> **Qual é o indivíduo de treinamento genomicamente mais próximo deste
+> indivíduo de validação, e quão próximo ele é?**
+
+Valores maiores de `g_max` indicam que existe pelo menos um indivíduo de
+treinamento relativamente próximo de `v`. Valores menores indicam que aquela
+região da diversidade genômica está menos representada pelo conjunto de
+treinamento.
+
+Entretanto, `g_max` sozinho não mostra quanto da melhor cobertura disponível no
+pool completo foi preservada após reduzir o tamanho do treinamento. Para isso,
+usamos uma segunda medida: o **rank do melhor vizinho disponível**.
+
+Para cada indivíduo de validação, ordenamos os 1.103 indivíduos de T100 do maior
+para o menor relacionamento. O indivíduo mais relacionado recebe rank 1, o
+segundo recebe rank 2 e assim por diante. Em cada subconjunto T25, T50, T75 ou
+T100, procuramos o menor rank ainda presente.
+
+Assim, as duas medidas são complementares:
+
+- `g_max` mede **quão próximo** é o melhor representante disponível;
+- `melhor_rank_no_pool` mede **quanto da melhor cobertura do pool completo foi
+  preservado** no subconjunto de treinamento.
+
+Essas medidas são apenas descritivas. Elas não são utilizadas para escolher os
+indivíduos de treinamento e não substituem os testes de desempenho preditivo.
 
 ```{r calcular-ranking-genomico}
+# 30 repetições × 276 indivíduos de validação × 4 tamanhos de treinamento.
 N_CENARIOS_RANK <- 30 * 276 * 4
 linhas_rank <- vector(
   "list",
@@ -337,14 +425,15 @@ linhas_rank <- vector(
 k <- 0L
 
 for (rep in seq_len(30)) {
+  # Validação e pool completo da repetição atual.
   validacao <- splits_mestre[["1"]][[rep]]$valid
   pool_index <- splits_mestre[["1"]][[rep]]$pool
 
   for (ind in validacao) {
-    # Relacionamentos deste indivíduo da validação com o pool completo.
+    # 1. Relacionamentos do indivíduo de validação com todo o pool T100.
     g_pool <- G[ind, pool_index]
 
-    # Ordem do mais relacionado para o menos relacionado.
+    # 2. Ordena T100 do vizinho mais relacionado para o menos relacionado.
     ordem_pool <- order(
       g_pool,
       decreasing = TRUE
@@ -352,7 +441,7 @@ for (rep in seq_len(30)) {
 
     pool_ordenado <- pool_index[ordem_pool]
 
-    # Rank 1 = indivíduo mais relacionado do pool completo.
+    # 3. Associa a cada indivíduo do pool sua posição no ranking completo.
     rank_no_pool <- seq_along(pool_ordenado)
 
     nomes_rank <- setNames(
@@ -363,14 +452,14 @@ for (rep in seq_len(30)) {
     for (proporcao in c(0.25, 0.50, 0.75, 1.00)) {
       treino_index <- splits_mestre[[as.character(proporcao)]][[rep]]$treino
 
-      # Ranks dos indivíduos que pertencem ao treinamento atual.
+      # 4. Identifica quais posições do ranking completo permanecem no treino.
       ranks_treino <- nomes_rank[
         as.character(treino_index)
       ]
 
       melhor_rank <- min(ranks_treino)
 
-      # Indivíduo do treinamento que ocupa esse melhor rank.
+      # 5. Recupera o melhor vizinho disponível no conjunto atual.
       melhor_individuo <- as.integer(
         names(ranks_treino)[
           which.min(ranks_treino)
@@ -379,6 +468,7 @@ for (rep in seq_len(30)) {
 
       g_max_atual <- G[ind, melhor_individuo]
 
+      # 6. Guarda também a melhor referência possível dentro de T100.
       melhor_individuo_pool <- pool_ordenado[1]
       g_max_pool <- G[ind, melhor_individuo_pool]
 
@@ -414,6 +504,11 @@ stopifnot(
 )
 ```
 
+O resumo abaixo combina as duas medidas. Para interpretar a tabela, valores
+maiores de `g_max_atual` indicam maior proximidade com algum indivíduo de
+treinamento, enquanto valores menores de `melhor_rank_no_pool` indicam melhor
+preservação dos vizinhos mais próximos existentes em T100.
+
 ```{r resumo-ranking-genomico}
 resumo_ranking <- aggregate(
   cbind(
@@ -433,9 +528,9 @@ knitr::kable(
 
 ### 9.1. Relacionamento genômico máximo
 
-Esta figura estava presente no script original. Ela mostra a distribuição do
-maior relacionamento genômico disponível para cada indivíduo da validação em
-cada tamanho de treinamento.
+A primeira figura mostra a distribuição de `g_max` para todos os indivíduos de
+validação ao longo das 30 repetições. Cada caixa responde, para um tamanho de
+treinamento, quão próximo está o melhor representante genômico disponível.
 
 ```{r figura-gmax, fig.height=5, fig.width=8, fig.cap="Distribuição do maior relacionamento genômico entre cada indivíduo de validação e o treinamento disponível."}
 dados_gmax <- ranking_individual
@@ -481,11 +576,22 @@ ggplot2::ggsave(
 )
 ```
 
+Ao comparar T25, T50, T75 e T100, uma distribuição deslocada para valores mais
+altos significa que os indivíduos de validação encontram representantes mais
+próximos no treinamento. Como conjuntos maiores contêm mais candidatos, esta
+figura ajuda a visualizar quanto a redução amostral diminui a proximidade
+máxima disponível.
+
 ### 9.2. Cobertura dos vizinhos genômicos mais próximos
 
-Esta figura também estava presente no script original. Ela mostra a posição, no
-ranking do pool completo, do melhor vizinho genômico que permanece disponível
-em cada subconjunto de treinamento. Em T100, o rank é sempre 1.
+A segunda figura usa o ranking definido em T100 como referência. Rank 1
+significa que o subconjunto de treinamento ainda contém o indivíduo mais
+relacionado de todo o pool. Rank 2 significa que o melhor indivíduo disponível
+no subconjunto é o segundo mais relacionado do pool, e assim sucessivamente.
+
+Em T100, o rank é sempre 1 por construção. Para T25, T50 e T75, quanto mais a
+distribuição estiver concentrada próxima de 1, maior é a cobertura dos melhores
+vizinhos genômicos presentes no pool completo.
 
 ```{r figura-rank-pool, fig.height=5, fig.width=8, fig.cap="Distribuição do melhor rank genômico disponível nos conjuntos T25, T50, T75 e T100."}
 dados_rank_plot <- ranking_individual
@@ -531,14 +637,17 @@ ggplot2::ggsave(
 )
 ```
 
-Esses diagnósticos são descritivos. Eles ajudam a interpretar como a redução do
-conjunto real afeta a cobertura genômica disponível para a validação, mas não
-substituem a comparação preditiva formal das Etapas 4 e 5.
+Em conjunto, as duas figuras mostram **proximidade** (`g_max`) e **cobertura**
+(rank). Elas ajudam a caracterizar o que é perdido genomicamente quando T100 é
+reduzido para T75, T50 ou T25. A decisão sobre suficiência preditiva, porém,
+será baseada nas predições do GBLUP e no teste formal de equivalência das etapas
+seguintes.
 
-## 10. Objeto salvo para a modelagem
+## 10. Objeto genômico usado pelos modelos
 
-Salvamos `p`, `Z`, `G` e o denominador porque o Data Augmentation precisará da
-mesma escala genômica para relacionar pseudoindivíduos e indivíduos reais.
+As etapas seguintes utilizam as mesmas frequências alélicas, a mesma matriz
+centralizada e a mesma escala de relacionamento. Por isso reunimos `p`, `Z`,
+`G` e o denominador em um único objeto.
 
 ```{r salvar-G}
 genomic_objects <- list(
@@ -554,5 +663,6 @@ saveRDS(
 )
 ```
 
-Com os dados auditados, os splits definidos e a matriz `G` construída, a
-próxima etapa pode ajustar o GBLUP usando somente indivíduos reais.
+Com a matriz `G` construída e a representatividade genômica descrita, a próxima
+etapa avalia como o desempenho do GBLUP muda à medida que aumentamos o número de
+indivíduos reais no treinamento.
