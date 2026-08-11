@@ -2,9 +2,9 @@ name: "genomic-prediction-data-augmentation"
 output_dir: "../docs"
 
 navbar:
-  title: "Genomic prediction + DA"
+  title: "Predição genômica + DA"
   left:
-    - text: "Home"
+    - text: "Início"
       href: index.html
     - text: "1. Dados"
       href: 01_data_audit.html
@@ -16,13 +16,15 @@ navbar:
       href: 04_gblup_baseline.html
     - text: "5. Equivalência"
       href: 05_equivalence.html
-    - text: "6. Data Augmentation"
+    - text: "6. Aumento de dados"
       href: 06_data_augmentation.html
-    - text: "About"
+    - text: "Sobre"
       href: about.html
+    - text: "Licença"
+      href: license.html
   right:
     - icon: fa-github
-      text: "Source"
+      text: "Código-fonte"
       href: https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation
 
 output:
