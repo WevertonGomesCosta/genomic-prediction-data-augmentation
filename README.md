@@ -107,27 +107,27 @@ Coloque o arquivo analítico em:
 data/dados_gblup.csv
 ```
 
-Execute primeiro as etapas leves, na ordem:
+Na configuração padrão, os módulos de modelagem usam os resultados pesados já auditados (`RUN_MODELS <- FALSE`). Assim, o site completo pode ser construído diretamente com:
+
+```r
+workflowr::wflow_build()
+```
+
+Esse comando constrói as páginas do tutorial que ainda estiverem desatualizadas, incluindo `analysis/index.Rmd`, e salva os HTML em `docs/`.
+
+Se quiser reconstruir apenas os seis módulos analíticos sem abrir automaticamente a página inicial ao final, use:
 
 ```r
 workflowr::wflow_build(
   c(
     "analysis/01_data_audit.Rmd",
     "analysis/02_sampling_splits.Rmd",
-    "analysis/03_genomic_matrix.Rmd"
-  )
-)
-```
-
-Depois, as páginas de modelagem e resultados podem ser construídas sem refazer os ajustes pesados:
-
-```r
-workflowr::wflow_build(
-  c(
+    "analysis/03_genomic_matrix.Rmd",
     "analysis/04_gblup_baseline.Rmd",
     "analysis/05_equivalence.Rmd",
     "analysis/06_data_augmentation.Rmd"
-  )
+  ),
+  view = FALSE
 )
 ```
 
