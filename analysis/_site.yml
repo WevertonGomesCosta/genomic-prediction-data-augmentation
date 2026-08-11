@@ -6,17 +6,17 @@ navbar:
   left:
     - text: "Home"
       href: index.html
-    - text: "1. Data audit"
+    - text: "1. Dados"
       href: 01_data_audit.html
-    - text: "2. Sampling"
+    - text: "2. Amostragem"
       href: 02_sampling_splits.html
-    - text: "3. Genomic matrix"
-      href: 03_genomic_matrix_diagnostics.html
-    - text: "4. GBLUP baseline"
+    - text: "3. Matriz G"
+      href: 03_genomic_matrix.html
+    - text: "4. GBLUP"
       href: 04_gblup_baseline.html
-    - text: "5. Equivalence"
+    - text: "5. Equivalência"
       href: 05_equivalence.html
-    - text: "6. Data augmentation"
+    - text: "6. Data Augmentation"
       href: 06_data_augmentation.html
     - text: "About"
       href: about.html
