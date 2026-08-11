@@ -1,5 +1,5 @@
 ---
-title: "License"
+title: "Licença"
 author: "Weverton Gomes da Costa"
 date: "`r Sys.Date()`"
 site: workflowr::wflow_site
@@ -17,11 +17,12 @@ editor_options:
 ## Licença do projeto
 
 Este repositório é destinado à pesquisa científica reproduzível e ao ensino do
-fluxo analítico de predição genômica com Data Augmentation.
+fluxo analítico de predição genômica com aumento de dados (*Data Augmentation*).
 
 Uma licença formal para o código deverá ser definida antes da versão final de
-publicação do projeto. A redistribuição do arquivo analítico também depende dos
-termos da fonte original dos dados SoyNAM.
+publicação do projeto. A redistribuição do arquivo analítico também depende da
+confirmação da fonte original, dos termos de uso e dos direitos de
+redistribuição dos dados.
 
 Até essa verificação, `data/dados_gblup.csv` permanece local e é explicitamente
 ignorado pelo Git.
