@@ -41,6 +41,18 @@ Neste conjunto de dados:
 - cada SNP é codificado como `0`, `1` ou `2`, correspondendo ao número de cópias
 do alelo contado naquele marcador.
 
+Os dados derivam do **SoyNAM (Soybean Nested Association Mapping)**. Neste
+tutorial, `yield` corresponde à produtividade de grãos observada no ambiente
+`IA_2012`, expressa em kg/ha. A conferência de proveniência confirmou a
+correspondência dos 1.379 registros fenotípicos e dos 4.325 loci com os arquivos
+públicos de referência do SoyNAM usados na preparação deste conjunto.
+
+`dados_gblup.csv` é tratado aqui como o arquivo analítico final de entrada. A
+sequência histórica exata de filtros e o método de imputação que antecederam
+essa versão não foram reconstruídos integralmente e, por isso, não são
+reaplicados nem atribuídos a um procedimento específico neste tutorial. A
+proveniência e essa limitação estão documentadas em `data/README.md`.
+
 A auditoria não modifica os dados. Ela apenas verifica a estrutura do arquivo e
 salva os objetos que serão usados na próxima etapa.
 
@@ -208,6 +220,7 @@ stopifnot(n_perfis_duplicados == 0)
 ## 7. Resumo do fenótipo
 
 O resumo abaixo permite conhecer a escala da produtividade antes da modelagem.
+Os valores de `yield` estão expressos em kg/ha.
 
 ```{r resumo-fenotipo}
 resumo_yield <- data.frame(
@@ -224,14 +237,14 @@ resumo_yield <- data.frame(
 knitr::kable(
   resumo_yield,
   digits = 2,
-  caption = "Resumo da produtividade"
+  caption = "Resumo da produtividade (kg/ha)"
 )
 ```
 
 A distribuição também é apresentada graficamente. A figura segue o padrão
 visual GDocs adotado no tutorial.
 
-```{r histograma-yield, fig.height=4.8, fig.width=8, fig.cap="Distribuição da produtividade dos 1.379 indivíduos."}
+```{r histograma-yield, fig.height=4.8, fig.width=8, fig.cap="Distribuição da produtividade, em kg/ha, dos 1.379 indivíduos."}
 if (!requireNamespace("ggplot2", quietly = TRUE)) {
   stop("Instale o pacote ggplot2 para gerar as figuras do tutorial.")
 }
@@ -256,7 +269,7 @@ figura_yield <- ggplot2::ggplot(
   ) +
   ggplot2::labs(
     title = "Distribuição da produtividade",
-    x = "Produtividade (yield)",
+    x = "Produtividade (kg/ha)",
     y = "Frequência"
   ) +
   ggthemes::theme_gdocs(
