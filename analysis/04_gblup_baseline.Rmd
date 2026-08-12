@@ -60,7 +60,7 @@ treinamento.
 
 Para representar essa estrutura, criamos um vetor fenotípico com `NA` para
 todos os indivíduos e preenchemos apenas as posições pertencentes ao
-Treinamento:
+treinamento:
 
 ```r
 # Estrutura conceitual do vetor fenotípico usado pelo modelo.
@@ -74,15 +74,24 @@ podem então ser comparadas aos valores observados para avaliar o modelo.
 
 ## 3. Modelo e parâmetros
 
-O componente genômico é especificado no `BGLR` usando `G` como kernel `RKHS`:
+O modelo pode ser representado por:
 
 \[
 y = \mu + g + \varepsilon,
 \]
 
-em que `g` representa o efeito genômico associado à matriz de relacionamento.
+em que `g` representa o efeito genômico associado à matriz de relacionamento
+`G`.
+
+No pacote `BGLR`, esse componente é especificado por meio de `model = "RKHS"`
+e `K = G`. Nesse caso, `G` funciona como o kernel que descreve a covariância
+genômica entre os indivíduos. Portanto, embora a opção do pacote seja chamada
+`RKHS`, o efeito genômico utilizado aqui é determinado diretamente pela matriz
+de relacionamento `G` construída na Etapa 3, mantendo a interpretação de
+predição genômica baseada em GBLUP adotada neste tutorial.
+
 O mesmo modelo e os mesmos parâmetros são mantidos em todos os tamanhos de
-Treinamento, permitindo uma comparação direta entre T25, T50, T75 e T100.
+treinamento, permitindo uma comparação direta entre T25, T50, T75 e T100.
 
 ```{r parametros-gblup}
 PROPORCOES <- c(0.25, 0.50, 0.75, 1.00)
@@ -100,7 +109,7 @@ período de *burn-in*.
 
 O código abaixo reúne o pipeline analítico aplicado a cada repetição e a cada
 tamanho de treinamento. Os comentários destacam as etapas essenciais: seleção
-do split, mascaramento dos fenótipos, especificação do modelo, predição e
+do conjunto, mascaramento dos fenótipos, especificação do modelo, predição e
 cálculo das métricas.
 
 ```{r pipeline-gblup, eval=FALSE}
@@ -218,8 +227,13 @@ Quatro medidas complementares são utilizadas:
 - **MAE**: representa o erro absoluto médio em uma escala de interpretação
   direta;
 - **inclinação de calibração**: é obtida da regressão `observado ~ predito` e
-  ajuda a avaliar a escala das predições; valores próximos de 1 indicam melhor
-  calibração.
+  compara a escala dos valores observados com a escala das predições.
+
+Para a inclinação de calibração, valores próximos de 1 indicam escala adequada.
+Quando a inclinação é menor que 1, as predições variam mais do que os valores
+observados, isto é, estão excessivamente dispersas em escala. Quando a
+inclinação é maior que 1, as predições apresentam variação menor que a
+necessária em relação aos observados.
 
 A correlação é a métrica principal para a comparação de equivalência, enquanto
 as demais descrevem aspectos adicionais do comportamento preditivo.
@@ -278,8 +292,31 @@ resumo_baseline$sd_correlacao <- sd_cor$correlacao[
   )
 ]
 
+resumo_baseline_exibicao <- resumo_baseline[
+  ,
+  c(
+    "proporcao_pool",
+    "n_treino",
+    "correlacao",
+    "sd_correlacao",
+    "RMSE",
+    "MAE",
+    "slope_calibracao"
+  )
+]
+
+names(resumo_baseline_exibicao) <- c(
+  "Proporção do pool",
+  "Indivíduos reais",
+  "Correlação média",
+  "DP da correlação",
+  "RMSE médio",
+  "MAE médio",
+  "Inclinação média"
+)
+
 knitr::kable(
-  resumo_baseline,
+  resumo_baseline_exibicao,
   digits = 4,
   caption = "Desempenho médio do GBLUP com dados reais"
 )
