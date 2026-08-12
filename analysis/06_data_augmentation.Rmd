@@ -1231,8 +1231,12 @@ SE_{NB}=
 }.
 \]
 
-Aqui `n_train = 1103`, pois todos os cenários comparados fornecem 1.103 valores
-fenotípicos ao modelo após combinar indivíduos reais e pseudoindivíduos.
+Na análise principal, usamos `n_train = 1103`, correspondente ao número total
+de valores fenotípicos fornecidos ao modelo em cada cenário após combinar
+indivíduos reais e pseudoindivíduos. Como os pseudoindivíduos são derivados dos
+próprios indivíduos reais, uma análise de sensibilidade mais conservadora será
+apresentada na Seção 11.2 usando apenas o número de indivíduos reais no termo de
+correção.
 
 ```{r equivalencia-da}
 DELTA <- 0.05
@@ -1467,6 +1471,153 @@ ggplot2::ggsave(
 )
 ```
 
+### 11.2. Sensibilidade da correção ao número de indivíduos reais
+
+Na análise principal, o termo de Nadeau-Bengio usa `n_train = 1103`, porque o
+modelo recebe 1.103 valores fenotípicos em todos os cenários. Entretanto, os
+pseudoindivíduos são interpolações construídas a partir dos próprios indivíduos
+reais e, portanto, não representam 1.103 unidades de informação independentes.
+
+Para avaliar a robustez da inferência, repetimos **somente o cálculo do erro-
+padrão, do intervalo de confiança e do TOST**, usando no termo de correção o
+número de indivíduos reais de cada cenário:
+
+\[
+n_{train}=n_{real}.
+\]
+
+Nenhum GBLUP é reajustado e nenhuma predição é recalculada. As mesmas diferenças
+pareadas dos 360 resultados já obtidos são utilizadas novamente.
+
+```{r sensibilidade-equivalencia-da}
+sensibilidade_equivalencia_da <- data.frame()
+
+for (config in configs$config_mistura) {
+  for (proporcao in PROPORCOES) {
+
+    # 1. Recupera as mesmas diferenças pareadas da análise principal.
+    grupo <- comparacao_t100[
+      comparacao_t100$config_mistura == config &
+      comparacao_t100$proporcao_pool == proporcao,
+    ]
+
+    d <- grupo$delta_cor_vs_T100
+    n_train_real <- unique(grupo$n_real)
+
+    stopifnot(length(d) == 30)
+    stopifnot(length(n_train_real) == 1)
+
+    media_d <- mean(d)
+    sd_d <- sd(d)
+
+    # 2. Usa somente o número de indivíduos reais no termo de correção.
+    fator_NB_real <-
+      1 / R +
+      N_TEST / n_train_real
+
+    se_NB_real <- sqrt(
+      fator_NB_real * sd_d^2
+    )
+
+    gl <- length(d) - 1
+
+    # 3. Recalcula os dois testes unilaterais.
+    p_inferior <- 1 - pt(
+      (media_d + DELTA) / se_NB_real,
+      df = gl
+    )
+
+    p_superior <- pt(
+      (media_d - DELTA) / se_NB_real,
+      df = gl
+    )
+
+    # 4. Recalcula o intervalo de confiança de 90%.
+    t_critico <- qt(
+      1 - ALPHA,
+      df = gl
+    )
+
+    ic90_inf <- media_d - t_critico * se_NB_real
+    ic90_sup <- media_d + t_critico * se_NB_real
+
+    p_TOST <- max(
+      p_inferior,
+      p_superior
+    )
+
+    equivalente_sensibilidade <-
+      p_inferior < ALPHA &&
+      p_superior < ALPHA &&
+      ic90_inf > -DELTA &&
+      ic90_sup < DELTA
+
+    equivalente_principal <- resultado_equivalencia_da$Equivalente[
+      resultado_equivalencia_da$Configuracao == config &
+      resultado_equivalencia_da$Proporcao == proporcao
+    ]
+
+    # 5. Guarda lado a lado a decisão principal e a análise de sensibilidade.
+    sensibilidade_equivalencia_da <- rbind(
+      sensibilidade_equivalencia_da,
+      data.frame(
+        Configuracao = config,
+        Proporcao = proporcao,
+        N_real = n_train_real,
+        N_sintetico = unique(grupo$n_syn),
+        Delta_cor_media = media_d,
+        SE_NB_real = se_NB_real,
+        IC90_inf = ic90_inf,
+        IC90_sup = ic90_sup,
+        p_TOST = p_TOST,
+        Equivalente_principal = equivalente_principal,
+        Equivalente_sensibilidade = equivalente_sensibilidade
+      )
+    )
+  }
+}
+
+sensibilidade_equivalencia_exibicao <- sensibilidade_equivalencia_da[
+  order(
+    sensibilidade_equivalencia_da$N_real,
+    -sensibilidade_equivalencia_da$Delta_cor_media
+  ),
+]
+
+names(sensibilidade_equivalencia_exibicao) <- c(
+  "Estratégia de mistura",
+  "Proporção do pool",
+  "Indivíduos reais",
+  "Pseudoindivíduos",
+  "Diferença média de correlação",
+  "Erro-padrão com n real",
+  "IC90% inferior",
+  "IC90% superior",
+  "p-valor TOST",
+  "Equivalência principal",
+  "Equivalência com n real"
+)
+
+knitr::kable(
+  sensibilidade_equivalencia_exibicao,
+  digits = 4,
+  caption = paste(
+    "Sensibilidade da equivalência usando o número de indivíduos reais",
+    "na correção de Nadeau-Bengio"
+  )
+)
+```
+
+Essa forma é mais conservadora porque o termo `n_test / n_train` aumenta quando
+`n_train` é reduzido ao número de indivíduos reais. Consequentemente, os
+intervalos de confiança ficam mais largos e configurações próximas da fronteira
+podem mudar de classificação.
+
+O ponto decisivo do estudo, entretanto, não muda: nenhuma configuração de T25 ou
+T50 se torna equivalente a T100. Assim, mesmo sob essa correção mais
+conservadora, o menor tamanho real associado à equivalência continua sendo T75,
+com 827 indivíduos reais.
+
 ## 12. Conclusão
 
 Sem aumento de dados, o menor conjunto real equivalente a T100 foi:
@@ -1476,7 +1627,8 @@ Sem aumento de dados, o menor conjunto real equivalente a T100 foi:
 \]
 
 Com as quatro regras de Mixup avaliadas, T25 e T50 continuam fora da região de
-equivalência. Portanto:
+equivalência tanto na análise principal quanto na análise de sensibilidade.
+Portanto:
 
 \[
 \boxed{\text{redução adicional atribuível ao aumento de dados}=0}.
