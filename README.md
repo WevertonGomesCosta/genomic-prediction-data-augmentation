@@ -13,8 +13,8 @@ necessários para manter o desempenho preditivo.
 ## Perguntas do estudo
 
 O conjunto analítico possui 1.379 indivíduos genotipados. Em cada repetição, 276
-indivíduos são separados para validação externa e os 1.103 restantes formam o
-conjunto completo de treinamento, denominado `T100`.
+indivíduos são separados para validação e os 1.103 restantes formam o conjunto
+completo de treinamento, denominado `T100`.
 
 O tutorial responde duas perguntas principais:
 
@@ -44,14 +44,14 @@ Dados
 Cada módulo apresenta primeiro a pergunta científica e a motivação da etapa.
 Depois, o código é mostrado em blocos curtos e comentados, seguido pela
 interpretação dos resultados. A lógica metodológica permanece visível nos
-próprios `.Rmd`, sem funções auxiliares que escondam as etapas principais.
+próprios `.Rmd`.
 
-## Desenho experimental
+## Desenho de avaliação
 
 - 1.379 indivíduos genotipados;
 - 4.325 SNPs;
 - 276 indivíduos de validação por repetição;
-- 30 repetições de validação externa aleatória;
+- 30 repetições de divisão entre treinamento e validação;
 - conjuntos reais aninhados em cada repetição:
   - T25 = 275 indivíduos;
   - T50 = 551 indivíduos;
@@ -64,7 +64,7 @@ próprios `.Rmd`, sem funções auxiliares que escondam as etapas principais.
 - RMSE, MAE e inclinação de calibração como métricas complementares;
 - margem de equivalência `delta = 0.05`, definida como uma margem prática
   específica deste estudo;
-- TOST com correção de Nadeau-Bengio para as repetições de validação externa.
+- TOST com correção de Nadeau-Bengio para as repetições de validação.
 
 ## Aumento de dados com Mixup
 
