@@ -195,6 +195,11 @@ milhão de células. Por isso usamos `geom_raster()`, que é adequado para uma
 grade regular desse tamanho e permite visualizar toda a população sem selecionar
 apenas um subconjunto de indivíduos.
 
+Os indivíduos permanecem na mesma ordem das linhas do arquivo analítico. Assim,
+eventuais regiões ou blocos visuais no mapa de calor descrevem a organização
+nessa ordem e não devem ser interpretados automaticamente como grupos ou
+conglomerados genômicos inferidos.
+
 ```{r heatmap-G, fig.height=7, fig.width=8, fig.cap="Matriz de relacionamento genômico G completa para os 1.379 indivíduos."}
 if (!requireNamespace("ggplot2", quietly = TRUE)) {
   stop("Instale o pacote ggplot2 para gerar as figuras do tutorial.")
@@ -264,29 +269,32 @@ ggplot2::ggsave(
 
 A leitura dessa figura é global: regiões com valores mais intensos indicam
 pares ou grupos com relacionamentos genômicos mais pronunciados. Entretanto, o
-heatmap não informa sozinho quão frequentes são esses relacionamentos. Para
-isso, examinamos a distribuição dos elementos fora da diagonal.
+mapa de calor não informa sozinho quão frequentes são esses relacionamentos.
+Para isso, examinamos a distribuição dos elementos fora da diagonal.
 
 ## 8. Distribuição dos relacionamentos entre indivíduos diferentes
 
-Para descrever os relacionamentos entre indivíduos diferentes, retiramos a
-diagonal principal de `G`:
+Como `G` é simétrica, o relacionamento entre os indivíduos `i` e `j` aparece em
+duas posições: `G[i,j]` e `G[j,i]`. Para que cada par de indivíduos seja contado
+uma única vez, utilizamos somente o triângulo superior da matriz, sem a diagonal:
 
 \[
-G_{offdiag}=\{G_{ij}:i\neq j\}.
+G_{pares}=\{G_{ij}:i<j\}.
 \]
 
 A distribuição resultante mostra onde se concentra a maior parte dos
 relacionamentos da população. Também calculamos os percentis P90, P95 e P99
 como referências para a cauda superior da distribuição.
 
-```{r distribuicao-offdiag, fig.height=5, fig.width=8, fig.cap="Distribuição dos relacionamentos genômicos fora da diagonal de G, com os percentis 90, 95 e 99."}
-# Mantém somente relacionamentos entre indivíduos diferentes.
+```{r distribuicao-offdiag, fig.height=5, fig.width=8, fig.cap="Distribuição dos relacionamentos genômicos entre pares únicos de indivíduos, com os percentis 90, 95 e 99."}
+# Mantém cada par de indivíduos uma única vez e exclui a diagonal.
 G_offdiag <- G[
-  row(G) != col(G)
+  upper.tri(G)
 ]
 
-stopifnot(length(G_offdiag) == nrow(G) * (nrow(G) - 1))
+n_pares_esperado <- nrow(G) * (nrow(G) - 1) / 2
+
+stopifnot(length(G_offdiag) == n_pares_esperado)
 stopifnot(!anyNA(G_offdiag))
 
 # Referências descritivas da cauda superior da distribuição.
@@ -301,7 +309,7 @@ knitr::kable(
     Relacionamento = unname(percentis_G)
   ),
   digits = 6,
-  caption = "Percentis de referência dos relacionamentos fora da diagonal de G"
+  caption = "Percentis de referência dos relacionamentos entre pares únicos"
 )
 
 dados_offdiag <- data.frame(
@@ -345,7 +353,7 @@ figura_offdiag <- ggplot2::ggplot(
   ) +
   ggplot2::labs(
     title = "Distribuição dos relacionamentos genômicos",
-    x = "Relacionamento genômico fora da diagonal",
+    x = "Relacionamento genômico entre indivíduos diferentes",
     y = "Frequência",
     color = "Percentil",
     linetype = "Percentil"
@@ -398,18 +406,20 @@ treinamento.
 
 Entretanto, `g_max` sozinho não mostra quanto da melhor cobertura disponível no
 pool completo foi preservada após reduzir o tamanho do treinamento. Para isso,
-usamos uma segunda medida: o **rank do melhor vizinho disponível**.
+usamos uma segunda medida: a **posição do melhor vizinho disponível no ranking
+de T100**.
 
 Para cada indivíduo de validação, ordenamos os 1.103 indivíduos de T100 do maior
-para o menor relacionamento. O indivíduo mais relacionado recebe rank 1, o
-segundo recebe rank 2 e assim por diante. Em cada subconjunto T25, T50, T75 ou
-T100, procuramos o menor rank ainda presente.
+para o menor relacionamento. O indivíduo mais relacionado recebe posição 1, o
+segundo recebe posição 2 e assim por diante. Em cada subconjunto T25, T50, T75
+ou T100, procuramos a menor posição ainda presente.
 
 Assim, as duas medidas são complementares:
 
 - `g_max` mede **quão próximo** é o melhor representante disponível;
-- `melhor_rank_no_pool` mede **quanto da melhor cobertura do pool completo foi
-  preservado** no subconjunto de treinamento.
+- `melhor_rank_no_pool` registra **a posição desse representante no ranking de
+  T100** e, portanto, quanto dos vizinhos mais próximos do pool completo foi
+  preservado no subconjunto.
 
 Essas medidas são apenas descritivas. Elas não são utilizadas para escolher os
 indivíduos de treinamento e não substituem os testes de desempenho preditivo.
@@ -468,10 +478,7 @@ for (rep in seq_len(30)) {
 
       g_max_atual <- G[ind, melhor_individuo]
 
-      # 6. Guarda também a melhor referência possível dentro de T100.
-      melhor_individuo_pool <- pool_ordenado[1]
-      g_max_pool <- G[ind, melhor_individuo_pool]
-
+      # 6. Registra as duas medidas usadas na interpretação.
       k <- k + 1L
 
       linhas_rank[[k]] <- data.frame(
@@ -480,10 +487,7 @@ for (rep in seq_len(30)) {
         individuo_validacao = ind,
         melhor_rank_no_pool = melhor_rank,
         melhor_individuo_treino = melhor_individuo,
-        melhor_individuo_pool = melhor_individuo_pool,
-        g_max_atual = g_max_atual,
-        g_max_pool = g_max_pool,
-        perda_g_max_vs_pool = g_max_pool - g_max_atual
+        g_max_atual = g_max_atual
       )
     }
   }
@@ -519,10 +523,17 @@ resumo_ranking <- aggregate(
   FUN = mean
 )
 
+resumo_ranking_exibicao <- resumo_ranking
+names(resumo_ranking_exibicao) <- c(
+  "Proporção do pool",
+  "Relacionamento máximo médio",
+  "Melhor posição média no ranking de T100"
+)
+
 knitr::kable(
-  resumo_ranking,
+  resumo_ranking_exibicao,
   digits = 4,
-  caption = "Relacionamento máximo e melhor rank disponíveis por tamanho de treinamento"
+  caption = "Relacionamento máximo e cobertura dos vizinhos genômicos por tamanho de treinamento"
 )
 ```
 
@@ -584,16 +595,17 @@ máxima disponível.
 
 ### 9.2. Cobertura dos vizinhos genômicos mais próximos
 
-A segunda figura usa o ranking definido em T100 como referência. Rank 1
+A segunda figura usa o ranking definido em T100 como referência. Posição 1
 significa que o subconjunto de treinamento ainda contém o indivíduo mais
-relacionado de todo o pool. Rank 2 significa que o melhor indivíduo disponível
-no subconjunto é o segundo mais relacionado do pool, e assim sucessivamente.
+relacionado de todo o pool. Posição 2 significa que o melhor indivíduo
+disponível no subconjunto é o segundo mais relacionado do pool, e assim
+sucessivamente.
 
-Em T100, o rank é sempre 1 por construção. Para T25, T50 e T75, quanto mais a
-distribuição estiver concentrada próxima de 1, maior é a cobertura dos melhores
-vizinhos genômicos presentes no pool completo.
+Em T100, a posição é sempre 1 por construção. Para T25, T50 e T75, quanto mais
+a distribuição estiver concentrada próxima de 1, maior é a cobertura dos
+melhores vizinhos genômicos presentes no pool completo.
 
-```{r figura-rank-pool, fig.height=5, fig.width=8, fig.cap="Distribuição do melhor rank genômico disponível nos conjuntos T25, T50, T75 e T100."}
+```{r figura-rank-pool, fig.height=5, fig.width=8, fig.cap="Distribuição da melhor posição no ranking genômico disponível nos conjuntos T25, T50, T75 e T100."}
 dados_rank_plot <- ranking_individual
 
 dados_rank_plot$proporcao_fator <- factor(
@@ -618,7 +630,7 @@ figura_rank <- ggplot2::ggplot(
   ggplot2::labs(
     title = "Cobertura dos vizinhos genômicos mais próximos",
     x = "Proporção do pool usada no treinamento",
-    y = "Melhor rank disponível no pool completo"
+    y = "Melhor posição disponível no ranking de T100"
   ) +
   ggthemes::theme_gdocs() +
   ggplot2::theme(
@@ -638,10 +650,10 @@ ggplot2::ggsave(
 ```
 
 Em conjunto, as duas figuras mostram **proximidade** (`g_max`) e **cobertura**
-(rank). Elas ajudam a caracterizar o que é perdido genomicamente quando T100 é
-reduzido para T75, T50 ou T25. A decisão sobre suficiência preditiva, porém,
-será baseada nas predições do GBLUP e no teste formal de equivalência das etapas
-seguintes.
+(posição no ranking). Elas ajudam a caracterizar o que é perdido genomicamente
+quando T100 é reduzido para T75, T50 ou T25. A decisão sobre suficiência
+preditiva, porém, será baseada nas predições do GBLUP e no teste formal de
+equivalência das etapas seguintes.
 
 ## 10. Objeto genômico usado pelos modelos
 
