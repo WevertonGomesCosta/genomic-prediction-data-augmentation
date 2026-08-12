@@ -48,11 +48,11 @@ Mixup?
 - 4.325 SNPs;
 - 276 indivíduos de validação por repetição;
 - T100 = 1.103 indivíduos reais de treinamento;
-- 30 repetições de validação externa aleatória;
+- 30 repetições de divisão entre treinamento e validação;
 - T25, T50, T75 e T100 aninhados;
 - uma matriz genômica global `G`;
 - GBLUP via `BGLR`/`RKHS`;
-- 10.000 iterações e período de burn-in de 5.000;
+- 10.000 iterações e período de *burn-in* de 5.000;
 - equivalência avaliada com margem `delta = 0.05`, definida como uma margem
 prática específica deste estudo, e correção de Nadeau-Bengio.
 
