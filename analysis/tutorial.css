@@ -1,0 +1,10 @@
+/* Remove controles automáticos de histórico de figuras do workflowr.
+   O versionamento permanece no Git; apenas não é exibido no tutorial. */
+.btn-workflowr-fig {
+  display: none !important;
+}
+
+p:has(> .btn-workflowr-fig),
+p:has(> .btn-workflowr-fig) + div.collapse {
+  display: none !important;
+}
