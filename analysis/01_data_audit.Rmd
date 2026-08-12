@@ -228,9 +228,8 @@ knitr::kable(
 )
 ```
 
-A distribuição também é apresentada graficamente. A figura usa o padrão
-`GDocs` diretamente no código para manter a identidade visual do projeto sem
-esconder a formatação em funções auxiliares.
+A distribuição também é apresentada graficamente. A figura segue o padrão
+visual GDocs adotado no tutorial.
 
 ```{r histograma-yield, fig.height=4.8, fig.width=8, fig.cap="Distribuição da produtividade dos 1.379 indivíduos."}
 if (!requireNamespace("ggplot2", quietly = TRUE)) {
