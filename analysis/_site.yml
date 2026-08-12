@@ -37,3 +37,4 @@ output:
     theme: cosmo
     highlight: textmate
     df_print: paged
+    css: tutorial.css
