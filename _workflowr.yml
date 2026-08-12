@@ -3,3 +3,4 @@
 
 seed: 20260810
 knit_root_dir: "."
+suppress_report: true
