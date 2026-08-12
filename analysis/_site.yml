@@ -2,7 +2,7 @@ name: "genomic-prediction-data-augmentation"
 output_dir: "../docs"
 
 navbar:
-  title: "Predição genômica + DA"
+  title: "Predição genômica"
   left:
     - text: "Início"
       href: index.html
