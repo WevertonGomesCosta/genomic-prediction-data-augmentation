@@ -41,9 +41,10 @@ margem de diferença considerada pequena para este estudo:
 \delta = 0.05.
 \]
 
-Neste tutorial, `delta = 0.05` é uma margem de equivalência prática definida
-especificamente para este estudo (SESOI) e não um limiar universal para estudos
-de predição genômica.
+Neste tutorial, `delta = 0.05` representa a menor diferença de interesse
+científico, conhecida pela sigla SESOI (*Smallest Effect Size of Interest*).
+Essa margem foi definida especificamente para este estudo e não deve ser
+interpretada como um limiar universal para estudos de predição genômica.
 
 Uma estratégia será considerada equivalente quando o intervalo de confiança do
 efeito estiver totalmente dentro de:
@@ -52,10 +53,10 @@ efeito estiver totalmente dentro de:
 [-0.05,\,+0.05].
 \]
 
-## 2. Carregando o baseline
+## 2. Resultados de referência com dados reais
 
-Esta etapa utiliza apenas os 120 resultados reais já produzidos na Etapa 4.
-Nenhum GBLUP é reajustado.
+Esta etapa utiliza apenas os 120 resultados com indivíduos reais já produzidos
+na Etapa 4. Nenhum GBLUP é reajustado.
 
 ```{r carregar-baseline}
 BASELINE_FILE <- "results/04_baseline_results.csv"
@@ -103,15 +104,22 @@ diferencas$delta_cor <-
   diferencas$correlacao -
   diferencas$correlacao_T100
 
-aggregate(
+resumo_diferencas <- aggregate(
   delta_cor ~ proporcao_pool,
   data = diferencas,
   FUN = mean
-) |>
-  knitr::kable(
-    digits = 4,
-    caption = "Diferença média de correlação em relação a T100"
-  )
+)
+
+names(resumo_diferencas) <- c(
+  "Proporção do pool",
+  "Diferença média de correlação"
+)
+
+knitr::kable(
+  resumo_diferencas,
+  digits = 4,
+  caption = "Diferença média de correlação em relação a T100"
+)
 ```
 
 Valores negativos indicam que a amostra reduzida teve correlação menor que
@@ -120,8 +128,8 @@ T100.
 ## 4. Por que corrigir o erro-padrão?
 
 As 30 repetições não são 30 experimentos completamente independentes. Os
-holdouts são sorteados da mesma população e um mesmo indivíduo pode aparecer em
-várias repetições.
+conjuntos de validação são sorteados da mesma população e um mesmo indivíduo
+pode aparecer em várias repetições.
 
 Por isso usamos a aproximação de Nadeau-Bengio para aumentar o erro-padrão em
 relação ao teste pareado ingênuo:
@@ -145,11 +153,12 @@ Aqui:
 
 ## 5. TOST com correção de Nadeau-Bengio
 
-O TOST realiza dois testes unilaterais. Para declarar equivalência, precisamos
-rejeitar simultaneamente que a diferença seja menor ou igual a `-0.05` e que
-seja maior ou igual a `+0.05`.
+O TOST (*Two One-Sided Tests*) é um procedimento de equivalência baseado em
+dois testes unilaterais. Para declarar equivalência, precisamos rejeitar
+simultaneamente que a diferença seja menor ou igual a `-0.05` e que seja maior
+ou igual a `+0.05`.
 
-O código abaixo mostra a conta diretamente, sem função auxiliar.
+O código abaixo apresenta diretamente o cálculo utilizado.
 
 ```{r tost-principal}
 DELTA <- 0.05
@@ -226,8 +235,20 @@ for (proporcao in c(0.25, 0.50, 0.75)) {
   )
 }
 
+resultado_equivalencia_exibicao <- resultado_equivalencia
+names(resultado_equivalencia_exibicao) <- c(
+  "Proporção do pool",
+  "Indivíduos reais",
+  "Diferença média de correlação",
+  "Erro-padrão corrigido",
+  "IC90% inferior",
+  "IC90% superior",
+  "p-valor TOST",
+  "Equivalente"
+)
+
 knitr::kable(
-  resultado_equivalencia,
+  resultado_equivalencia_exibicao,
   digits = 4,
   caption = "Equivalência das amostras reais reduzidas com T100"
 )
@@ -334,7 +355,7 @@ intervalo de T75 está inteiramente entre `-0.05` e `+0.05`.
 
 ## 7. Análise de sensibilidade usando o tamanho real de treinamento
 
-Na análise principal usamos `n_train = 1103`, correspondente ao pool externo de
+Na análise principal usamos `n_train = 1103`, correspondente ao pool de
 treinamento. Como verificação de sensibilidade, repetimos a correção usando o
 tamanho efetivo de cada estratégia: 275, 551 ou 827.
 
@@ -409,8 +430,19 @@ for (proporcao in c(0.25, 0.50, 0.75)) {
   )
 }
 
+sensibilidade_exibicao <- sensibilidade
+names(sensibilidade_exibicao) <- c(
+  "Proporção do pool",
+  "N usado na correção",
+  "Diferença média de correlação",
+  "IC90% inferior",
+  "IC90% superior",
+  "p-valor TOST",
+  "Equivalente"
+)
+
 knitr::kable(
-  sensibilidade,
+  sensibilidade_exibicao,
   digits = 4,
   caption = "Sensibilidade da correção ao tamanho efetivo de treinamento"
 )
@@ -420,12 +452,12 @@ A conclusão não muda: T75 permanece equivalente e T25/T50 não são equivalent
 
 ## 8. Conclusão desta etapa
 
-Sem Data Augmentation, o menor conjunto real equivalente a T100 é:
+Sem aumento de dados, o menor conjunto real equivalente a T100 é:
 
 \[
 \boxed{T75 = 827\text{ indivíduos reais}}.
 \]
 
-Esse valor será a referência da próxima etapa. O Data Augmentation só terá
+Esse valor será a referência da próxima etapa. O aumento de dados só terá
 benefício prático se permitir que T50 ou T25 também se tornem equivalentes a
 T100.
