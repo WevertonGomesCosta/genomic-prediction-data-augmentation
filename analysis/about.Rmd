@@ -16,12 +16,13 @@ editor_options:
 
 ## Projeto
 
-Tutorial reproduzível em `workflowr` para estudar predição genômica com GBLUP,
-tamanho de amostra real e aumento de dados (*Data Augmentation*) via Mixup.
+Tutorial em `workflowr` para estudar predição genômica com GBLUP, tamanho de
+amostra real e aumento de dados (*Data Augmentation*) via Mixup.
 
-O repositório foi organizado para priorizar leitura didática: o código
-metodologicamente relevante aparece diretamente nos módulos analíticos, sem
-arquivos de funções auxiliares que escondam as etapas principais.
+O repositório foi organizado para priorizar uma leitura didática e sequencial.
+O código metodologicamente relevante aparece diretamente nos módulos
+analíticos, acompanhado da explicação do objetivo e da interpretação dos
+resultados de cada etapa.
 
 A fonte original e o procedimento de preparação do conjunto analítico serão
 documentados separadamente após a conclusão da auditoria de proveniência dos
