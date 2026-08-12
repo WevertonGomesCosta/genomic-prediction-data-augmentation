@@ -70,9 +70,9 @@ n
 ## 3. Parâmetros do desenho amostral
 
 Utilizamos 30 repetições independentes do sorteio de validação. Em cada uma
-delas, 20% dos indivíduos são reservados para validação externa. As sementes
-são definidas previamente para que o mesmo desenho amostral seja utilizado em
-todas as etapas seguintes.
+delas, 20% dos indivíduos são reservados para validação. As sementes são
+definidas previamente para que o mesmo desenho amostral seja utilizado em todas
+as etapas seguintes.
 
 ```{r parametros-amostragem}
 PROP_VALIDACAO <- 0.20
@@ -96,7 +96,7 @@ Com 1.379 indivíduos, cada repetição contém:
 \]
 
 O termo `T100` refere-se, portanto, a **100% do pool disponível para
-Treinamento naquela repetição**, e não a 100% dos 1.379 indivíduos da população
+treinamento naquela repetição**, e não a 100% dos 1.379 indivíduos da população
 analítica.
 
 ## 4. Sorteio da validação e formação dos conjuntos aninhados
@@ -107,7 +107,7 @@ Para cada repetição, primeiro sorteamos os 276 indivíduos de validação. Os
 Em seguida, uma única permutação aleatória de T100 é criada. T25, T50 e T75 são
 obtidos usando partes progressivamente maiores dessa mesma ordem aleatória. É
 essa construção que garante o aninhamento entre os quatro tamanhos de
-Treinamento.
+treinamento.
 
 ```{r criar-splits}
 # Estrutura que armazenará os 30 splits de cada tamanho de treinamento.
@@ -122,7 +122,7 @@ splits_mestre <- setNames(
 for (rep in seq_len(N_REP)) {
   set.seed(SEEDS_REP[rep])
 
-  # 1. Sorteia a validação externa da repetição atual.
+  # 1. Sorteia a validação da repetição atual.
   validacao <- sort(
     sample(
       seq_len(n),
@@ -236,9 +236,9 @@ head(resumo_splits, 8) |>
 
 O número de vezes em que cada indivíduo aparece na validação pode variar porque
 a validação é sorteada novamente em cada repetição. A figura mostra como essa
-participação se distribui ao longo dos 30 holdouts.
+participação se distribui ao longo das 30 repetições de validação.
 
-```{r frequencia-validacao, fig.height=4.8, fig.width=8, fig.cap="Frequência com que cada indivíduo aparece na validação ao longo dos 30 holdouts."}
+```{r frequencia-validacao, fig.height=4.8, fig.width=8, fig.cap="Frequência com que cada indivíduo aparece na validação ao longo das 30 repetições."}
 validacoes <- unlist(
   lapply(
     splits_mestre[["1"]],
@@ -282,7 +282,7 @@ figura_frequencia <- ggplot2::ggplot(
     )
   ) +
   ggplot2::labs(
-    title = "Frequência dos indivíduos nos 30 holdouts",
+    title = "Frequência dos indivíduos nas 30 repetições de validação",
     x = "Número de vezes na validação",
     y = "Número de indivíduos"
   ) +
