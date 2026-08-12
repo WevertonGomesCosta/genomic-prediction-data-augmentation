@@ -144,8 +144,8 @@ N_ITER <- 10000
 BURN_IN <- 5000
 
 # Arquivos com os resultados primários usados nas comparações.
-RAW_DA_FILE <- "results/06_da_results.csv"
-BASELINE_FILE <- "results/04_baseline_results.csv"
+DA_RESULTS_FILE <- "results/06_da_results.csv"
+REAL_RESULTS_FILE <- "results/04_baseline_results.csv"
 
 # Regras de mistura avaliadas.
 configs <- data.frame(
@@ -189,8 +189,9 @@ configs_exibicao <- data.frame(
     "Beta simétrica",
     "Beta simétrica"
   ),
-  Lambda_fixo = configs$lambda_fixo,
-  Alpha = configs$alpha
+  `Lambda fixo` = configs$lambda_fixo,
+  Alpha = configs$alpha,
+  check.names = FALSE
 )
 
 knitr::kable(
@@ -235,11 +236,10 @@ denominador <- gobj$denom
 
 ## 6. Construção dos 360 cenários de aumento de dados
 
-A seguir, cada processo é mostrado em uma subseção própria. Em vez de esconder
-todas as operações dentro de um único loop longo, repetimos os loops quando
-necessário. Assim, o leitor pode acompanhar separadamente a formação dos
-conjuntos reais, o sorteio dos doadores, a criação dos pseudoindivíduos, a
-expansão da matriz genômica e o ajuste do modelo.
+O aumento de dados é apresentado em etapas sucessivas. Cada subseção mostra um
+processo específico: definição dos conjuntos reais, sorteio dos doadores,
+interpolação dos pseudoindivíduos, expansão da matriz genômica, construção do
+vetor fenotípico e ajuste do GBLUP.
 
 ### 6.1. Separação dos conjuntos reais de treinamento
 
@@ -254,7 +254,7 @@ for (ci in seq_len(nrow(configs))) {
   for (proporcao in PROPORCOES) {
     for (rep in seq_len(N_REP)) {
 
-      # Recupera o mesmo split usado na análise com dados reais.
+      # Recupera o mesmo conjunto usado na análise com dados reais.
       split <- splits_mestre[[as.character(proporcao)]][[rep]]
 
       treino <- split$treino
@@ -300,10 +300,9 @@ Depois definimos, para cada cenário, os dois doadores de cada pseudoindivíduo 
 o peso `lambda` usado na interpolação. Os doadores são sorteados com reposição,
 mas os dois integrantes de uma mesma mistura são sempre diferentes.
 
-O sorteio dos doadores e a geração de `lambda` permanecem no mesmo loop porque
+O sorteio dos doadores e a geração de `lambda` permanecem na mesma etapa porque
 fazem parte da mesma realização aleatória do Mixup. Para as distribuições Beta,
-`lambda` é gerado depois dos dois doadores, preservando exatamente a sequência
-aleatória definida para cada cenário.
+`lambda` é gerado depois dos dois doadores.
 
 ```{r doadores-lambda-da, eval=FALSE}
 misturas_da <- vector(
@@ -368,7 +367,7 @@ for (s in seq_len(nrow(cenarios_da))) {
     )
   }
 
-  # Guarda apenas as informações necessárias para reconstruir o Mixup.
+  # Guarda as informações necessárias para reconstruir o Mixup.
   misturas_da[[s]] <- list(
     idx1 = idx1,
     idx2 = idx2,
@@ -396,7 +395,6 @@ for (s in seq_len(nrow(cenarios_da))) {
   proporcao_chave <- as.character(cenario$proporcao_pool)
 
   split <- splits_mestre[[proporcao_chave]][[cenario$repeticao]]
-
   treino <- split$treino
 
   M_train <- M[
@@ -409,7 +407,6 @@ for (s in seq_len(nrow(cenarios_da))) {
 
   # Recupera os doadores e os pesos do Mixup.
   mistura <- misturas_da[[s]]
-
   idx1 <- mistura$idx1
   idx2 <- mistura$idx2
   lambda <- mistura$lambda
@@ -446,12 +443,10 @@ blocos sintético-real, real-sintético e sintético-sintético.
 ```{r matriz-expandida-da, eval=FALSE}
 for (s in seq_len(nrow(cenarios_da))) {
 
-  # Recupera cenário, treinamento e receita do Mixup.
+  # Recupera cenário, treinamento e definição do Mixup.
   cenario <- cenarios_da[s, ]
   proporcao_chave <- as.character(cenario$proporcao_pool)
-
   split <- splits_mestre[[proporcao_chave]][[cenario$repeticao]]
-
   treino <- split$treino
 
   M_train <- M[
@@ -485,38 +480,19 @@ for (s in seq_len(nrow(cenarios_da))) {
     Z_syn
   ) / denominador
 
-  # Define as posições dos pseudoindivíduos na matriz expandida.
-  n_total_matriz <- n + cenario$n_syn
-  idx_syn <- (n + 1):(n + cenario$n_syn)
-
-  G_expanded <- matrix(
-    0,
-    nrow = n_total_matriz,
-    ncol = n_total_matriz
+  # Monta a matriz expandida em quatro blocos.
+  G_expanded <- rbind(
+    cbind(
+      G,
+      t(G_syn_real)
+    ),
+    cbind(
+      G_syn_real,
+      G_syn_syn
+    )
   )
 
-  # Mantém o bloco real-real exatamente igual a G.
-  G_expanded[
-    seq_len(n),
-    seq_len(n)
-  ] <- G
-
-  # Insere os relacionamentos entre sintéticos e reais.
-  G_expanded[
-    idx_syn,
-    seq_len(n)
-  ] <- G_syn_real
-
-  G_expanded[
-    seq_len(n),
-    idx_syn
-  ] <- t(G_syn_real)
-
-  # Insere os relacionamentos entre os pseudoindivíduos.
-  G_expanded[
-    idx_syn,
-    idx_syn
-  ] <- G_syn_syn
+  idx_syn <- (n + 1):(n + cenario$n_syn)
 
   # Pequeno ajuste numérico somente na diagonal dos sintéticos.
   G_expanded[
@@ -542,9 +518,18 @@ for (s in seq_len(nrow(cenarios_da))) {
 }
 ```
 
-Essa construção mantém todos os relacionamentos existentes entre os 1.379
-indivíduos reais e adiciona a posição dos pseudoindivíduos na mesma escala
-genômica.
+A forma em blocos deixa explícita a estrutura da matriz:
+
+\[
+G_{expanded}=
+\begin{bmatrix}
+G & G_{real,syn}\\
+G_{syn,real} & G_{syn,syn}
+\end{bmatrix}.
+\]
+
+Assim, todos os relacionamentos existentes entre os 1.379 indivíduos reais são
+mantidos e os pseudoindivíduos são acrescentados na mesma escala genômica.
 
 ### 6.5. Construção do vetor fenotípico
 
@@ -558,10 +543,9 @@ com `NA`.
 ```{r fenotipo-expandido-da, eval=FALSE}
 for (s in seq_len(nrow(cenarios_da))) {
 
-  # Recupera cenário e split correspondente.
+  # Recupera cenário e conjunto correspondente.
   cenario <- cenarios_da[s, ]
   proporcao_chave <- as.character(cenario$proporcao_pool)
-
   split <- splits_mestre[[proporcao_chave]][[cenario$repeticao]]
 
   treino <- split$treino
@@ -575,23 +559,15 @@ for (s in seq_len(nrow(cenarios_da))) {
     mistura$lambda * y_train[mistura$idx1] +
     (1 - mistura$lambda) * y_train[mistura$idx2]
 
-  # Define as posições dos pseudoindivíduos.
-  n_total_matriz <- n + cenario$n_syn
-  idx_syn <- (n + 1):(n + cenario$n_syn)
-
-  # Começa com todos os valores mascarados.
-  y_modelo <- rep(
-    NA_real_,
-    n_total_matriz
+  # Os 1.379 indivíduos reais começam mascarados; os sintéticos são anexados.
+  y_modelo <- c(
+    rep(NA_real_, n),
+    y_syn
   )
 
-  # Fenótipos reais observados no treinamento.
+  # Apenas os fenótipos reais do treinamento são revelados.
   y_modelo[treino] <- y_train
 
-  # Fenótipos interpolados dos pseudoindivíduos.
-  y_modelo[idx_syn] <- y_syn
-
-  # Confere que a validação continua completamente mascarada.
   reais_fora_treino <- setdiff(
     seq_len(n),
     treino
@@ -609,13 +585,11 @@ são interpolações produzidas pelo Mixup.
 
 ### 6.6. Ajuste do GBLUP em cada cenário
 
-Depois de entender separadamente como `M_syn`, `G_expanded` e `y_modelo` são
-construídos, aplicamos essas mesmas operações dentro do loop de ajuste. Elas são
-repetidas explicitamente para que o procedimento utilizado pelo modelo permaneça
-visível, sem ser escondido em uma função auxiliar.
-
-Neste loop guardamos somente os valores observados e preditos da validação. As
-métricas serão calculadas na subseção seguinte.
+As subseções anteriores mostraram separadamente como cada componente é obtido.
+No ajuste, esses componentes são reconstruídos para o cenário atual e usados
+imediatamente no GBLUP. A forma em blocos de `G_expanded` e a construção direta
+de `y_modelo` deixam esse loop concentrado apenas nas operações necessárias ao
+modelo.
 
 ```{r ajuste-gblup-da, eval=FALSE}
 predicoes_da <- vector(
@@ -625,25 +599,18 @@ predicoes_da <- vector(
 
 for (s in seq_len(nrow(cenarios_da))) {
 
-  # 1. Recupera cenário, treinamento, validação e receita do Mixup.
+  # 1. Recupera cenário, treinamento, validação e definição do Mixup.
   cenario <- cenarios_da[s, ]
   proporcao_chave <- as.character(cenario$proporcao_pool)
-
   split <- splits_mestre[[proporcao_chave]][[cenario$repeticao]]
 
   treino <- split$treino
   validacao <- split$valid
-
-  M_train <- M[
-    treino,
-    ,
-    drop = FALSE
-  ]
-
+  M_train <- M[treino, , drop = FALSE]
   y_train <- y[treino]
   mistura <- misturas_da[[s]]
 
-  # 2. Reconstrói genótipos e fenótipos sintéticos.
+  # 2. Reconstrói os pseudoindivíduos.
   M_syn <-
     mistura$lambda * M_train[mistura$idx1, , drop = FALSE] +
     (1 - mistura$lambda) * M_train[mistura$idx2, , drop = FALSE]
@@ -652,69 +619,28 @@ for (s in seq_len(nrow(cenarios_da))) {
     mistura$lambda * y_train[mistura$idx1] +
     (1 - mistura$lambda) * y_train[mistura$idx2]
 
-  # 3. Constrói os blocos genômicos dos pseudoindivíduos.
-  Z_syn <- sweep(
-    M_syn,
-    2,
-    2 * p,
-    FUN = "-"
+  # 3. Expande a matriz de relacionamento genômico.
+  Z_syn <- sweep(M_syn, 2, 2 * p, FUN = "-")
+  G_syn_real <- tcrossprod(Z_syn, Z) / denominador
+  G_syn_syn <- tcrossprod(Z_syn) / denominador
+
+  G_expanded <- rbind(
+    cbind(G, t(G_syn_real)),
+    cbind(G_syn_real, G_syn_syn)
   )
 
-  G_syn_real <- tcrossprod(
-    Z_syn,
-    Z
-  ) / denominador
-
-  G_syn_syn <- tcrossprod(
-    Z_syn
-  ) / denominador
-
-  n_total_matriz <- n + cenario$n_syn
   idx_syn <- (n + 1):(n + cenario$n_syn)
+  G_expanded[cbind(idx_syn, idx_syn)] <-
+    G_expanded[cbind(idx_syn, idx_syn)] + 1e-6
 
-  # 4. Monta a matriz genômica expandida.
-  G_expanded <- matrix(
-    0,
-    nrow = n_total_matriz,
-    ncol = n_total_matriz
+  # 4. Fornece fenótipos apenas para treinamento real e pseudoindivíduos.
+  y_modelo <- c(
+    rep(NA_real_, n),
+    y_syn
   )
-
-  G_expanded[
-    seq_len(n),
-    seq_len(n)
-  ] <- G
-
-  G_expanded[
-    idx_syn,
-    seq_len(n)
-  ] <- G_syn_real
-
-  G_expanded[
-    seq_len(n),
-    idx_syn
-  ] <- t(G_syn_real)
-
-  G_expanded[
-    idx_syn,
-    idx_syn
-  ] <- G_syn_syn
-
-  G_expanded[
-    cbind(idx_syn, idx_syn)
-  ] <-
-    G_expanded[cbind(idx_syn, idx_syn)] +
-    1e-6
-
-  # 5. Monta o vetor fenotípico fornecido ao modelo.
-  y_modelo <- rep(
-    NA_real_,
-    n_total_matriz
-  )
-
   y_modelo[treino] <- y_train
-  y_modelo[idx_syn] <- y_syn
 
-  # 6. Define o componente genômico do GBLUP.
+  # 5. Ajusta o componente genômico usando a matriz expandida como kernel.
   ETA <- list(
     list(
       K = G_expanded,
@@ -722,7 +648,6 @@ for (s in seq_len(nrow(cenarios_da))) {
     )
   )
 
-  # 7. Ajusta o modelo com uma semente própria para o BGLR.
   seed_bglr <-
     260000 +
     cenario$ci * 10000 +
@@ -739,7 +664,7 @@ for (s in seq_len(nrow(cenarios_da))) {
     verbose = FALSE
   )
 
-  # 8. Guarda apenas observado e predito nos 276 indivíduos de validação.
+  # 6. Guarda observado e predito nos 276 indivíduos de validação.
   predicoes_da[[s]] <- list(
     observado = y[validacao],
     predicao = ajuste$yHat[validacao]
@@ -747,11 +672,10 @@ for (s in seq_len(nrow(cenarios_da))) {
 }
 ```
 
-O procedimento de ajuste é, portanto, o mesmo em todos os cenários. O que muda
-é a quantidade de indivíduos reais e a forma como os pseudoindivíduos foram
-gerados.
+O modelo é mantido constante entre os 360 cenários. O que varia é o número de
+indivíduos reais e a regra usada para construir os pseudoindivíduos.
 
-### 6.7. Cálculo das métricas de cada cenário
+### 6.7. Cálculo e armazenamento das métricas
 
 Por fim, percorremos as 360 predições e calculamos correlação, RMSE, MAE e
 inclinação de calibração. Cada linha da tabela final representa uma regra de
@@ -822,12 +746,17 @@ for (s in seq_len(nrow(cenarios_da))) {
 }
 
 stopifnot(nrow(resultados_da_calculados) == 360)
+
+write.csv(
+  resultados_da_calculados,
+  DA_RESULTS_FILE,
+  row.names = FALSE
+)
 ```
 
-Com essa separação, o fluxo completo pode ser lido como uma sequência de
-operações independentes: definir os conjuntos reais, gerar o Mixup, construir os
-pseudoindivíduos, expandir a matriz genômica, montar o fenótipo, ajustar o GBLUP
-e calcular as métricas.
+O pipeline passa, portanto, das 360 combinações definidas na Seção 6.1 para uma
+tabela com uma linha de desempenho por cenário e repetição. Esse é o arquivo
+primário usado nas comparações seguintes.
 
 ## 7. Resultados dos 360 cenários
 
@@ -837,7 +766,7 @@ presentes e se cada regra × tamanho contém 30 repetições.
 
 ```{r carregar-resultados-da}
 resultados_da <- read.csv(
-  RAW_DA_FILE
+  DA_RESULTS_FILE
 )
 
 # Chave única: regra de mistura × tamanho real × repetição.
@@ -955,6 +884,17 @@ resumo_exibicao <- resumo_da[
   )
 ]
 
+names(resumo_exibicao) <- c(
+  "Estratégia de mistura",
+  "Indivíduos reais",
+  "Pseudoindivíduos",
+  "Correlação média",
+  "DP da correlação",
+  "RMSE médio",
+  "MAE médio",
+  "Inclinação média"
+)
+
 knitr::kable(
   resumo_exibicao,
   digits = 4,
@@ -968,6 +908,13 @@ Essas comparações identificam a melhor regra dentro de cada tamanho real, mas
 ainda não dizem se o aumento de dados melhora o modelo em relação ao uso dos
 mesmos indivíduos reais sem pseudoindivíduos.
 
+A inclinação de calibração é interpretada como na Etapa 4. Valores próximos de
+1 indicam escala adequada. Valores menores que 1 indicam que as predições estão
+mais dispersas em escala do que os valores observados. Nos cenários de aumento
+de dados, as inclinações médias permanecem abaixo de 1, indicando excesso de
+variação na escala das predições, especialmente nos conjuntos com menor número
+de indivíduos reais.
+
 ## 9. Aumento de dados versus o mesmo conjunto real
 
 Para atribuir algum ganho ao aumento de dados, precisamos comparar cada cenário
@@ -977,7 +924,7 @@ sempre dentro da mesma repetição.
 
 ```{r da-vs-real}
 baseline <- read.csv(
-  BASELINE_FILE
+  REAL_RESULTS_FILE
 )
 
 stopifnot(nrow(baseline) == 120)
@@ -1000,7 +947,7 @@ names(baseline_reduzido)[3:5] <- c(
   "MAE_real"
 )
 
-# Pareia DA e dados reais pela mesma repetição e pelo mesmo tamanho real.
+# Pareia aumento de dados e dados reais pela repetição e pelo tamanho real.
 comparacao_real <- merge(
   resultados_da,
   baseline_reduzido,
@@ -1012,7 +959,7 @@ comparacao_real <- merge(
 
 stopifnot(nrow(comparacao_real) == 360)
 
-# Diferenças: DA menos o modelo correspondente com somente dados reais.
+# Diferenças: aumento de dados menos o modelo com somente dados reais.
 comparacao_real$delta_cor_DA_real <-
   comparacao_real$correlacao -
   comparacao_real$correlacao_real
@@ -1035,21 +982,31 @@ resumo_da_vs_real <- aggregate(
   FUN = mean
 )
 
+resumo_da_vs_real_exibicao <- resumo_da_vs_real[
+  order(
+    resumo_da_vs_real$proporcao_pool,
+    -resumo_da_vs_real$delta_cor_DA_real
+  ),
+]
+
+names(resumo_da_vs_real_exibicao) <- c(
+  "Estratégia de mistura",
+  "Proporção do pool",
+  "Indivíduos reais",
+  "Diferença média de correlação",
+  "Diferença média de RMSE",
+  "Diferença média de MAE"
+)
+
 knitr::kable(
-  resumo_da_vs_real[
-    order(
-      resumo_da_vs_real$proporcao_pool,
-      -resumo_da_vs_real$delta_cor_DA_real
-    ),
-  ],
+  resumo_da_vs_real_exibicao,
   digits = 4,
   caption = "Aumento de dados versus o mesmo tamanho de amostra real"
 )
 ```
 
-Para a correlação, valores positivos de `delta_cor_DA_real` indicariam vantagem
-do aumento de dados. Para RMSE e MAE, valores negativos indicariam redução do
-erro.
+Para a correlação, valores positivos indicariam vantagem do aumento de dados.
+Para RMSE e MAE, valores negativos indicariam redução do erro.
 
 Nas 12 combinações, a diferença média de correlação é negativa. Portanto,
 nenhuma das quatro regras de Mixup melhora, em média, o GBLUP correspondente
@@ -1198,8 +1155,9 @@ parte dos indivíduos reais por pseudoindivíduos.
 
 ## 10. Aumento de dados versus T100
 
-A comparação anterior pergunta se DA melhora o modelo em relação ao mesmo
-número de indivíduos reais. A pergunta principal do projeto é mais exigente:
+A comparação anterior pergunta se o aumento de dados melhora o modelo em
+relação ao mesmo número de indivíduos reais. A pergunta principal do projeto é
+mais exigente:
 
 > **Uma amostra reduzida completada com pseudoindivíduos pode atingir desempenho
 > praticamente equivalente ao T100 formado por 1.103 indivíduos reais?**
@@ -1225,7 +1183,7 @@ names(t100)[2:4] <- c(
   "MAE_T100"
 )
 
-# Pareia cada cenário de DA com T100 dentro da mesma repetição.
+# Pareia cada cenário de aumento de dados com T100 na mesma repetição.
 comparacao_t100 <- merge(
   resultados_da,
   t100,
@@ -1363,13 +1321,28 @@ for (config in configs$config_mistura) {
   }
 }
 
+resultado_equivalencia_da_exibicao <- resultado_equivalencia_da[
+  order(
+    resultado_equivalencia_da$N_real,
+    -resultado_equivalencia_da$Delta_cor_media
+  ),
+]
+
+names(resultado_equivalencia_da_exibicao) <- c(
+  "Estratégia de mistura",
+  "Proporção do pool",
+  "Indivíduos reais",
+  "Pseudoindivíduos",
+  "Diferença média de correlação",
+  "Erro-padrão corrigido",
+  "IC90% inferior",
+  "IC90% superior",
+  "p-valor TOST",
+  "Equivalente"
+)
+
 knitr::kable(
-  resultado_equivalencia_da[
-    order(
-      resultado_equivalencia_da$N_real,
-      -resultado_equivalencia_da$Delta_cor_media
-    ),
-  ],
+  resultado_equivalencia_da_exibicao,
   digits = 4,
   caption = "Equivalência das estratégias de aumento de dados com T100"
 )
@@ -1506,7 +1479,7 @@ Com as quatro regras de Mixup avaliadas, T25 e T50 continuam fora da região de
 equivalência. Portanto:
 
 \[
-\boxed{\text{redução adicional atribuível ao DA}=0}.
+\boxed{\text{redução adicional atribuível ao aumento de dados}=0}.
 \]
 
 Sob este desenho, completar amostras aleatórias reduzidas até T100 com
