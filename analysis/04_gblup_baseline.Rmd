@@ -99,7 +99,7 @@ N_REP <- 30
 N_ITER <- 10000
 BURN_IN <- 5000
 
-FINAL_FILE <- "results/04_baseline_results.csv"
+FINAL_FILE <- "output/04_baseline_results.csv"
 ```
 
 Utilizamos 10.000 iterações MCMC, com as primeiras 5.000 descartadas como

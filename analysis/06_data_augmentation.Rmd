@@ -144,8 +144,8 @@ N_ITER <- 10000
 BURN_IN <- 5000
 
 # Arquivos com os resultados primários usados nas comparações.
-DA_RESULTS_FILE <- "results/06_da_results.csv"
-REAL_RESULTS_FILE <- "results/04_baseline_results.csv"
+DA_RESULTS_FILE <- "output/06_da_results.csv"
+REAL_RESULTS_FILE <- "output/04_baseline_results.csv"
 
 # Regras de mistura avaliadas.
 configs <- data.frame(
@@ -760,7 +760,7 @@ primário usado nas comparações seguintes.
 
 ## 7. Resultados dos 360 cenários
 
-As análises abaixo utilizam a tabela primária `results/06_da_results.csv`. Antes
+As análises abaixo utilizam a tabela primária `output/06_da_results.csv`. Antes
 de resumir os resultados, verificamos se as 360 combinações esperadas estão
 presentes e se cada regra × tamanho contém 30 repetições.
 

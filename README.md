@@ -116,7 +116,7 @@ analysis/06_data_augmentation.Rmd
 ```
 
 Os objetos intermediários usados entre etapas são armazenados em `output/`. As
-tabelas primárias de desempenho estão em `results/`, enquanto resumos,
+tabelas primárias de desempenho estão em `output/`, enquanto resumos,
 diferenças pareadas, figuras e testes de equivalência são calculados diretamente
 nos módulos correspondentes.
 

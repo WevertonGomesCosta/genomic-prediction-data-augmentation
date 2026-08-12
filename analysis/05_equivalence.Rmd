@@ -59,10 +59,10 @@ Esta etapa utiliza apenas os 120 resultados com indivíduos reais já produzidos
 na Etapa 4. Nenhum GBLUP é reajustado.
 
 ```{r carregar-baseline}
-BASELINE_FILE <- "results/04_baseline_results.csv"
+BASELINE_FILE <- "output/04_baseline_results.csv"
 
 if (!file.exists(BASELINE_FILE)) {
-  stop("Arquivo ausente: results/04_baseline_results.csv")
+  stop("Arquivo ausente: output/04_baseline_results.csv")
 }
 
 baseline <- read.csv(BASELINE_FILE)
