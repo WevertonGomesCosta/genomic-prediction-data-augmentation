@@ -67,7 +67,29 @@ if (!file.exists(BASELINE_FILE)) {
 
 baseline <- read.csv(BASELINE_FILE)
 
-stopifnot(nrow(baseline) == 120)
+PROPORCOES <- sort(unique(baseline$proporcao_pool))
+PROP_T100 <- max(PROPORCOES)
+PROPORCOES_REDUZIDAS <- PROPORCOES[PROPORCOES < PROP_T100]
+
+N_REP <- length(unique(baseline$repeticao))
+N_TAMANHOS <- length(PROPORCOES)
+N_CENARIOS <- N_REP * N_TAMANHOS
+
+N_TEST <- unique(baseline$n_validacao)
+N_TRAIN_POOL <- unique(
+  baseline$n_treino[
+    baseline$proporcao_pool == PROP_T100
+  ]
+)
+
+LABELS_REDUZIDOS <- paste0(
+  "T",
+  PROPORCOES_REDUZIDAS * 100
+)
+
+stopifnot(length(N_TEST) == 1L)
+stopifnot(length(N_TRAIN_POOL) == 1L)
+stopifnot(nrow(baseline) == N_CENARIOS)
 ```
 
 ## 3. Diferenças pareadas contra T100
@@ -78,14 +100,14 @@ validação.
 
 ```{r diferencas-pareadas}
 t100 <- baseline[
-  baseline$proporcao_pool == 1,
+  baseline$proporcao_pool == PROP_T100,
   c("repeticao", "correlacao")
 ]
 
 names(t100)[2] <- "correlacao_T100"
 
 reduzidos <- baseline[
-  baseline$proporcao_pool < 1,
+  baseline$proporcao_pool < PROP_T100,
   c(
     "repeticao",
     "proporcao_pool",
@@ -132,7 +154,9 @@ conjuntos de validação são sorteados da mesma população e um mesmo indivíd
 pode aparecer em várias repetições.
 
 Por isso usamos a aproximação de Nadeau-Bengio para aumentar o erro-padrão em
-relação ao teste pareado ingênuo:
+relação ao teste pareado ingênuo. O procedimento original foi proposto para
+comparações sob reamostragem repetida; aqui utilizamos esse erro-padrão corrigido
+dentro do TOST como uma adaptação para a análise de equivalência:
 
 \[
 SE_{NB}=
@@ -163,13 +187,10 @@ O código abaixo apresenta diretamente o cálculo utilizado.
 ```{r tost-principal}
 DELTA <- 0.05
 ALPHA <- 0.05
-R <- 30
-N_TEST <- 276
-N_TRAIN <- 1103
 
 resultado_equivalencia <- data.frame()
 
-for (proporcao in c(0.25, 0.50, 0.75)) {
+for (proporcao in PROPORCOES_REDUZIDAS) {
   d <- diferencas$delta_cor[
     diferencas$proporcao_pool == proporcao
   ]
@@ -178,8 +199,8 @@ for (proporcao in c(0.25, 0.50, 0.75)) {
   sd_d <- sd(d)
 
   fator_NB <-
-    1 / R +
-    N_TEST / N_TRAIN
+    1 / N_REP +
+    N_TEST / N_TRAIN_POOL
 
   se_NB <- sqrt(
     fator_NB * sd_d^2
@@ -280,8 +301,8 @@ dados_equivalencia <- resultado_equivalencia
 
 dados_equivalencia$Cenario <- factor(
   dados_equivalencia$Proporcao,
-  levels = c(0.25, 0.50, 0.75),
-  labels = c("T25", "T50", "T75")
+  levels = PROPORCOES_REDUZIDAS,
+  labels = LABELS_REDUZIDOS
 )
 
 dados_equivalencia$Status <- factor(
@@ -360,30 +381,26 @@ treinamento. Como verificação de sensibilidade, repetimos a correção usando 
 tamanho efetivo de cada estratégia: 275, 551 ou 827.
 
 ```{r sensibilidade-ntrain}
-tamanhos_efetivos <- c(
-  "0.25" = 275,
-  "0.5" = 551,
-  "0.75" = 827
-)
-
 sensibilidade <- data.frame()
 
-for (proporcao in c(0.25, 0.50, 0.75)) {
+for (proporcao in PROPORCOES_REDUZIDAS) {
   d <- diferencas$delta_cor[
     diferencas$proporcao_pool == proporcao
   ]
 
-  n_train_efetivo <- unname(
-    tamanhos_efetivos[
-      as.character(proporcao)
+  n_train_efetivo <- unique(
+    diferencas$n_treino[
+      diferencas$proporcao_pool == proporcao
     ]
   )
+
+  stopifnot(length(n_train_efetivo) == 1L)
 
   media_d <- mean(d)
   sd_d <- sd(d)
 
   fator_NB <-
-    1 / R +
+    1 / N_REP +
     N_TEST / n_train_efetivo
 
   se_NB <- sqrt(
