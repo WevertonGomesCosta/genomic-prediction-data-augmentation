@@ -66,6 +66,23 @@ splits_mestre <- readRDS(SPLITS_FILE)
 
 M <- obj$M
 
+# Parâmetros estruturais derivados dos objetos produzidos nas etapas anteriores.
+N_INDIVIDUOS <- nrow(M)
+PROPORCOES_TREINO <- sort(as.numeric(names(splits_mestre)))
+CHAVE_T100 <- as.character(max(PROPORCOES_TREINO))
+N_REP <- length(splits_mestre[[CHAVE_T100]])
+N_VALIDACAO <- length(splits_mestre[[CHAVE_T100]][[1]]$valid)
+N_TAMANHOS <- length(PROPORCOES_TREINO)
+
+LABELS_PROP <- paste0(PROPORCOES_TREINO * 100, "%")
+
+# Parâmetros numéricos usados neste módulo.
+EPS_DIAGONAL <- 1e-6
+TOL_SIMETRIA <- 1e-10
+PROBS_PERCENTIS <- c(0.90, 0.95, 0.99)
+LABELS_PERCENTIS <- paste0("P", PROBS_PERCENTIS * 100)
+PASSO_EIXO <- 250
+
 dim(M)
 ```
 
@@ -148,7 +165,7 @@ problemas de estabilidade numérica em operações matriciais posteriores, sem
 alterar de forma relevante os relacionamentos genômicos.
 
 ```{r estabilidade-numerica}
-diag(G) <- diag(G) + 1e-6
+diag(G) <- diag(G) + EPS_DIAGONAL
 ```
 
 ## 6. Estrutura da matriz G
@@ -177,10 +194,10 @@ knitr::kable(
   caption = "Resumo da matriz de relacionamento genômico"
 )
 
-stopifnot(nrow(G) == 1379)
-stopifnot(ncol(G) == 1379)
+stopifnot(nrow(G) == N_INDIVIDUOS)
+stopifnot(ncol(G) == N_INDIVIDUOS)
 stopifnot(all(is.finite(G)))
-stopifnot(erro_simetria < 1e-10)
+stopifnot(erro_simetria < TOL_SIMETRIA)
 ```
 
 ## 7. Matriz de relacionamento dos 1.379 indivíduos
@@ -209,7 +226,7 @@ if (!requireNamespace("ggthemes", quietly = TRUE)) {
   stop("Instale o pacote ggthemes para usar o padrão gráfico GDocs.")
 }
 
-n_individuos <- nrow(G)
+n_individuos <- N_INDIVIDUOS
 
 # Converte todas as células de G para o formato usado pelo ggplot2.
 dados_heatmap <- data.frame(
@@ -218,7 +235,15 @@ dados_heatmap <- data.frame(
   Relacionamento = as.vector(G)
 )
 
-quebras_eixos <- c(1, 250, 500, 750, 1000, 1250, 1379)
+quebras_eixos <- c(
+  1,
+  seq(
+    PASSO_EIXO,
+    n_individuos - 1,
+    by = PASSO_EIXO
+  ),
+  n_individuos
+)
 
 figura_heatmap <- ggplot2::ggplot(
   dados_heatmap,
@@ -300,12 +325,12 @@ stopifnot(!anyNA(G_offdiag))
 # Referências descritivas da cauda superior da distribuição.
 percentis_G <- quantile(
   G_offdiag,
-  probs = c(0.90, 0.95, 0.99)
+  probs = PROBS_PERCENTIS
 )
 
 knitr::kable(
   data.frame(
-    Percentil = c("P90", "P95", "P99"),
+    Percentil = LABELS_PERCENTIS,
     Relacionamento = unname(percentis_G)
   ),
   digits = 6,
@@ -318,8 +343,8 @@ dados_offdiag <- data.frame(
 
 linhas_percentis <- data.frame(
   Percentil = factor(
-    c("P90", "P95", "P99"),
-    levels = c("P90", "P95", "P99")
+    LABELS_PERCENTIS,
+    levels = LABELS_PERCENTIS
   ),
   Relacionamento = unname(percentis_G)
 )
@@ -345,10 +370,9 @@ figura_offdiag <- ggplot2::ggplot(
   ) +
   ggthemes::scale_color_gdocs() +
   ggplot2::scale_linetype_manual(
-    values = c(
-      P90 = "dashed",
-      P95 = "dotdash",
-      P99 = "dotted"
+    values = setNames(
+      c("dashed", "dotdash", "dotted"),
+      LABELS_PERCENTIS
     )
   ) +
   ggplot2::labs(
@@ -425,8 +449,8 @@ Essas medidas são apenas descritivas. Elas não são utilizadas para escolher o
 indivíduos de treinamento e não substituem os testes de desempenho preditivo.
 
 ```{r calcular-ranking-genomico}
-# 30 repetições × 276 indivíduos de validação × 4 tamanhos de treinamento.
-N_CENARIOS_RANK <- 30 * 276 * 4
+# Número esperado de combinações: repetição × validação × tamanho de treinamento.
+N_CENARIOS_RANK <- N_REP * N_VALIDACAO * N_TAMANHOS
 linhas_rank <- vector(
   "list",
   N_CENARIOS_RANK
@@ -434,10 +458,10 @@ linhas_rank <- vector(
 
 k <- 0L
 
-for (rep in seq_len(30)) {
+for (rep in seq_len(N_REP)) {
   # Validação e pool completo da repetição atual.
-  validacao <- splits_mestre[["1"]][[rep]]$valid
-  pool_index <- splits_mestre[["1"]][[rep]]$pool
+  validacao <- splits_mestre[[CHAVE_T100]][[rep]]$valid
+  pool_index <- splits_mestre[[CHAVE_T100]][[rep]]$pool
 
   for (ind in validacao) {
     # 1. Relacionamentos do indivíduo de validação com todo o pool T100.
@@ -459,7 +483,7 @@ for (rep in seq_len(30)) {
       pool_ordenado
     )
 
-    for (proporcao in c(0.25, 0.50, 0.75, 1.00)) {
+    for (proporcao in PROPORCOES_TREINO) {
       treino_index <- splits_mestre[[as.character(proporcao)]][[rep]]$treino
 
       # 4. Identifica quais posições do ranking completo permanecem no treino.
@@ -502,7 +526,7 @@ stopifnot(nrow(ranking_individual) == N_CENARIOS_RANK)
 stopifnot(
   all(
     ranking_individual$melhor_rank_no_pool[
-      ranking_individual$proporcao_pool == 1
+      ranking_individual$proporcao_pool == max(PROPORCOES_TREINO)
     ] == 1
   )
 )
@@ -548,8 +572,8 @@ dados_gmax <- ranking_individual
 
 dados_gmax$proporcao_fator <- factor(
   dados_gmax$proporcao_pool,
-  levels = c(0.25, 0.50, 0.75, 1.00),
-  labels = c("25%", "50%", "75%", "100%")
+  levels = PROPORCOES_TREINO,
+  labels = LABELS_PROP
 )
 
 figura_gmax <- ggplot2::ggplot(
@@ -610,8 +634,8 @@ dados_rank_plot <- ranking_individual
 
 dados_rank_plot$proporcao_fator <- factor(
   dados_rank_plot$proporcao_pool,
-  levels = c(0.25, 0.50, 0.75, 1.00),
-  labels = c("25%", "50%", "75%", "100%")
+  levels = PROPORCOES_TREINO,
+  labels = LABELS_PROP
 )
 
 figura_rank <- ggplot2::ggplot(
