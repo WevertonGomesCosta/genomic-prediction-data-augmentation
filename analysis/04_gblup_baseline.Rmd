@@ -94,12 +94,30 @@ O mesmo modelo e os mesmos parâmetros são mantidos em todos os tamanhos de
 treinamento, permitindo uma comparação direta entre T25, T50, T75 e T100.
 
 ```{r parametros-gblup}
-PROPORCOES <- c(0.25, 0.50, 0.75, 1.00)
-N_REP <- 30
+DATA_OBJECTS <- "output/01_data_objects.rds"
+SPLITS_FILE <- "output/02_splits_mestre_30rep.rds"
+GENOMIC_OBJECTS <- "output/03_genomic_objects.rds"
+FINAL_FILE <- "output/04_baseline_results.csv"
+
+obj <- readRDS(DATA_OBJECTS)
+splits_mestre <- readRDS(SPLITS_FILE)
+gobj <- readRDS(GENOMIC_OBJECTS)
+
+y <- obj$y
+G <- gobj$G
+
+PROPORCOES <- sort(as.numeric(names(splits_mestre)))
+CHAVE_T100 <- as.character(max(PROPORCOES))
+N_REP <- length(splits_mestre[[CHAVE_T100]])
+N_VALIDACAO <- length(splits_mestre[[CHAVE_T100]][[1]]$valid)
+N_CENARIOS <- N_REP * length(PROPORCOES)
+
+BREAKS_PROP <- PROPORCOES * 100
+LABELS_PROP <- paste0(BREAKS_PROP, "%")
+
 N_ITER <- 10000
 BURN_IN <- 5000
-
-FINAL_FILE <- "output/04_baseline_results.csv"
+SEED_BASE <- 50000
 ```
 
 Utilizamos 10.000 iterações MCMC, com as primeiras 5.000 descartadas como
@@ -112,15 +130,7 @@ tamanho de treinamento. Os comentários destacam as etapas essenciais: seleção
 do conjunto, mascaramento dos fenótipos, especificação do modelo, predição e
 cálculo das métricas.
 
-```{r pipeline-gblup, eval=FALSE}
-# Objetos produzidos nas etapas anteriores.
-obj <- readRDS("output/01_data_objects.rds")
-splits_mestre <- readRDS("output/02_splits_mestre_30rep.rds")
-gobj <- readRDS("output/03_genomic_objects.rds")
-
-y <- obj$y
-G <- gobj$G
-
+```{r pipeline-gblup}
 resultados_baseline <- data.frame()
 
 for (rep in seq_len(N_REP)) {
@@ -150,7 +160,7 @@ for (rep in seq_len(N_REP)) {
 
     # 4. Ajusta o mesmo modelo em todos os cenários.
     set.seed(
-      50000 + rep * 100 + i
+      SEED_BASE + rep * 100 + i
     )
 
     ajuste <- BGLR::BGLR(
@@ -252,10 +262,10 @@ chaves <- paste(
   sep = "__"
 )
 
-stopifnot(nrow(baseline) == 120)
+stopifnot(nrow(baseline) == N_CENARIOS)
 stopifnot(anyDuplicated(chaves) == 0)
-stopifnot(all(baseline$repeticao %in% 1:30))
-stopifnot(all(baseline$n_validacao == 276))
+stopifnot(all(baseline$repeticao %in% seq_len(N_REP)))
+stopifnot(all(baseline$n_validacao == N_VALIDACAO))
 stopifnot(!anyNA(baseline[, c("correlacao", "RMSE", "MAE", "slope_calibracao")]))
 ```
 
@@ -398,8 +408,8 @@ figura_learning_curve <- ggplot2::ggplot(
     size = 3
   ) +
   ggplot2::scale_x_continuous(
-    breaks = c(25, 50, 75, 100),
-    labels = c("25%", "50%", "75%", "100%")
+    breaks = BREAKS_PROP,
+    labels = LABELS_PROP
   ) +
   ggplot2::labs(
     title = "Curva de aprendizado do GBLUP",
