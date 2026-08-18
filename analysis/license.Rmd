@@ -19,10 +19,17 @@ editor_options:
 Este repositório é destinado à pesquisa científica reproduzível e ao ensino do
 fluxo analítico de predição genômica com aumento de dados (*Data Augmentation*).
 
-Uma licença formal para o código deverá ser definida antes da versão final de
-publicação do projeto. A redistribuição do arquivo analítico também depende da
-confirmação da fonte original, dos termos de uso e dos direitos de
-redistribuição dos dados.
+Uma licença formal para o **código deste repositório** deverá ser definida
+antes da versão final de publicação do projeto.
 
-Até essa verificação, `data/dados_gblup.csv` permanece local e é explicitamente
-ignorado pelo Git.
+Os dados de referência utilizados no tutorial são publicados no Dryad sob
+**CC0 (Creative Commons Zero)**, que permite reutilização, modificação,
+compartilhamento e redistribuição. A fonte de referência é o conjunto SoyNAM
+documentado em `data/README.md`, associado ao DOI
+`10.5061/dryad.2fqz6133v`.
+
+O arquivo `data/dados_gblup.csv` permanece local e explicitamente ignorado pelo
+Git como uma escolha organizacional e de proveniência, pois a sequência
+histórica exata de filtragem e imputação que gerou essa entrada analítica não foi
+reconstruída integralmente. Objetos derivados necessários à reprodução das
+etapas seguintes são versionados em `output/`.

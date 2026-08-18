@@ -24,9 +24,9 @@ O código metodologicamente relevante aparece diretamente nos módulos
 analíticos, acompanhado da explicação do objetivo e da interpretação dos
 resultados de cada etapa.
 
-A fonte original e o procedimento de preparação do conjunto analítico serão
-documentados separadamente após a conclusão da auditoria de proveniência dos
-dados.
+A origem do conjunto analítico, sua correspondência com os dados SoyNAM de
+referência e as limitações na reconstrução da preparação histórica estão
+documentadas em `data/README.md`.
 
 ## Contato
 

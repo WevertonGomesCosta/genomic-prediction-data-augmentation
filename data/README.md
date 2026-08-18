@@ -60,13 +60,26 @@ Essa limitação de proveniência não modifica as análises apresentadas no
 tutorial, que partem explicitamente do arquivo analítico final já codificado e
 sem valores ausentes.
 
-## Redistribuição
+## Reutilização e versionamento
 
-Os arquivos públicos de referência possuem sua própria documentação e seus
-próprios termos de disponibilização. O arquivo derivado `dados_gblup.csv` não é
-versionado neste repositório enquanto os termos aplicáveis à redistribuição
-dessa versão analítica não forem formalmente estabelecidos. Por isso,
-`data/dados_gblup.csv` permanece listado no `.gitignore`.
+Os dados de referência utilizados neste projeto são publicados no Dryad sob
+**CC0 (Creative Commons Zero)**. Esse instrumento permite reutilização,
+modificação, compartilhamento e redistribuição dos dados. A citação da fonte
+permanece recomendada como prática acadêmica:
 
-Essa separação permite manter público o pipeline analítico e os resultados do
-estudo sem redistribuir desnecessariamente uma cópia derivada dos dados.
+- Sagae et al., conjunto de dados Dryad:
+  [doi:10.5061/dryad.2fqz6133v](https://doi.org/10.5061/dryad.2fqz6133v)
+- política de reutilização do Dryad:
+  [How to reuse Dryad data](https://datadryad.org/help/guides/reuse)
+
+O arquivo local `data/dados_gblup.csv` continua não versionado e permanece no
+`.gitignore`. Essa decisão é **organizacional e de proveniência**, e não uma
+restrição de licença: o arquivo representa a entrada analítica local cuja
+sequência histórica exata de filtragem e imputação não foi reconstruída
+integralmente.
+
+Para tornar o tutorial reprodutível a partir do estado já auditado, objetos
+derivados necessários às etapas seguintes são versionados em `output/`,
+incluindo `output/01_data_objects.rds`. Esses objetos devem ser interpretados
+como derivados analíticos dos dados SoyNAM de referência e permanecem sujeitos
+à documentação de proveniência e às limitações descritas acima.

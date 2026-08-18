@@ -64,7 +64,8 @@ próprios `.Rmd`.
 - RMSE, MAE e inclinação de calibração como métricas complementares;
 - margem de equivalência `delta = 0.05`, definida como uma margem prática
   específica deste estudo;
-- TOST com correção de Nadeau-Bengio para as repetições de validação.
+- TOST usando o erro-padrão corrigido de Nadeau-Bengio como adaptação para
+  as repetições de validação.
 
 ## Aumento de dados com Mixup
 
@@ -137,5 +138,6 @@ O arquivo analítico esperado pelos módulos é:
 data/dados_gblup.csv
 ```
 
-A estrutura esperada do arquivo e a situação atual da documentação de origem e
-redistribuição estão descritas em `data/README.md`.
+A estrutura esperada do arquivo, sua origem no SoyNAM, os termos de
+reutilização da fonte e as limitações na reconstrução da preparação histórica
+estão descritos em `data/README.md`.
