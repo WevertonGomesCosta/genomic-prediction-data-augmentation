@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Weverton Gomes da Costa" />
+
+<meta name="date" content="2026-08-17" />
+
+<title>4. GBLUP com dados reais</title>
+
+<script src="site_libs/header-attrs-2.30/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<script src="site_libs/navigation-1.1/sourceembed.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet" />
+<script src="site_libs/pagedtable-1.1/js/pagedtable.js"></script>
+<link href="site_libs/font-awesome-6.5.2/css/all.min.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet" />
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/main/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+<style type="text/css">
+#rmd-source-code {
+  display: none;
+}
+</style>
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Predição genômica</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Início</a>
+</li>
+<li>
+  <a href="01_data_audit.html">1. Dados</a>
+</li>
+<li>
+  <a href="02_sampling_splits.html">2. Amostragem</a>
+</li>
+<li>
+  <a href="03_genomic_matrix.html">3. Matriz G</a>
+</li>
+<li>
+  <a href="04_gblup_baseline.html">4. GBLUP</a>
+</li>
+<li>
+  <a href="05_equivalence.html">5. Equivalência</a>
+</li>
+<li>
+  <a href="06_data_augmentation.html">6. Aumento de dados</a>
+</li>
+<li>
+  <a href="about.html">Sobre</a>
+</li>
+<li>
+  <a href="license.html">Licença</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation">
+    <span class="fa fa-github"></span>
+     
+    Código-fonte
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+<li role="separator" class="divider"></li>
+<li><a id="rmd-download-source" href="#">Download Rmd</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">4. GBLUP com dados reais</h1>
+<h4 class="author">Weverton Gomes da Costa</h4>
+<h4 class="date">2026-08-17</h4>
+
+</div>
+
+
+<div id="objetivo" class="section level2">
+<h2>1. Objetivo</h2>
+<p>Agora que os conjuntos de treinamento estão definidos e a matriz de
+relacionamento genômico <code>G</code> foi construída, podemos avaliar
+como o tamanho da amostra real influencia a predição genômica.</p>
+<p>Em cada uma das 30 repetições ajustamos o mesmo GBLUP usando:</p>
+<ul>
+<li>T25 = 275 indivíduos reais;</li>
+<li>T50 = 551 indivíduos reais;</li>
+<li>T75 = 827 indivíduos reais;</li>
+<li>T100 = 1.103 indivíduos reais.</li>
+</ul>
+<p>A validação contém sempre 276 indivíduos e é exatamente a mesma para
+os quatro tamanhos de treinamento dentro de cada repetição. Portanto, as
+diferenças entre T25, T50, T75 e T100 refletem principalmente a
+quantidade de informação fenotípica disponível para o treinamento.</p>
+<p>Esta etapa responde à pergunta:</p>
+<blockquote>
+<p><strong>Como o desempenho preditivo do GBLUP muda quando aumentamos o
+número de indivíduos reais no treinamento?</strong></p>
+</blockquote>
+<p>A equivalência estatística entre os tamanhos reduzidos e T100 será
+avaliada na Etapa 5.</p>
+</div>
+<div id="como-o-gblup-usa-treinamento-e-validação"
+class="section level2">
+<h2>2. Como o GBLUP usa treinamento e validação</h2>
+<p>A matriz <code>G</code> contém os relacionamentos genômicos dos 1.379
+indivíduos, mas o fenótipo é fornecido ao modelo somente para os
+indivíduos do conjunto de treinamento.</p>
+<p>Para representar essa estrutura, criamos um vetor fenotípico com
+<code>NA</code> para todos os indivíduos e preenchemos apenas as
+posições pertencentes ao treinamento:</p>
+<pre class="r"><code># Estrutura conceitual do vetor fenotípico usado pelo modelo.
+y_modelo &lt;- rep(NA_real_, length(y))
+y_modelo[treino] &lt;- y[treino]</code></pre>
+<p>Assim, os indivíduos da validação participam da matriz genômica, mas
+seus fenótipos não são utilizados no ajuste. As predições obtidas nessas
+posições podem então ser comparadas aos valores observados para avaliar
+o modelo.</p>
+</div>
+<div id="modelo-e-parâmetros" class="section level2">
+<h2>3. Modelo e parâmetros</h2>
+<p>O modelo pode ser representado por:</p>
+<p><span class="math display">\[
+y = \mu + g + \varepsilon,
+\]</span></p>
+<p>em que <code>g</code> representa o efeito genômico associado à matriz
+de relacionamento <code>G</code>.</p>
+<p>No pacote <code>BGLR</code>, esse componente é especificado por meio
+de <code>model = "RKHS"</code> e <code>K = G</code>. Nesse caso,
+<code>G</code> funciona como o kernel que descreve a covariância
+genômica entre os indivíduos. Portanto, embora a opção do pacote seja
+chamada <code>RKHS</code>, o efeito genômico utilizado aqui é
+determinado diretamente pela matriz de relacionamento <code>G</code>
+construída na Etapa 3, mantendo a interpretação de predição genômica
+baseada em GBLUP adotada neste tutorial.</p>
+<p>O mesmo modelo e os mesmos parâmetros são mantidos em todos os
+tamanhos de treinamento, permitindo uma comparação direta entre T25,
+T50, T75 e T100.</p>
+<pre class="r"><code>DATA_OBJECTS &lt;- &quot;output/01_data_objects.rds&quot;
+SPLITS_FILE &lt;- &quot;output/02_splits_mestre_30rep.rds&quot;
+GENOMIC_OBJECTS &lt;- &quot;output/03_genomic_objects.rds&quot;
+FINAL_FILE &lt;- &quot;output/04_baseline_results.csv&quot;
+
+obj &lt;- readRDS(DATA_OBJECTS)
+splits_mestre &lt;- readRDS(SPLITS_FILE)
+gobj &lt;- readRDS(GENOMIC_OBJECTS)
+
+y &lt;- obj$y
+G &lt;- gobj$G
+
+PROPORCOES &lt;- sort(as.numeric(names(splits_mestre)))
+CHAVE_T100 &lt;- as.character(max(PROPORCOES))
+N_REP &lt;- length(splits_mestre[[CHAVE_T100]])
+N_VALIDACAO &lt;- length(splits_mestre[[CHAVE_T100]][[1]]$valid)
+N_CENARIOS &lt;- N_REP * length(PROPORCOES)
+
+BREAKS_PROP &lt;- PROPORCOES * 100
+LABELS_PROP &lt;- paste0(BREAKS_PROP, &quot;%&quot;)
+
+N_ITER &lt;- 10000
+BURN_IN &lt;- 5000
+SEED_BASE &lt;- 50000</code></pre>
+<p>Utilizamos 10.000 iterações MCMC, com as primeiras 5.000 descartadas
+como período de <em>burn-in</em>.</p>
+</div>
+<div id="pipeline-do-gblup" class="section level2">
+<h2>4. Pipeline do GBLUP</h2>
+<p>O código abaixo reúne o pipeline analítico aplicado a cada repetição
+e a cada tamanho de treinamento. Os comentários destacam as etapas
+essenciais: seleção do conjunto, mascaramento dos fenótipos,
+especificação do modelo, predição e cálculo das métricas.</p>
+<pre class="r"><code>resultados_baseline &lt;- data.frame()
+
+for (rep in seq_len(N_REP)) {
+  for (i in seq_along(PROPORCOES)) {
+    proporcao &lt;- PROPORCOES[i]
+
+    # 1. Recupera treinamento e validação da repetição atual.
+    split &lt;- splits_mestre[[as.character(proporcao)]][[rep]]
+    treino &lt;- split$treino
+    validacao &lt;- split$valid
+
+    # 2. Mantém fenótipos somente nos indivíduos de treinamento.
+    y_modelo &lt;- rep(
+      NA_real_,
+      length(y)
+    )
+
+    y_modelo[treino] &lt;- y[treino]
+
+    # 3. Define o componente genômico usando G como kernel.
+    ETA &lt;- list(
+      list(
+        K = G,
+        model = &quot;RKHS&quot;
+      )
+    )
+
+    # 4. Ajusta o mesmo modelo em todos os cenários.
+    set.seed(
+      SEED_BASE + rep * 100 + i
+    )
+
+    ajuste &lt;- BGLR::BGLR(
+      y = y_modelo,
+      ETA = ETA,
+      nIter = N_ITER,
+      burnIn = BURN_IN,
+      verbose = FALSE
+    )
+
+    # 5. Obtém predições apenas para os indivíduos da validação.
+    predicao &lt;- ajuste$yHat[validacao]
+    observado &lt;- y[validacao]
+
+    # 6. Calcula as métricas de desempenho preditivo.
+    correlacao &lt;- cor(
+      observado,
+      predicao
+    )
+
+    RMSE &lt;- sqrt(
+      mean(
+        (observado - predicao)^2
+      )
+    )
+
+    MAE &lt;- mean(
+      abs(
+        observado - predicao
+      )
+    )
+
+    calibracao &lt;- lm(
+      observado ~ predicao
+    )
+
+    slope_calibracao &lt;- unname(
+      coef(calibracao)[2]
+    )
+
+    # 7. Armazena uma linha para a combinação repetição × tamanho.
+    nova_linha &lt;- data.frame(
+      repeticao = rep,
+      proporcao_pool = proporcao,
+      n_treino = length(treino),
+      n_validacao = length(validacao),
+      correlacao = correlacao,
+      RMSE = RMSE,
+      MAE = MAE,
+      slope_calibracao = slope_calibracao
+    )
+
+    resultados_baseline &lt;- rbind(
+      resultados_baseline,
+      nova_linha
+    )
+  }
+}
+
+write.csv(
+  resultados_baseline,
+  FINAL_FILE,
+  row.names = FALSE
+)</code></pre>
+</div>
+<div id="métricas-de-avaliação" class="section level2">
+<h2>5. Métricas de avaliação</h2>
+<p>Quatro medidas complementares são utilizadas:</p>
+<ul>
+<li><strong>correlação preditiva</strong>: mede a associação linear
+entre valores observados e preditos; valores maiores indicam melhor
+capacidade de ordenar os indivíduos;</li>
+<li><strong>RMSE</strong>: resume a magnitude dos erros e dá maior peso
+a erros grandes;</li>
+<li><strong>MAE</strong>: representa o erro absoluto médio em uma escala
+de interpretação direta;</li>
+<li><strong>inclinação de calibração</strong>: é obtida da regressão
+<code>observado ~ predito</code> e compara a escala dos valores
+observados com a escala das predições.</li>
+</ul>
+<p>Para a inclinação de calibração, valores próximos de 1 indicam escala
+adequada. Quando a inclinação é menor que 1, as predições variam mais do
+que os valores observados, isto é, estão excessivamente dispersas em
+escala. Quando a inclinação é maior que 1, as predições apresentam
+variação menor que a necessária em relação aos observados.</p>
+<p>A correlação é a métrica principal para a comparação de equivalência,
+enquanto as demais descrevem aspectos adicionais do comportamento
+preditivo.</p>
+</div>
+<div id="resultados-do-gblup-com-dados-reais" class="section level2">
+<h2>6. Resultados do GBLUP com dados reais</h2>
+<p>A tabela primária contém uma linha para cada combinação entre as 30
+repetições e os quatro tamanhos de treinamento, totalizando 120
+resultados.</p>
+<pre class="r"><code>baseline &lt;- read.csv(FINAL_FILE)
+
+chaves &lt;- paste(
+  baseline$repeticao,
+  baseline$proporcao_pool,
+  sep = &quot;__&quot;
+)
+
+stopifnot(nrow(baseline) == N_CENARIOS)
+stopifnot(anyDuplicated(chaves) == 0)
+stopifnot(all(baseline$repeticao %in% seq_len(N_REP)))
+stopifnot(all(baseline$n_validacao == N_VALIDACAO))
+stopifnot(!anyNA(baseline[, c(&quot;correlacao&quot;, &quot;RMSE&quot;, &quot;MAE&quot;, &quot;slope_calibracao&quot;)]))</code></pre>
+</div>
+<div id="curva-de-aprendizado" class="section level2">
+<h2>7. Curva de aprendizado</h2>
+<p>Para cada tamanho de treinamento calculamos a média das quatro
+métricas e o desvio-padrão da correlação. A curva de aprendizado permite
+visualizar quanto o desempenho aumenta quando mais indivíduos reais são
+adicionados ao treinamento.</p>
+<pre class="r"><code># Médias das quatro métricas em cada tamanho de treinamento.
+resumo_baseline &lt;- aggregate(
+  cbind(
+    correlacao,
+    RMSE,
+    MAE,
+    slope_calibracao
+  ) ~ proporcao_pool + n_treino,
+  data = baseline,
+  FUN = mean
+)
+
+# Variabilidade da correlação entre as 30 repetições.
+sd_cor &lt;- aggregate(
+  correlacao ~ proporcao_pool,
+  data = baseline,
+  FUN = sd
+)
+
+resumo_baseline$sd_correlacao &lt;- sd_cor$correlacao[
+  match(
+    resumo_baseline$proporcao_pool,
+    sd_cor$proporcao_pool
+  )
+]
+
+resumo_baseline_exibicao &lt;- resumo_baseline[
+  ,
+  c(
+    &quot;proporcao_pool&quot;,
+    &quot;n_treino&quot;,
+    &quot;correlacao&quot;,
+    &quot;sd_correlacao&quot;,
+    &quot;RMSE&quot;,
+    &quot;MAE&quot;,
+    &quot;slope_calibracao&quot;
+  )
+]
+
+names(resumo_baseline_exibicao) &lt;- c(
+  &quot;Proporção do pool&quot;,
+  &quot;Indivíduos reais&quot;,
+  &quot;Correlação média&quot;,
+  &quot;DP da correlação&quot;,
+  &quot;RMSE médio&quot;,
+  &quot;MAE médio&quot;,
+  &quot;Inclinação média&quot;
+)
+
+knitr::kable(
+  resumo_baseline_exibicao,
+  digits = 4,
+  caption = &quot;Desempenho médio do GBLUP com dados reais&quot;
+)</code></pre>
+<table>
+<caption>Desempenho médio do GBLUP com dados reais</caption>
+<colgroup>
+<col width="16%" />
+<col width="15%" />
+<col width="15%" />
+<col width="15%" />
+<col width="10%" />
+<col width="9%" />
+<col width="15%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="right">Proporção do pool</th>
+<th align="right">Indivíduos reais</th>
+<th align="right">Correlação média</th>
+<th align="right">DP da correlação</th>
+<th align="right">RMSE médio</th>
+<th align="right">MAE médio</th>
+<th align="right">Inclinação média</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">0.25</td>
+<td align="right">275</td>
+<td align="right">0.5325</td>
+<td align="right">0.0538</td>
+<td align="right">526.0265</td>
+<td align="right">418.4008</td>
+<td align="right">0.9751</td>
+</tr>
+<tr class="even">
+<td align="right">0.50</td>
+<td align="right">551</td>
+<td align="right">0.6113</td>
+<td align="right">0.0416</td>
+<td align="right">491.0314</td>
+<td align="right">389.7054</td>
+<td align="right">1.0113</td>
+</tr>
+<tr class="odd">
+<td align="right">0.75</td>
+<td align="right">827</td>
+<td align="right">0.6470</td>
+<td align="right">0.0346</td>
+<td align="right">472.9666</td>
+<td align="right">374.9868</td>
+<td align="right">1.0097</td>
+</tr>
+<tr class="even">
+<td align="right">1.00</td>
+<td align="right">1103</td>
+<td align="right">0.6655</td>
+<td align="right">0.0300</td>
+<td align="right">462.8366</td>
+<td align="right">366.6982</td>
+<td align="right">1.0055</td>
+</tr>
+</tbody>
+</table>
+<p>A figura preserva a informação das 30 repetições. Cada linha fina
+representa a trajetória de uma repetição de T25 até T100. A linha
+destacada mostra a correlação média e a faixa representa média ± 1
+desvio-padrão em cada tamanho de treinamento.</p>
+<pre class="r"><code>if (!requireNamespace(&quot;ggplot2&quot;, quietly = TRUE)) {
+  stop(&quot;Instale o pacote ggplot2 para gerar as figuras do tutorial.&quot;)
+}
+
+if (!requireNamespace(&quot;ggthemes&quot;, quietly = TRUE)) {
+  stop(&quot;Instale o pacote ggthemes para usar o padrão gráfico GDocs.&quot;)
+}
+
+baseline_plot &lt;- baseline
+baseline_plot$Proporcao_percentual &lt;- baseline_plot$proporcao_pool * 100
+
+resumo_plot &lt;- resumo_baseline
+resumo_plot$Proporcao_percentual &lt;- resumo_plot$proporcao_pool * 100
+resumo_plot$Limite_inferior &lt;-
+  resumo_plot$correlacao - resumo_plot$sd_correlacao
+resumo_plot$Limite_superior &lt;-
+  resumo_plot$correlacao + resumo_plot$sd_correlacao
+
+cor_media &lt;- ggthemes::gdocs_pal()(1)
+
+figura_learning_curve &lt;- ggplot2::ggplot(
+  baseline_plot,
+  ggplot2::aes(
+    x = Proporcao_percentual,
+    y = correlacao,
+    group = repeticao
+  )
+) +
+  ggplot2::geom_line(
+    color = &quot;grey65&quot;,
+    alpha = 0.45,
+    linewidth = 0.45
+  ) +
+  ggplot2::geom_point(
+    color = &quot;grey65&quot;,
+    alpha = 0.45,
+    size = 1.2
+  ) +
+  ggplot2::geom_ribbon(
+    data = resumo_plot,
+    ggplot2::aes(
+      x = Proporcao_percentual,
+      ymin = Limite_inferior,
+      ymax = Limite_superior
+    ),
+    inherit.aes = FALSE,
+    fill = cor_media,
+    alpha = 0.15
+  ) +
+  ggplot2::geom_line(
+    data = resumo_plot,
+    ggplot2::aes(
+      x = Proporcao_percentual,
+      y = correlacao
+    ),
+    inherit.aes = FALSE,
+    color = cor_media,
+    linewidth = 1.15
+  ) +
+  ggplot2::geom_point(
+    data = resumo_plot,
+    ggplot2::aes(
+      x = Proporcao_percentual,
+      y = correlacao
+    ),
+    inherit.aes = FALSE,
+    color = cor_media,
+    size = 3
+  ) +
+  ggplot2::scale_x_continuous(
+    breaks = BREAKS_PROP,
+    labels = LABELS_PROP
+  ) +
+  ggplot2::labs(
+    title = &quot;Curva de aprendizado do GBLUP&quot;,
+    x = &quot;Proporção do pool real usada no treinamento&quot;,
+    y = &quot;Correlação preditiva&quot;
+  ) +
+  ggthemes::theme_gdocs() +
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(
+      face = &quot;bold&quot;,
+      hjust = 0.5
+    )
+  )
+
+figura_learning_curve</code></pre>
+<div class="figure" style="text-align: center">
+<img src="figure/04_gblup_baseline.Rmd/curva-aprendizado-1.png" alt="Curva de aprendizado do GBLUP nas 30 repetições, com média e faixa de ±1 desvio-padrão." width="100%" />
+<p class="caption">
+Curva de aprendizado do GBLUP nas 30 repetições, com média e faixa de ±1
+desvio-padrão.
+</p>
+</div>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-curva-aprendizado-1">
+Past versions of curva-aprendizado-1.png
+</button>
+</p>
+<div id="fig-curva-aprendizado-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/blob/d648821de44e35cc5c1497746f8e8694daaaf9d7/docs/figure/04_gblup_baseline.Rmd/curva-aprendizado-1.png" target="_blank">d648821</a>
+</td>
+<td>
+WevertonGomesCosta
+</td>
+<td>
+2026-08-12
+</td>
+</tr>
+<tr>
+<td>
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/blob/db45d13e26a47d0fb6981c58229aad355d09def9/docs/figure/04_gblup_baseline.Rmd/curva-aprendizado-1.png" target="_blank">db45d13</a>
+</td>
+<td>
+WevertonGomesCosta
+</td>
+<td>
+2026-08-11
+</td>
+</tr>
+<tr>
+<td>
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/blob/d32edc6ed8258adf2f831660fd3d0f69f4caf78e/docs/figure/04_gblup_baseline.Rmd/curva-aprendizado-1.png" target="_blank">d32edc6</a>
+</td>
+<td>
+WevertonGomesCosta
+</td>
+<td>
+2026-08-11
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<pre class="r"><code>ggplot2::ggsave(
+  filename = &quot;output/figures/04_curva_aprendizado_gblup.png&quot;,
+  plot = figura_learning_curve,
+  width = 8.5,
+  height = 5.5,
+  dpi = 300
+)</code></pre>
+<p>A correlação média aumenta de aproximadamente 0,53 em T25 para 0,67
+em T100. O ganho, porém, fica progressivamente menor à medida que mais
+indivíduos são adicionados. A curva sugere que T75 já se aproxima de
+T100, mas proximidade visual não é suficiente para declarar
+equivalência.</p>
+<p>Na próxima etapa, T25, T50 e T75 serão comparados formalmente com
+T100 usando as diferenças pareadas das mesmas 30 repetições.</p>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 4.5.1 (2025-06-13 ucrt)
+Platform: x86_64-w64-mingw32/x64
+Running under: Windows 11 x64 (build 26200)
+
+Matrix products: default
+  LAPACK version 3.12.1
+
+locale:
+[1] LC_COLLATE=Portuguese_Brazil.utf8  LC_CTYPE=Portuguese_Brazil.utf8   
+[3] LC_MONETARY=Portuguese_Brazil.utf8 LC_NUMERIC=C                      
+[5] LC_TIME=Portuguese_Brazil.utf8    
+
+time zone: America/Sao_Paulo
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices datasets  utils     methods   base     
+
+loaded via a namespace (and not attached):
+ [1] gtable_0.3.6       jsonlite_2.0.0     compiler_4.5.1     renv_1.1.8        
+ [5] promises_1.5.0     Rcpp_1.1.2         stringr_1.6.0      git2r_0.36.2      
+ [9] later_1.4.4        jquerylib_0.1.4    scales_1.4.0       yaml_2.3.12       
+[13] fastmap_1.2.0      ggplot2_4.0.0      R6_2.6.1           BGLR_1.1.4        
+[17] labeling_0.4.3     workflowr_1.7.2    knitr_1.50         MASS_7.3-66       
+[21] tibble_3.3.1       rprojroot_2.1.1    RColorBrewer_1.1-3 bslib_0.9.0       
+[25] pillar_1.11.1      ggthemes_5.2.0     rlang_1.1.7        cachem_1.1.0      
+[29] stringi_1.8.7      httpuv_1.6.16      xfun_0.54          S7_0.2.1          
+[33] fs_1.6.6           sass_0.4.10        otel_0.2.0         truncnorm_1.0-9   
+[37] cli_3.6.5          withr_3.0.2        magrittr_2.0.4     digest_0.6.39     
+[41] grid_4.5.1         rstudioapi_0.17.1  lifecycle_1.0.5    vctrs_0.7.1       
+[45] evaluate_1.0.5     glue_1.8.0         whisker_0.4.1      farver_2.1.2      
+[49] purrr_1.2.1        rmarkdown_2.30     tools_4.5.1        pkgconfig_2.0.3   
+[53] htmltools_0.5.9   </code></pre>
+</div>
+</div>
+
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIjQuIEdCTFVQIGNvbSBkYWRvcyByZWFpcyINCmF1dGhvcjogIldldmVydG9uIEdvbWVzIGRhIENvc3RhIg0KZGF0ZTogImByIFN5cy5EYXRlKClgIg0Kc2l0ZTogd29ya2Zsb3dyOjp3Zmxvd19zaXRlDQpvdXRwdXQ6DQogIHdvcmtmbG93cjo6d2Zsb3dfaHRtbDoNCiAgICB0b2M6IHRydWUNCiAgICB0b2NfZGVwdGg6IDMNCiAgICB0b2NfZmxvYXQ6IHRydWUNCiAgICBjb2RlX2Rvd25sb2FkOiB0cnVlDQogICAgY29kZV9mb2xkaW5nOiBzaG93DQplZGl0b3Jfb3B0aW9uczoNCiAgY2h1bmtfb3V0cHV0X3R5cGU6IGNvbnNvbGUNCi0tLQ0KDQpgYGB7ciBzZXR1cCwgaW5jbHVkZT1GQUxTRX0NCmtuaXRyOjpvcHRzX2NodW5rJHNldCgNCiAgZWNobyA9IFRSVUUsDQogIHdhcm5pbmcgPSBGQUxTRSwNCiAgbWVzc2FnZSA9IEZBTFNFLA0KICBjYWNoZSA9IEZBTFNFLA0KICBmaWcuYWxpZ24gPSAiY2VudGVyIiwNCiAgb3V0LndpZHRoID0gIjEwMCUiDQopDQpkaXIuY3JlYXRlKCJvdXRwdXQvZmlndXJlcyIsIHNob3dXYXJuaW5ncyA9IEZBTFNFLCByZWN1cnNpdmUgPSBUUlVFKQ0KYGBgDQoNCiMjIDEuIE9iamV0aXZvDQoNCkFnb3JhIHF1ZSBvcyBjb25qdW50b3MgZGUgdHJlaW5hbWVudG8gZXN0w6NvIGRlZmluaWRvcyBlIGEgbWF0cml6IGRlDQpyZWxhY2lvbmFtZW50byBnZW7DtG1pY28gYEdgIGZvaSBjb25zdHJ1w61kYSwgcG9kZW1vcyBhdmFsaWFyIGNvbW8gbyB0YW1hbmhvIGRhDQphbW9zdHJhIHJlYWwgaW5mbHVlbmNpYSBhIHByZWRpw6fDo28gZ2Vuw7RtaWNhLg0KDQpFbSBjYWRhIHVtYSBkYXMgMzAgcmVwZXRpw6fDtWVzIGFqdXN0YW1vcyBvIG1lc21vIEdCTFVQIHVzYW5kbzoNCg0KLSBUMjUgPSAyNzUgaW5kaXbDrWR1b3MgcmVhaXM7DQotIFQ1MCA9IDU1MSBpbmRpdsOtZHVvcyByZWFpczsNCi0gVDc1ID0gODI3IGluZGl2w61kdW9zIHJlYWlzOw0KLSBUMTAwID0gMS4xMDMgaW5kaXbDrWR1b3MgcmVhaXMuDQoNCkEgdmFsaWRhw6fDo28gY29udMOpbSBzZW1wcmUgMjc2IGluZGl2w61kdW9zIGUgw6kgZXhhdGFtZW50ZSBhIG1lc21hIHBhcmEgb3MgcXVhdHJvDQp0YW1hbmhvcyBkZSB0cmVpbmFtZW50byBkZW50cm8gZGUgY2FkYSByZXBldGnDp8Ojby4gUG9ydGFudG8sIGFzIGRpZmVyZW7Dp2FzIGVudHJlDQpUMjUsIFQ1MCwgVDc1IGUgVDEwMCByZWZsZXRlbSBwcmluY2lwYWxtZW50ZSBhIHF1YW50aWRhZGUgZGUgaW5mb3JtYcOnw6NvDQpmZW5vdMOtcGljYSBkaXNwb27DrXZlbCBwYXJhIG8gdHJlaW5hbWVudG8uDQoNCkVzdGEgZXRhcGEgcmVzcG9uZGUgw6AgcGVyZ3VudGE6DQoNCj4gKipDb21vIG8gZGVzZW1wZW5obyBwcmVkaXRpdm8gZG8gR0JMVVAgbXVkYSBxdWFuZG8gYXVtZW50YW1vcyBvIG7Dum1lcm8gZGUNCj4gaW5kaXbDrWR1b3MgcmVhaXMgbm8gdHJlaW5hbWVudG8/KioNCg0KQSBlcXVpdmFsw6puY2lhIGVzdGF0w61zdGljYSBlbnRyZSBvcyB0YW1hbmhvcyByZWR1emlkb3MgZSBUMTAwIHNlcsOhIGF2YWxpYWRhIG5hDQpFdGFwYSA1Lg0KDQojIyAyLiBDb21vIG8gR0JMVVAgdXNhIHRyZWluYW1lbnRvIGUgdmFsaWRhw6fDo28NCg0KQSBtYXRyaXogYEdgIGNvbnTDqW0gb3MgcmVsYWNpb25hbWVudG9zIGdlbsO0bWljb3MgZG9zIDEuMzc5IGluZGl2w61kdW9zLCBtYXMgbw0KZmVuw7N0aXBvIMOpIGZvcm5lY2lkbyBhbyBtb2RlbG8gc29tZW50ZSBwYXJhIG9zIGluZGl2w61kdW9zIGRvIGNvbmp1bnRvIGRlDQp0cmVpbmFtZW50by4NCg0KUGFyYSByZXByZXNlbnRhciBlc3NhIGVzdHJ1dHVyYSwgY3JpYW1vcyB1bSB2ZXRvciBmZW5vdMOtcGljbyBjb20gYE5BYCBwYXJhDQp0b2RvcyBvcyBpbmRpdsOtZHVvcyBlIHByZWVuY2hlbW9zIGFwZW5hcyBhcyBwb3Npw6fDtWVzIHBlcnRlbmNlbnRlcyBhbw0KdHJlaW5hbWVudG86DQoNCmBgYHINCiMgRXN0cnV0dXJhIGNvbmNlaXR1YWwgZG8gdmV0b3IgZmVub3TDrXBpY28gdXNhZG8gcGVsbyBtb2RlbG8uDQp5X21vZGVsbyA8LSByZXAoTkFfcmVhbF8sIGxlbmd0aCh5KSkNCnlfbW9kZWxvW3RyZWlub10gPC0geVt0cmVpbm9dDQpgYGANCg0KQXNzaW0sIG9zIGluZGl2w61kdW9zIGRhIHZhbGlkYcOnw6NvIHBhcnRpY2lwYW0gZGEgbWF0cml6IGdlbsO0bWljYSwgbWFzIHNldXMNCmZlbsOzdGlwb3MgbsOjbyBzw6NvIHV0aWxpemFkb3Mgbm8gYWp1c3RlLiBBcyBwcmVkacOnw7VlcyBvYnRpZGFzIG5lc3NhcyBwb3Npw6fDtWVzDQpwb2RlbSBlbnTDo28gc2VyIGNvbXBhcmFkYXMgYW9zIHZhbG9yZXMgb2JzZXJ2YWRvcyBwYXJhIGF2YWxpYXIgbyBtb2RlbG8uDQoNCiMjIDMuIE1vZGVsbyBlIHBhcsOibWV0cm9zDQoNCk8gbW9kZWxvIHBvZGUgc2VyIHJlcHJlc2VudGFkbyBwb3I6DQoNClxbDQp5ID0gXG11ICsgZyArIFx2YXJlcHNpbG9uLA0KXF0NCg0KZW0gcXVlIGBnYCByZXByZXNlbnRhIG8gZWZlaXRvIGdlbsO0bWljbyBhc3NvY2lhZG8gw6AgbWF0cml6IGRlIHJlbGFjaW9uYW1lbnRvDQpgR2AuDQoNCk5vIHBhY290ZSBgQkdMUmAsIGVzc2UgY29tcG9uZW50ZSDDqSBlc3BlY2lmaWNhZG8gcG9yIG1laW8gZGUgYG1vZGVsID0gIlJLSFMiYA0KZSBgSyA9IEdgLiBOZXNzZSBjYXNvLCBgR2AgZnVuY2lvbmEgY29tbyBvIGtlcm5lbCBxdWUgZGVzY3JldmUgYSBjb3ZhcmnDom5jaWENCmdlbsO0bWljYSBlbnRyZSBvcyBpbmRpdsOtZHVvcy4gUG9ydGFudG8sIGVtYm9yYSBhIG9ww6fDo28gZG8gcGFjb3RlIHNlamEgY2hhbWFkYQ0KYFJLSFNgLCBvIGVmZWl0byBnZW7DtG1pY28gdXRpbGl6YWRvIGFxdWkgw6kgZGV0ZXJtaW5hZG8gZGlyZXRhbWVudGUgcGVsYSBtYXRyaXoNCmRlIHJlbGFjaW9uYW1lbnRvIGBHYCBjb25zdHJ1w61kYSBuYSBFdGFwYSAzLCBtYW50ZW5kbyBhIGludGVycHJldGHDp8OjbyBkZQ0KcHJlZGnDp8OjbyBnZW7DtG1pY2EgYmFzZWFkYSBlbSBHQkxVUCBhZG90YWRhIG5lc3RlIHR1dG9yaWFsLg0KDQpPIG1lc21vIG1vZGVsbyBlIG9zIG1lc21vcyBwYXLDom1ldHJvcyBzw6NvIG1hbnRpZG9zIGVtIHRvZG9zIG9zIHRhbWFuaG9zIGRlDQp0cmVpbmFtZW50bywgcGVybWl0aW5kbyB1bWEgY29tcGFyYcOnw6NvIGRpcmV0YSBlbnRyZSBUMjUsIFQ1MCwgVDc1IGUgVDEwMC4NCg0KYGBge3IgcGFyYW1ldHJvcy1nYmx1cH0NCkRBVEFfT0JKRUNUUyA8LSAib3V0cHV0LzAxX2RhdGFfb2JqZWN0cy5yZHMiDQpTUExJVFNfRklMRSA8LSAib3V0cHV0LzAyX3NwbGl0c19tZXN0cmVfMzByZXAucmRzIg0KR0VOT01JQ19PQkpFQ1RTIDwtICJvdXRwdXQvMDNfZ2Vub21pY19vYmplY3RzLnJkcyINCkZJTkFMX0ZJTEUgPC0gIm91dHB1dC8wNF9iYXNlbGluZV9yZXN1bHRzLmNzdiINCg0Kb2JqIDwtIHJlYWRSRFMoREFUQV9PQkpFQ1RTKQ0Kc3BsaXRzX21lc3RyZSA8LSByZWFkUkRTKFNQTElUU19GSUxFKQ0KZ29iaiA8LSByZWFkUkRTKEdFTk9NSUNfT0JKRUNUUykNCg0KeSA8LSBvYmokeQ0KRyA8LSBnb2JqJEcNCg0KUFJPUE9SQ09FUyA8LSBzb3J0KGFzLm51bWVyaWMobmFtZXMoc3BsaXRzX21lc3RyZSkpKQ0KQ0hBVkVfVDEwMCA8LSBhcy5jaGFyYWN0ZXIobWF4KFBST1BPUkNPRVMpKQ0KTl9SRVAgPC0gbGVuZ3RoKHNwbGl0c19tZXN0cmVbW0NIQVZFX1QxMDBdXSkNCk5fVkFMSURBQ0FPIDwtIGxlbmd0aChzcGxpdHNfbWVzdHJlW1tDSEFWRV9UMTAwXV1bWzFdXSR2YWxpZCkNCk5fQ0VOQVJJT1MgPC0gTl9SRVAgKiBsZW5ndGgoUFJPUE9SQ09FUykNCg0KQlJFQUtTX1BST1AgPC0gUFJPUE9SQ09FUyAqIDEwMA0KTEFCRUxTX1BST1AgPC0gcGFzdGUwKEJSRUFLU19QUk9QLCAiJSIpDQoNCk5fSVRFUiA8LSAxMDAwMA0KQlVSTl9JTiA8LSA1MDAwDQpTRUVEX0JBU0UgPC0gNTAwMDANCmBgYA0KDQpVdGlsaXphbW9zIDEwLjAwMCBpdGVyYcOnw7VlcyBNQ01DLCBjb20gYXMgcHJpbWVpcmFzIDUuMDAwIGRlc2NhcnRhZGFzIGNvbW8NCnBlcsOtb2RvIGRlICpidXJuLWluKi4NCg0KIyMgNC4gUGlwZWxpbmUgZG8gR0JMVVANCg0KTyBjw7NkaWdvIGFiYWl4byByZcO6bmUgbyBwaXBlbGluZSBhbmFsw610aWNvIGFwbGljYWRvIGEgY2FkYSByZXBldGnDp8OjbyBlIGEgY2FkYQ0KdGFtYW5obyBkZSB0cmVpbmFtZW50by4gT3MgY29tZW50w6FyaW9zIGRlc3RhY2FtIGFzIGV0YXBhcyBlc3NlbmNpYWlzOiBzZWxlw6fDo28NCmRvIGNvbmp1bnRvLCBtYXNjYXJhbWVudG8gZG9zIGZlbsOzdGlwb3MsIGVzcGVjaWZpY2HDp8OjbyBkbyBtb2RlbG8sIHByZWRpw6fDo28gZQ0KY8OhbGN1bG8gZGFzIG3DqXRyaWNhcy4NCg0KYGBge3IgcGlwZWxpbmUtZ2JsdXB9DQpyZXN1bHRhZG9zX2Jhc2VsaW5lIDwtIGRhdGEuZnJhbWUoKQ0KDQpmb3IgKHJlcCBpbiBzZXFfbGVuKE5fUkVQKSkgew0KICBmb3IgKGkgaW4gc2VxX2Fsb25nKFBST1BPUkNPRVMpKSB7DQogICAgcHJvcG9yY2FvIDwtIFBST1BPUkNPRVNbaV0NCg0KICAgICMgMS4gUmVjdXBlcmEgdHJlaW5hbWVudG8gZSB2YWxpZGHDp8OjbyBkYSByZXBldGnDp8OjbyBhdHVhbC4NCiAgICBzcGxpdCA8LSBzcGxpdHNfbWVzdHJlW1thcy5jaGFyYWN0ZXIocHJvcG9yY2FvKV1dW1tyZXBdXQ0KICAgIHRyZWlubyA8LSBzcGxpdCR0cmVpbm8NCiAgICB2YWxpZGFjYW8gPC0gc3BsaXQkdmFsaWQNCg0KICAgICMgMi4gTWFudMOpbSBmZW7Ds3RpcG9zIHNvbWVudGUgbm9zIGluZGl2w61kdW9zIGRlIHRyZWluYW1lbnRvLg0KICAgIHlfbW9kZWxvIDwtIHJlcCgNCiAgICAgIE5BX3JlYWxfLA0KICAgICAgbGVuZ3RoKHkpDQogICAgKQ0KDQogICAgeV9tb2RlbG9bdHJlaW5vXSA8LSB5W3RyZWlub10NCg0KICAgICMgMy4gRGVmaW5lIG8gY29tcG9uZW50ZSBnZW7DtG1pY28gdXNhbmRvIEcgY29tbyBrZXJuZWwuDQogICAgRVRBIDwtIGxpc3QoDQogICAgICBsaXN0KA0KICAgICAgICBLID0gRywNCiAgICAgICAgbW9kZWwgPSAiUktIUyINCiAgICAgICkNCiAgICApDQoNCiAgICAjIDQuIEFqdXN0YSBvIG1lc21vIG1vZGVsbyBlbSB0b2RvcyBvcyBjZW7DoXJpb3MuDQogICAgc2V0LnNlZWQoDQogICAgICBTRUVEX0JBU0UgKyByZXAgKiAxMDAgKyBpDQogICAgKQ0KDQogICAgYWp1c3RlIDwtIEJHTFI6OkJHTFIoDQogICAgICB5ID0geV9tb2RlbG8sDQogICAgICBFVEEgPSBFVEEsDQogICAgICBuSXRlciA9IE5fSVRFUiwNCiAgICAgIGJ1cm5JbiA9IEJVUk5fSU4sDQogICAgICB2ZXJib3NlID0gRkFMU0UNCiAgICApDQoNCiAgICAjIDUuIE9idMOpbSBwcmVkacOnw7VlcyBhcGVuYXMgcGFyYSBvcyBpbmRpdsOtZHVvcyBkYSB2YWxpZGHDp8Ojby4NCiAgICBwcmVkaWNhbyA8LSBhanVzdGUkeUhhdFt2YWxpZGFjYW9dDQogICAgb2JzZXJ2YWRvIDwtIHlbdmFsaWRhY2FvXQ0KDQogICAgIyA2LiBDYWxjdWxhIGFzIG3DqXRyaWNhcyBkZSBkZXNlbXBlbmhvIHByZWRpdGl2by4NCiAgICBjb3JyZWxhY2FvIDwtIGNvcigNCiAgICAgIG9ic2VydmFkbywNCiAgICAgIHByZWRpY2FvDQogICAgKQ0KDQogICAgUk1TRSA8LSBzcXJ0KA0KICAgICAgbWVhbigNCiAgICAgICAgKG9ic2VydmFkbyAtIHByZWRpY2FvKV4yDQogICAgICApDQogICAgKQ0KDQogICAgTUFFIDwtIG1lYW4oDQogICAgICBhYnMoDQogICAgICAgIG9ic2VydmFkbyAtIHByZWRpY2FvDQogICAgICApDQogICAgKQ0KDQogICAgY2FsaWJyYWNhbyA8LSBsbSgNCiAgICAgIG9ic2VydmFkbyB+IHByZWRpY2FvDQogICAgKQ0KDQogICAgc2xvcGVfY2FsaWJyYWNhbyA8LSB1bm5hbWUoDQogICAgICBjb2VmKGNhbGlicmFjYW8pWzJdDQogICAgKQ0KDQogICAgIyA3LiBBcm1hemVuYSB1bWEgbGluaGEgcGFyYSBhIGNvbWJpbmHDp8OjbyByZXBldGnDp8OjbyDDlyB0YW1hbmhvLg0KICAgIG5vdmFfbGluaGEgPC0gZGF0YS5mcmFtZSgNCiAgICAgIHJlcGV0aWNhbyA9IHJlcCwNCiAgICAgIHByb3BvcmNhb19wb29sID0gcHJvcG9yY2FvLA0KICAgICAgbl90cmVpbm8gPSBsZW5ndGgodHJlaW5vKSwNCiAgICAgIG5fdmFsaWRhY2FvID0gbGVuZ3RoKHZhbGlkYWNhbyksDQogICAgICBjb3JyZWxhY2FvID0gY29ycmVsYWNhbywNCiAgICAgIFJNU0UgPSBSTVNFLA0KICAgICAgTUFFID0gTUFFLA0KICAgICAgc2xvcGVfY2FsaWJyYWNhbyA9IHNsb3BlX2NhbGlicmFjYW8NCiAgICApDQoNCiAgICByZXN1bHRhZG9zX2Jhc2VsaW5lIDwtIHJiaW5kKA0KICAgICAgcmVzdWx0YWRvc19iYXNlbGluZSwNCiAgICAgIG5vdmFfbGluaGENCiAgICApDQogIH0NCn0NCg0Kd3JpdGUuY3N2KA0KICByZXN1bHRhZG9zX2Jhc2VsaW5lLA0KICBGSU5BTF9GSUxFLA0KICByb3cubmFtZXMgPSBGQUxTRQ0KKQ0KYGBgDQoNCiMjIDUuIE3DqXRyaWNhcyBkZSBhdmFsaWHDp8Ojbw0KDQpRdWF0cm8gbWVkaWRhcyBjb21wbGVtZW50YXJlcyBzw6NvIHV0aWxpemFkYXM6DQoNCi0gKipjb3JyZWxhw6fDo28gcHJlZGl0aXZhKio6IG1lZGUgYSBhc3NvY2lhw6fDo28gbGluZWFyIGVudHJlIHZhbG9yZXMgb2JzZXJ2YWRvcyBlDQogIHByZWRpdG9zOyB2YWxvcmVzIG1haW9yZXMgaW5kaWNhbSBtZWxob3IgY2FwYWNpZGFkZSBkZSBvcmRlbmFyIG9zIGluZGl2w61kdW9zOw0KLSAqKlJNU0UqKjogcmVzdW1lIGEgbWFnbml0dWRlIGRvcyBlcnJvcyBlIGTDoSBtYWlvciBwZXNvIGEgZXJyb3MgZ3JhbmRlczsNCi0gKipNQUUqKjogcmVwcmVzZW50YSBvIGVycm8gYWJzb2x1dG8gbcOpZGlvIGVtIHVtYSBlc2NhbGEgZGUgaW50ZXJwcmV0YcOnw6NvDQogIGRpcmV0YTsNCi0gKippbmNsaW5hw6fDo28gZGUgY2FsaWJyYcOnw6NvKio6IMOpIG9idGlkYSBkYSByZWdyZXNzw6NvIGBvYnNlcnZhZG8gfiBwcmVkaXRvYCBlDQogIGNvbXBhcmEgYSBlc2NhbGEgZG9zIHZhbG9yZXMgb2JzZXJ2YWRvcyBjb20gYSBlc2NhbGEgZGFzIHByZWRpw6fDtWVzLg0KDQpQYXJhIGEgaW5jbGluYcOnw6NvIGRlIGNhbGlicmHDp8OjbywgdmFsb3JlcyBwcsOzeGltb3MgZGUgMSBpbmRpY2FtIGVzY2FsYSBhZGVxdWFkYS4NClF1YW5kbyBhIGluY2xpbmHDp8OjbyDDqSBtZW5vciBxdWUgMSwgYXMgcHJlZGnDp8O1ZXMgdmFyaWFtIG1haXMgZG8gcXVlIG9zIHZhbG9yZXMNCm9ic2VydmFkb3MsIGlzdG8gw6ksIGVzdMOjbyBleGNlc3NpdmFtZW50ZSBkaXNwZXJzYXMgZW0gZXNjYWxhLiBRdWFuZG8gYQ0KaW5jbGluYcOnw6NvIMOpIG1haW9yIHF1ZSAxLCBhcyBwcmVkacOnw7VlcyBhcHJlc2VudGFtIHZhcmlhw6fDo28gbWVub3IgcXVlIGENCm5lY2Vzc8OhcmlhIGVtIHJlbGHDp8OjbyBhb3Mgb2JzZXJ2YWRvcy4NCg0KQSBjb3JyZWxhw6fDo28gw6kgYSBtw6l0cmljYSBwcmluY2lwYWwgcGFyYSBhIGNvbXBhcmHDp8OjbyBkZSBlcXVpdmFsw6puY2lhLCBlbnF1YW50bw0KYXMgZGVtYWlzIGRlc2NyZXZlbSBhc3BlY3RvcyBhZGljaW9uYWlzIGRvIGNvbXBvcnRhbWVudG8gcHJlZGl0aXZvLg0KDQojIyA2LiBSZXN1bHRhZG9zIGRvIEdCTFVQIGNvbSBkYWRvcyByZWFpcw0KDQpBIHRhYmVsYSBwcmltw6FyaWEgY29udMOpbSB1bWEgbGluaGEgcGFyYSBjYWRhIGNvbWJpbmHDp8OjbyBlbnRyZSBhcyAzMCByZXBldGnDp8O1ZXMgZQ0Kb3MgcXVhdHJvIHRhbWFuaG9zIGRlIHRyZWluYW1lbnRvLCB0b3RhbGl6YW5kbyAxMjAgcmVzdWx0YWRvcy4NCg0KYGBge3IgY2FycmVnYXItcmVzdWx0YWRvc30NCmJhc2VsaW5lIDwtIHJlYWQuY3N2KEZJTkFMX0ZJTEUpDQoNCmNoYXZlcyA8LSBwYXN0ZSgNCiAgYmFzZWxpbmUkcmVwZXRpY2FvLA0KICBiYXNlbGluZSRwcm9wb3JjYW9fcG9vbCwNCiAgc2VwID0gIl9fIg0KKQ0KDQpzdG9waWZub3QobnJvdyhiYXNlbGluZSkgPT0gTl9DRU5BUklPUykNCnN0b3BpZm5vdChhbnlEdXBsaWNhdGVkKGNoYXZlcykgPT0gMCkNCnN0b3BpZm5vdChhbGwoYmFzZWxpbmUkcmVwZXRpY2FvICVpbiUgc2VxX2xlbihOX1JFUCkpKQ0Kc3RvcGlmbm90KGFsbChiYXNlbGluZSRuX3ZhbGlkYWNhbyA9PSBOX1ZBTElEQUNBTykpDQpzdG9waWZub3QoIWFueU5BKGJhc2VsaW5lWywgYygiY29ycmVsYWNhbyIsICJSTVNFIiwgIk1BRSIsICJzbG9wZV9jYWxpYnJhY2FvIildKSkNCmBgYA0KDQojIyA3LiBDdXJ2YSBkZSBhcHJlbmRpemFkbw0KDQpQYXJhIGNhZGEgdGFtYW5obyBkZSB0cmVpbmFtZW50byBjYWxjdWxhbW9zIGEgbcOpZGlhIGRhcyBxdWF0cm8gbcOpdHJpY2FzIGUgbw0KZGVzdmlvLXBhZHLDo28gZGEgY29ycmVsYcOnw6NvLiBBIGN1cnZhIGRlIGFwcmVuZGl6YWRvIHBlcm1pdGUgdmlzdWFsaXphciBxdWFudG8gbw0KZGVzZW1wZW5obyBhdW1lbnRhIHF1YW5kbyBtYWlzIGluZGl2w61kdW9zIHJlYWlzIHPDo28gYWRpY2lvbmFkb3MgYW8gdHJlaW5hbWVudG8uDQoNCmBgYHtyIHJlc3Vtby1iYXNlbGluZX0NCiMgTcOpZGlhcyBkYXMgcXVhdHJvIG3DqXRyaWNhcyBlbSBjYWRhIHRhbWFuaG8gZGUgdHJlaW5hbWVudG8uDQpyZXN1bW9fYmFzZWxpbmUgPC0gYWdncmVnYXRlKA0KICBjYmluZCgNCiAgICBjb3JyZWxhY2FvLA0KICAgIFJNU0UsDQogICAgTUFFLA0KICAgIHNsb3BlX2NhbGlicmFjYW8NCiAgKSB+IHByb3BvcmNhb19wb29sICsgbl90cmVpbm8sDQogIGRhdGEgPSBiYXNlbGluZSwNCiAgRlVOID0gbWVhbg0KKQ0KDQojIFZhcmlhYmlsaWRhZGUgZGEgY29ycmVsYcOnw6NvIGVudHJlIGFzIDMwIHJlcGV0acOnw7Vlcy4NCnNkX2NvciA8LSBhZ2dyZWdhdGUoDQogIGNvcnJlbGFjYW8gfiBwcm9wb3JjYW9fcG9vbCwNCiAgZGF0YSA9IGJhc2VsaW5lLA0KICBGVU4gPSBzZA0KKQ0KDQpyZXN1bW9fYmFzZWxpbmUkc2RfY29ycmVsYWNhbyA8LSBzZF9jb3IkY29ycmVsYWNhb1sNCiAgbWF0Y2goDQogICAgcmVzdW1vX2Jhc2VsaW5lJHByb3BvcmNhb19wb29sLA0KICAgIHNkX2NvciRwcm9wb3JjYW9fcG9vbA0KICApDQpdDQoNCnJlc3Vtb19iYXNlbGluZV9leGliaWNhbyA8LSByZXN1bW9fYmFzZWxpbmVbDQogICwNCiAgYygNCiAgICAicHJvcG9yY2FvX3Bvb2wiLA0KICAgICJuX3RyZWlubyIsDQogICAgImNvcnJlbGFjYW8iLA0KICAgICJzZF9jb3JyZWxhY2FvIiwNCiAgICAiUk1TRSIsDQogICAgIk1BRSIsDQogICAgInNsb3BlX2NhbGlicmFjYW8iDQogICkNCl0NCg0KbmFtZXMocmVzdW1vX2Jhc2VsaW5lX2V4aWJpY2FvKSA8LSBjKA0KICAiUHJvcG9yw6fDo28gZG8gcG9vbCIsDQogICJJbmRpdsOtZHVvcyByZWFpcyIsDQogICJDb3JyZWxhw6fDo28gbcOpZGlhIiwNCiAgIkRQIGRhIGNvcnJlbGHDp8OjbyIsDQogICJSTVNFIG3DqWRpbyIsDQogICJNQUUgbcOpZGlvIiwNCiAgIkluY2xpbmHDp8OjbyBtw6lkaWEiDQopDQoNCmtuaXRyOjprYWJsZSgNCiAgcmVzdW1vX2Jhc2VsaW5lX2V4aWJpY2FvLA0KICBkaWdpdHMgPSA0LA0KICBjYXB0aW9uID0gIkRlc2VtcGVuaG8gbcOpZGlvIGRvIEdCTFVQIGNvbSBkYWRvcyByZWFpcyINCikNCmBgYA0KDQpBIGZpZ3VyYSBwcmVzZXJ2YSBhIGluZm9ybWHDp8OjbyBkYXMgMzAgcmVwZXRpw6fDtWVzLiBDYWRhIGxpbmhhIGZpbmEgcmVwcmVzZW50YSBhDQp0cmFqZXTDs3JpYSBkZSB1bWEgcmVwZXRpw6fDo28gZGUgVDI1IGF0w6kgVDEwMC4gQSBsaW5oYSBkZXN0YWNhZGEgbW9zdHJhIGENCmNvcnJlbGHDp8OjbyBtw6lkaWEgZSBhIGZhaXhhIHJlcHJlc2VudGEgbcOpZGlhIMKxIDEgZGVzdmlvLXBhZHLDo28gZW0gY2FkYSB0YW1hbmhvDQpkZSB0cmVpbmFtZW50by4NCg0KYGBge3IgY3VydmEtYXByZW5kaXphZG8sIGZpZy5oZWlnaHQ9NS41LCBmaWcud2lkdGg9OC41LCBmaWcuY2FwPSJDdXJ2YSBkZSBhcHJlbmRpemFkbyBkbyBHQkxVUCBuYXMgMzAgcmVwZXRpw6fDtWVzLCBjb20gbcOpZGlhIGUgZmFpeGEgZGUgwrExIGRlc3Zpby1wYWRyw6NvLiJ9DQppZiAoIXJlcXVpcmVOYW1lc3BhY2UoImdncGxvdDIiLCBxdWlldGx5ID0gVFJVRSkpIHsNCiAgc3RvcCgiSW5zdGFsZSBvIHBhY290ZSBnZ3Bsb3QyIHBhcmEgZ2VyYXIgYXMgZmlndXJhcyBkbyB0dXRvcmlhbC4iKQ0KfQ0KDQppZiAoIXJlcXVpcmVOYW1lc3BhY2UoImdndGhlbWVzIiwgcXVpZXRseSA9IFRSVUUpKSB7DQogIHN0b3AoIkluc3RhbGUgbyBwYWNvdGUgZ2d0aGVtZXMgcGFyYSB1c2FyIG8gcGFkcsOjbyBncsOhZmljbyBHRG9jcy4iKQ0KfQ0KDQpiYXNlbGluZV9wbG90IDwtIGJhc2VsaW5lDQpiYXNlbGluZV9wbG90JFByb3BvcmNhb19wZXJjZW50dWFsIDwtIGJhc2VsaW5lX3Bsb3QkcHJvcG9yY2FvX3Bvb2wgKiAxMDANCg0KcmVzdW1vX3Bsb3QgPC0gcmVzdW1vX2Jhc2VsaW5lDQpyZXN1bW9fcGxvdCRQcm9wb3JjYW9fcGVyY2VudHVhbCA8LSByZXN1bW9fcGxvdCRwcm9wb3JjYW9fcG9vbCAqIDEwMA0KcmVzdW1vX3Bsb3QkTGltaXRlX2luZmVyaW9yIDwtDQogIHJlc3Vtb19wbG90JGNvcnJlbGFjYW8gLSByZXN1bW9fcGxvdCRzZF9jb3JyZWxhY2FvDQpyZXN1bW9fcGxvdCRMaW1pdGVfc3VwZXJpb3IgPC0NCiAgcmVzdW1vX3Bsb3QkY29ycmVsYWNhbyArIHJlc3Vtb19wbG90JHNkX2NvcnJlbGFjYW8NCg0KY29yX21lZGlhIDwtIGdndGhlbWVzOjpnZG9jc19wYWwoKSgxKQ0KDQpmaWd1cmFfbGVhcm5pbmdfY3VydmUgPC0gZ2dwbG90Mjo6Z2dwbG90KA0KICBiYXNlbGluZV9wbG90LA0KICBnZ3Bsb3QyOjphZXMoDQogICAgeCA9IFByb3BvcmNhb19wZXJjZW50dWFsLA0KICAgIHkgPSBjb3JyZWxhY2FvLA0KICAgIGdyb3VwID0gcmVwZXRpY2FvDQogICkNCikgKw0KICBnZ3Bsb3QyOjpnZW9tX2xpbmUoDQogICAgY29sb3IgPSAiZ3JleTY1IiwNCiAgICBhbHBoYSA9IDAuNDUsDQogICAgbGluZXdpZHRoID0gMC40NQ0KICApICsNCiAgZ2dwbG90Mjo6Z2VvbV9wb2ludCgNCiAgICBjb2xvciA9ICJncmV5NjUiLA0KICAgIGFscGhhID0gMC40NSwNCiAgICBzaXplID0gMS4yDQogICkgKw0KICBnZ3Bsb3QyOjpnZW9tX3JpYmJvbigNCiAgICBkYXRhID0gcmVzdW1vX3Bsb3QsDQogICAgZ2dwbG90Mjo6YWVzKA0KICAgICAgeCA9IFByb3BvcmNhb19wZXJjZW50dWFsLA0KICAgICAgeW1pbiA9IExpbWl0ZV9pbmZlcmlvciwNCiAgICAgIHltYXggPSBMaW1pdGVfc3VwZXJpb3INCiAgICApLA0KICAgIGluaGVyaXQuYWVzID0gRkFMU0UsDQogICAgZmlsbCA9IGNvcl9tZWRpYSwNCiAgICBhbHBoYSA9IDAuMTUNCiAgKSArDQogIGdncGxvdDI6Omdlb21fbGluZSgNCiAgICBkYXRhID0gcmVzdW1vX3Bsb3QsDQogICAgZ2dwbG90Mjo6YWVzKA0KICAgICAgeCA9IFByb3BvcmNhb19wZXJjZW50dWFsLA0KICAgICAgeSA9IGNvcnJlbGFjYW8NCiAgICApLA0KICAgIGluaGVyaXQuYWVzID0gRkFMU0UsDQogICAgY29sb3IgPSBjb3JfbWVkaWEsDQogICAgbGluZXdpZHRoID0gMS4xNQ0KICApICsNCiAgZ2dwbG90Mjo6Z2VvbV9wb2ludCgNCiAgICBkYXRhID0gcmVzdW1vX3Bsb3QsDQogICAgZ2dwbG90Mjo6YWVzKA0KICAgICAgeCA9IFByb3BvcmNhb19wZXJjZW50dWFsLA0KICAgICAgeSA9IGNvcnJlbGFjYW8NCiAgICApLA0KICAgIGluaGVyaXQuYWVzID0gRkFMU0UsDQogICAgY29sb3IgPSBjb3JfbWVkaWEsDQogICAgc2l6ZSA9IDMNCiAgKSArDQogIGdncGxvdDI6OnNjYWxlX3hfY29udGludW91cygNCiAgICBicmVha3MgPSBCUkVBS1NfUFJPUCwNCiAgICBsYWJlbHMgPSBMQUJFTFNfUFJPUA0KICApICsNCiAgZ2dwbG90Mjo6bGFicygNCiAgICB0aXRsZSA9ICJDdXJ2YSBkZSBhcHJlbmRpemFkbyBkbyBHQkxVUCIsDQogICAgeCA9ICJQcm9wb3LDp8OjbyBkbyBwb29sIHJlYWwgdXNhZGEgbm8gdHJlaW5hbWVudG8iLA0KICAgIHkgPSAiQ29ycmVsYcOnw6NvIHByZWRpdGl2YSINCiAgKSArDQogIGdndGhlbWVzOjp0aGVtZV9nZG9jcygpICsNCiAgZ2dwbG90Mjo6dGhlbWUoDQogICAgcGxvdC50aXRsZSA9IGdncGxvdDI6OmVsZW1lbnRfdGV4dCgNCiAgICAgIGZhY2UgPSAiYm9sZCIsDQogICAgICBoanVzdCA9IDAuNQ0KICAgICkNCiAgKQ0KDQpmaWd1cmFfbGVhcm5pbmdfY3VydmUNCg0KZ2dwbG90Mjo6Z2dzYXZlKA0KICBmaWxlbmFtZSA9ICJvdXRwdXQvZmlndXJlcy8wNF9jdXJ2YV9hcHJlbmRpemFkb19nYmx1cC5wbmciLA0KICBwbG90ID0gZmlndXJhX2xlYXJuaW5nX2N1cnZlLA0KICB3aWR0aCA9IDguNSwNCiAgaGVpZ2h0ID0gNS41LA0KICBkcGkgPSAzMDANCikNCmBgYA0KDQpBIGNvcnJlbGHDp8OjbyBtw6lkaWEgYXVtZW50YSBkZSBhcHJveGltYWRhbWVudGUgMCw1MyBlbSBUMjUgcGFyYSAwLDY3IGVtIFQxMDAuDQpPIGdhbmhvLCBwb3LDqW0sIGZpY2EgcHJvZ3Jlc3NpdmFtZW50ZSBtZW5vciDDoCBtZWRpZGEgcXVlIG1haXMgaW5kaXbDrWR1b3Mgc8Ojbw0KYWRpY2lvbmFkb3MuIEEgY3VydmEgc3VnZXJlIHF1ZSBUNzUgasOhIHNlIGFwcm94aW1hIGRlIFQxMDAsIG1hcyBwcm94aW1pZGFkZQ0KdmlzdWFsIG7Do28gw6kgc3VmaWNpZW50ZSBwYXJhIGRlY2xhcmFyIGVxdWl2YWzDqm5jaWEuDQoNCk5hIHByw7N4aW1hIGV0YXBhLCBUMjUsIFQ1MCBlIFQ3NSBzZXLDo28gY29tcGFyYWRvcyBmb3JtYWxtZW50ZSBjb20gVDEwMCB1c2FuZG8gYXMNCmRpZmVyZW7Dp2FzIHBhcmVhZGFzIGRhcyBtZXNtYXMgMzAgcmVwZXRpw6fDtWVzLg0K</div>
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+https://docs.mathjax.org/en/latest/web/configuration.html. This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeSourceEmbed("04_gblup_baseline.Rmd");
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

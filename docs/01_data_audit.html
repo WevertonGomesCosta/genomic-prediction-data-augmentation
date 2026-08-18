@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Weverton Gomes da Costa" />
+
+<meta name="date" content="2026-08-17" />
+
+<title>1. Auditoria dos dados</title>
+
+<script src="site_libs/header-attrs-2.30/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<script src="site_libs/navigation-1.1/sourceembed.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet" />
+<script src="site_libs/pagedtable-1.1/js/pagedtable.js"></script>
+<link href="site_libs/font-awesome-6.5.2/css/all.min.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet" />
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/main/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+<style type="text/css">
+#rmd-source-code {
+  display: none;
+}
+</style>
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Predição genômica</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Início</a>
+</li>
+<li>
+  <a href="01_data_audit.html">1. Dados</a>
+</li>
+<li>
+  <a href="02_sampling_splits.html">2. Amostragem</a>
+</li>
+<li>
+  <a href="03_genomic_matrix.html">3. Matriz G</a>
+</li>
+<li>
+  <a href="04_gblup_baseline.html">4. GBLUP</a>
+</li>
+<li>
+  <a href="05_equivalence.html">5. Equivalência</a>
+</li>
+<li>
+  <a href="06_data_augmentation.html">6. Aumento de dados</a>
+</li>
+<li>
+  <a href="about.html">Sobre</a>
+</li>
+<li>
+  <a href="license.html">Licença</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation">
+    <span class="fa fa-github"></span>
+     
+    Código-fonte
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+<li role="separator" class="divider"></li>
+<li><a id="rmd-download-source" href="#">Download Rmd</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">1. Auditoria dos dados</h1>
+<h4 class="author">Weverton Gomes da Costa</h4>
+<h4 class="date">2026-08-17</h4>
+
+</div>
+
+
+<div id="objetivo" class="section level2">
+<h2>1. Objetivo</h2>
+<p>Antes de ajustar qualquer modelo de predição genômica, precisamos
+conhecer o arquivo analítico e verificar se sua estrutura corresponde ao
+que será usado no restante do tutorial.</p>
+<p>Neste conjunto de dados:</p>
+<ul>
+<li>cada <strong>linha</strong> representa um indivíduo;</li>
+<li>a coluna <code>yield</code> contém o fenótipo de produtividade;</li>
+<li>as demais colunas representam SNPs;</li>
+<li>cada SNP é codificado como <code>0</code>, <code>1</code> ou
+<code>2</code>, correspondendo ao número de cópias do alelo contado
+naquele marcador.</li>
+</ul>
+<p>Os dados derivam do <strong>SoyNAM (Soybean Nested Association
+Mapping)</strong>. Neste tutorial, <code>yield</code> corresponde à
+produtividade de grãos observada no ambiente <code>IA_2012</code>,
+expressa em kg/ha. A conferência de proveniência confirmou a
+correspondência dos 1.379 registros fenotípicos e dos 4.325 loci com os
+arquivos públicos de referência do SoyNAM usados na preparação deste
+conjunto.</p>
+<p><code>dados_gblup.csv</code> é tratado aqui como o arquivo analítico
+final de entrada. A sequência histórica exata de filtros e o método de
+imputação que antecederam essa versão não foram reconstruídos
+integralmente e, por isso, não são reaplicados nem atribuídos a um
+procedimento específico neste tutorial. A proveniência e essa limitação
+estão documentadas em <code>data/README.md</code>.</p>
+<p>A auditoria não modifica os dados. Ela apenas verifica a estrutura do
+arquivo e salva os objetos que serão usados na próxima etapa.</p>
+</div>
+<div id="leitura-do-arquivo" class="section level2">
+<h2>2. Leitura do arquivo</h2>
+<p>O arquivo analítico deve estar em
+<code>data/dados_gblup.csv</code>.</p>
+<pre class="r"><code>DATA_FILE &lt;- &quot;data/dados_gblup.csv&quot;
+
+if (!file.exists(DATA_FILE)) {
+  stop(
+    &quot;Arquivo não encontrado: &quot;, DATA_FILE,
+    &quot;. Coloque dados_gblup.csv dentro da pasta data/.&quot;
+  )
+}
+
+dados &lt;- read.csv(
+  DATA_FILE,
+  check.names = FALSE
+)
+
+dim(dados)</code></pre>
+<pre><code>[1] 1379 4326</code></pre>
+<p>O projeto validado possui 1.379 indivíduos e 4.326 colunas: uma
+coluna fenotípica e 4.325 SNPs.</p>
+</div>
+<div id="identificação-do-fenótipo-e-dos-snps" class="section level2">
+<h2>3. Identificação do fenótipo e dos SNPs</h2>
+<p>Primeiro separamos o nome da característica fenotípica dos nomes dos
+marcadores.</p>
+<pre class="r"><code>if (sum(names(dados) == &quot;yield&quot;) != 1) {
+  stop(&quot;O arquivo deve possuir exatamente uma coluna chamada yield.&quot;)
+}
+
+if (anyDuplicated(names(dados)) &gt; 0) {
+  stop(&quot;Existem nomes de colunas duplicados.&quot;)
+}
+
+marker_names &lt;- setdiff(
+  names(dados),
+  &quot;yield&quot;
+)
+
+length(marker_names)</code></pre>
+<pre><code>[1] 4325</code></pre>
+<p>Os nomes dos SNPs seguem o padrão adotado no arquivo analítico, por
+exemplo <code>Gm01_..._A_G</code>.</p>
+<pre class="r"><code>pattern_snp &lt;- &quot;^Gm[0-9]{2}_[0-9]+_[ACGT]_[ACGT]$&quot;
+
+if (!all(grepl(pattern_snp, marker_names))) {
+  stop(&quot;Há marcadores com nomes fora do padrão esperado.&quot;)
+}</code></pre>
+</div>
+<div id="construção-da-matriz-de-marcadores-e-do-vetor-fenotípico"
+class="section level2">
+<h2>4. Construção da matriz de marcadores e do vetor fenotípico</h2>
+<p>A matriz <code>M</code> contém apenas os SNPs. O vetor <code>y</code>
+contém a produtividade.</p>
+<pre class="r"><code>M &lt;- as.matrix(
+  dados[, marker_names, drop = FALSE]
+)
+
+storage.mode(M) &lt;- &quot;numeric&quot;
+
+y &lt;- as.numeric(
+  dados$yield
+)
+
+dim(M)</code></pre>
+<pre><code>[1] 1379 4325</code></pre>
+<pre class="r"><code>length(y)</code></pre>
+<pre><code>[1] 1379</code></pre>
+</div>
+<div id="valores-ausentes-e-codificação-dos-snps"
+class="section level2">
+<h2>5. Valores ausentes e codificação dos SNPs</h2>
+<p>Os modelos deste tutorial utilizam o arquivo analítico já filtrado.
+Por isso, não esperamos valores ausentes nos SNPs nem no fenótipo.</p>
+<p>Também verificamos se todos os genótipos estão codificados como
+<code>0</code>, <code>1</code> ou <code>2</code>.</p>
+<pre class="r"><code>auditoria_valores &lt;- data.frame(
+  Verificacao = c(
+    &quot;Fenótipos ausentes&quot;,
+    &quot;Genótipos ausentes&quot;,
+    &quot;Valores SNP fora de 0/1/2&quot;
+  ),
+  Valor = c(
+    sum(is.na(y)),
+    sum(is.na(M)),
+    sum(!(M %in% c(0, 1, 2)))
+  )
+)
+
+knitr::kable(
+  auditoria_valores,
+  caption = &quot;Verificações básicas do arquivo analítico&quot;
+)</code></pre>
+<table>
+<caption>Verificações básicas do arquivo analítico</caption>
+<thead>
+<tr class="header">
+<th align="left">Verificacao</th>
+<th align="right">Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Fenótipos ausentes</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">Genótipos ausentes</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">Valores SNP fora de 0/1/2</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>if (anyNA(y)) stop(&quot;Existem fenótipos ausentes no arquivo analítico.&quot;)
+if (anyNA(M)) stop(&quot;Existem SNPs ausentes no arquivo analítico.&quot;)
+if (!all(M %in% c(0, 1, 2))) stop(&quot;Os SNPs devem estar codificados como 0, 1 ou 2.&quot;)</code></pre>
+</div>
+<div id="marcadores-sem-variação-e-registros-duplicados"
+class="section level2">
+<h2>6. Marcadores sem variação e registros duplicados</h2>
+<p>Um marcador monomórfico apresenta o mesmo valor para todos os
+indivíduos e não contribui para diferenciar geneticamente a população.
+Também verificamos se há linhas ou perfis genômicos exatamente
+duplicados.</p>
+<pre class="r"><code>n_classes &lt;- integer(ncol(M))
+
+for (j in seq_len(ncol(M))) {
+  n_classes[j] &lt;- length(
+    unique(M[, j])
+  )
+}
+
+n_monomorficos &lt;- sum(n_classes &lt;= 1)
+n_linhas_duplicadas &lt;- sum(duplicated(dados))
+n_perfis_duplicados &lt;- sum(
+  duplicated(
+    as.data.frame(M)
+  )
+)
+
+auditoria_estrutura &lt;- data.frame(
+  Verificacao = c(
+    &quot;Indivíduos&quot;,
+    &quot;SNPs&quot;,
+    &quot;Marcadores monomórficos&quot;,
+    &quot;Linhas duplicadas&quot;,
+    &quot;Perfis genômicos duplicados&quot;
+  ),
+  Valor = c(
+    nrow(M),
+    ncol(M),
+    n_monomorficos,
+    n_linhas_duplicadas,
+    n_perfis_duplicados
+  )
+)
+
+knitr::kable(
+  auditoria_estrutura,
+  caption = &quot;Estrutura validada dos dados&quot;
+)</code></pre>
+<table>
+<caption>Estrutura validada dos dados</caption>
+<thead>
+<tr class="header">
+<th align="left">Verificacao</th>
+<th align="right">Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Indivíduos</td>
+<td align="right">1379</td>
+</tr>
+<tr class="even">
+<td align="left">SNPs</td>
+<td align="right">4325</td>
+</tr>
+<tr class="odd">
+<td align="left">Marcadores monomórficos</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">Linhas duplicadas</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">Perfis genômicos duplicados</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>stopifnot(nrow(M) == 1379)
+stopifnot(ncol(M) == 4325)
+stopifnot(n_monomorficos == 0)
+stopifnot(n_linhas_duplicadas == 0)
+stopifnot(n_perfis_duplicados == 0)</code></pre>
+</div>
+<div id="resumo-do-fenótipo" class="section level2">
+<h2>7. Resumo do fenótipo</h2>
+<p>O resumo abaixo permite conhecer a escala da produtividade antes da
+modelagem. Os valores de <code>yield</code> estão expressos em
+kg/ha.</p>
+<pre class="r"><code>resumo_yield &lt;- data.frame(
+  N = length(y),
+  Media = mean(y),
+  Desvio_padrao = sd(y),
+  Minimo = min(y),
+  Q1 = unname(quantile(y, 0.25)),
+  Mediana = median(y),
+  Q3 = unname(quantile(y, 0.75)),
+  Maximo = max(y)
+)
+
+knitr::kable(
+  resumo_yield,
+  digits = 2,
+  caption = &quot;Resumo da produtividade (kg/ha)&quot;
+)</code></pre>
+<table>
+<caption>Resumo da produtividade (kg/ha)</caption>
+<thead>
+<tr class="header">
+<th align="right">N</th>
+<th align="right">Media</th>
+<th align="right">Desvio_padrao</th>
+<th align="right">Minimo</th>
+<th align="right">Q1</th>
+<th align="right">Mediana</th>
+<th align="right">Q3</th>
+<th align="right">Maximo</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1379</td>
+<td align="right">2780.96</td>
+<td align="right">614.62</td>
+<td align="right">670</td>
+<td align="right">2405.5</td>
+<td align="right">2816</td>
+<td align="right">3208</td>
+<td align="right">4978</td>
+</tr>
+</tbody>
+</table>
+<p>A distribuição também é apresentada graficamente. A figura segue o
+padrão visual GDocs adotado no tutorial.</p>
+<pre class="r"><code>if (!requireNamespace(&quot;ggplot2&quot;, quietly = TRUE)) {
+  stop(&quot;Instale o pacote ggplot2 para gerar as figuras do tutorial.&quot;)
+}
+
+if (!requireNamespace(&quot;ggthemes&quot;, quietly = TRUE)) {
+  stop(&quot;Instale o pacote ggthemes para usar o padrão gráfico GDocs.&quot;)
+}
+
+dados_yield &lt;- data.frame(
+  Produtividade = y
+)
+
+figura_yield &lt;- ggplot2::ggplot(
+  dados_yield,
+  ggplot2::aes(x = Produtividade)
+) +
+  ggplot2::geom_histogram(
+    bins = 30,
+    fill = ggthemes::gdocs_pal()(1),
+    color = &quot;white&quot;,
+    linewidth = 0.25
+  ) +
+  ggplot2::labs(
+    title = &quot;Distribuição da produtividade&quot;,
+    x = &quot;Produtividade (kg/ha)&quot;,
+    y = &quot;Frequência&quot;
+  ) +
+  ggthemes::theme_gdocs(
+    base_size = 12
+  ) +
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(
+      face = &quot;bold&quot;
+    )
+  )
+
+figura_yield</code></pre>
+<div class="figure" style="text-align: center">
+<img src="figure/01_data_audit.Rmd/histograma-yield-1.png" alt="Distribuição da produtividade, em kg/ha, dos 1.379 indivíduos." width="100%" />
+<p class="caption">
+Distribuição da produtividade, em kg/ha, dos 1.379 indivíduos.
+</p>
+</div>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-histograma-yield-1">
+Past versions of histograma-yield-1.png
+</button>
+</p>
+<div id="fig-histograma-yield-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/blob/d648821de44e35cc5c1497746f8e8694daaaf9d7/docs/figure/01_data_audit.Rmd/histograma-yield-1.png" target="_blank">d648821</a>
+</td>
+<td>
+WevertonGomesCosta
+</td>
+<td>
+2026-08-12
+</td>
+</tr>
+<tr>
+<td>
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/blob/e4f6c89436323887f90ebe97eb1f10e9a219da0c/docs/figure/01_data_audit.Rmd/histograma-yield-1.png" target="_blank">e4f6c89</a>
+</td>
+<td>
+WevertonGomesCosta
+</td>
+<td>
+2026-08-12
+</td>
+</tr>
+<tr>
+<td>
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/blob/db45d13e26a47d0fb6981c58229aad355d09def9/docs/figure/01_data_audit.Rmd/histograma-yield-1.png" target="_blank">db45d13</a>
+</td>
+<td>
+WevertonGomesCosta
+</td>
+<td>
+2026-08-11
+</td>
+</tr>
+<tr>
+<td>
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/blob/d32edc6ed8258adf2f831660fd3d0f69f4caf78e/docs/figure/01_data_audit.Rmd/histograma-yield-1.png" target="_blank">d32edc6</a>
+</td>
+<td>
+WevertonGomesCosta
+</td>
+<td>
+2026-08-11
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<pre class="r"><code>ggplot2::ggsave(
+  filename = &quot;output/figures/01_distribuicao_produtividade.png&quot;,
+  plot = figura_yield,
+  width = 8,
+  height = 4.8,
+  dpi = 300
+)</code></pre>
+</div>
+<div id="objeto-salvo-para-a-próxima-etapa" class="section level2">
+<h2>8. Objeto salvo para a próxima etapa</h2>
+<p>Não precisamos reler e reorganizar o CSV em todos os módulos.
+Salvamos apenas o objeto já auditado em
+<code>output/01_data_objects.rds</code>.</p>
+<pre class="r"><code>data_objects &lt;- list(
+  y = y,
+  M = M,
+  n = nrow(M),
+  m = ncol(M),
+  marker_names = marker_names
+)
+
+saveRDS(
+  data_objects,
+  &quot;output/01_data_objects.rds&quot;
+)</code></pre>
+<p>Na próxima etapa, esse objeto será usado para separar aleatoriamente
+os indivíduos de treinamento e validação.</p>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 4.5.1 (2025-06-13 ucrt)
+Platform: x86_64-w64-mingw32/x64
+Running under: Windows 11 x64 (build 26200)
+
+Matrix products: default
+  LAPACK version 3.12.1
+
+locale:
+[1] LC_COLLATE=Portuguese_Brazil.utf8  LC_CTYPE=Portuguese_Brazil.utf8   
+[3] LC_MONETARY=Portuguese_Brazil.utf8 LC_NUMERIC=C                      
+[5] LC_TIME=Portuguese_Brazil.utf8    
+
+time zone: America/Sao_Paulo
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices datasets  utils     methods   base     
+
+loaded via a namespace (and not attached):
+ [1] gtable_0.3.6       jsonlite_2.0.0     compiler_4.5.1     renv_1.1.8        
+ [5] promises_1.5.0     Rcpp_1.1.2         stringr_1.6.0      git2r_0.36.2      
+ [9] later_1.4.4        jquerylib_0.1.4    scales_1.4.0       yaml_2.3.12       
+[13] fastmap_1.2.0      ggplot2_4.0.0      R6_2.6.1           labeling_0.4.3    
+[17] workflowr_1.7.2    knitr_1.50         tibble_3.3.1       rprojroot_2.1.1   
+[21] bslib_0.9.0        pillar_1.11.1      RColorBrewer_1.1-3 ggthemes_5.2.0    
+[25] rlang_1.1.7        cachem_1.1.0       stringi_1.8.7      httpuv_1.6.16     
+[29] xfun_0.54          S7_0.2.1           fs_1.6.6           sass_0.4.10       
+[33] otel_0.2.0         cli_3.6.5          withr_3.0.2        magrittr_2.0.4    
+[37] digest_0.6.39      grid_4.5.1         rstudioapi_0.17.1  lifecycle_1.0.5   
+[41] vctrs_0.7.1        evaluate_1.0.5     glue_1.8.0         whisker_0.4.1     
+[45] farver_2.1.2       purrr_1.2.1        rmarkdown_2.30     tools_4.5.1       
+[49] pkgconfig_2.0.3    htmltools_0.5.9   </code></pre>
+</div>
+</div>
+
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIjEuIEF1ZGl0b3JpYSBkb3MgZGFkb3MiDQphdXRob3I6ICJXZXZlcnRvbiBHb21lcyBkYSBDb3N0YSINCmRhdGU6ICJgciBTeXMuRGF0ZSgpYCINCnNpdGU6IHdvcmtmbG93cjo6d2Zsb3dfc2l0ZQ0Kb3V0cHV0Og0KICB3b3JrZmxvd3I6OndmbG93X2h0bWw6DQogICAgdG9jOiB0cnVlDQogICAgdG9jX2RlcHRoOiAzDQogICAgdG9jX2Zsb2F0OiB0cnVlDQogICAgY29kZV9kb3dubG9hZDogdHJ1ZQ0KICAgIGNvZGVfZm9sZGluZzogc2hvdw0KZWRpdG9yX29wdGlvbnM6DQogIGNodW5rX291dHB1dF90eXBlOiBjb25zb2xlDQotLS0NCg0KYGBge3Igc2V0dXAsIGluY2x1ZGU9RkFMU0V9DQprbml0cjo6b3B0c19jaHVuayRzZXQoDQogIGVjaG8gPSBUUlVFLA0KICB3YXJuaW5nID0gRkFMU0UsDQogIG1lc3NhZ2UgPSBGQUxTRSwNCiAgY2FjaGUgPSBGQUxTRSwNCiAgZmlnLmFsaWduID0gImNlbnRlciIsDQogIG91dC53aWR0aCA9ICIxMDAlIg0KKQ0KZGlyLmNyZWF0ZSgib3V0cHV0Iiwgc2hvd1dhcm5pbmdzID0gRkFMU0UsIHJlY3Vyc2l2ZSA9IFRSVUUpDQpkaXIuY3JlYXRlKCJvdXRwdXQvZmlndXJlcyIsIHNob3dXYXJuaW5ncyA9IEZBTFNFLCByZWN1cnNpdmUgPSBUUlVFKQ0KYGBgDQoNCiMjIDEuIE9iamV0aXZvDQoNCkFudGVzIGRlIGFqdXN0YXIgcXVhbHF1ZXIgbW9kZWxvIGRlIHByZWRpw6fDo28gZ2Vuw7RtaWNhLCBwcmVjaXNhbW9zIGNvbmhlY2VyIG8NCmFycXVpdm8gYW5hbMOtdGljbyBlIHZlcmlmaWNhciBzZSBzdWEgZXN0cnV0dXJhIGNvcnJlc3BvbmRlIGFvIHF1ZSBzZXLDoSB1c2FkbyBubw0KcmVzdGFudGUgZG8gdHV0b3JpYWwuDQoNCk5lc3RlIGNvbmp1bnRvIGRlIGRhZG9zOg0KDQotIGNhZGEgKipsaW5oYSoqIHJlcHJlc2VudGEgdW0gaW5kaXbDrWR1bzsNCi0gYSBjb2x1bmEgYHlpZWxkYCBjb250w6ltIG8gZmVuw7N0aXBvIGRlIHByb2R1dGl2aWRhZGU7DQotIGFzIGRlbWFpcyBjb2x1bmFzIHJlcHJlc2VudGFtIFNOUHM7DQotIGNhZGEgU05QIMOpIGNvZGlmaWNhZG8gY29tbyBgMGAsIGAxYCBvdSBgMmAsIGNvcnJlc3BvbmRlbmRvIGFvIG7Dum1lcm8gZGUgY8OzcGlhcw0KZG8gYWxlbG8gY29udGFkbyBuYXF1ZWxlIG1hcmNhZG9yLg0KDQpPcyBkYWRvcyBkZXJpdmFtIGRvICoqU295TkFNIChTb3liZWFuIE5lc3RlZCBBc3NvY2lhdGlvbiBNYXBwaW5nKSoqLiBOZXN0ZQ0KdHV0b3JpYWwsIGB5aWVsZGAgY29ycmVzcG9uZGUgw6AgcHJvZHV0aXZpZGFkZSBkZSBncsOjb3Mgb2JzZXJ2YWRhIG5vIGFtYmllbnRlDQpgSUFfMjAxMmAsIGV4cHJlc3NhIGVtIGtnL2hhLiBBIGNvbmZlcsOqbmNpYSBkZSBwcm92ZW5pw6puY2lhIGNvbmZpcm1vdSBhDQpjb3JyZXNwb25kw6puY2lhIGRvcyAxLjM3OSByZWdpc3Ryb3MgZmVub3TDrXBpY29zIGUgZG9zIDQuMzI1IGxvY2kgY29tIG9zIGFycXVpdm9zDQpww7pibGljb3MgZGUgcmVmZXLDqm5jaWEgZG8gU295TkFNIHVzYWRvcyBuYSBwcmVwYXJhw6fDo28gZGVzdGUgY29uanVudG8uDQoNCmBkYWRvc19nYmx1cC5jc3ZgIMOpIHRyYXRhZG8gYXF1aSBjb21vIG8gYXJxdWl2byBhbmFsw610aWNvIGZpbmFsIGRlIGVudHJhZGEuIEENCnNlcXXDqm5jaWEgaGlzdMOzcmljYSBleGF0YSBkZSBmaWx0cm9zIGUgbyBtw6l0b2RvIGRlIGltcHV0YcOnw6NvIHF1ZSBhbnRlY2VkZXJhbQ0KZXNzYSB2ZXJzw6NvIG7Do28gZm9yYW0gcmVjb25zdHJ1w61kb3MgaW50ZWdyYWxtZW50ZSBlLCBwb3IgaXNzbywgbsOjbyBzw6NvDQpyZWFwbGljYWRvcyBuZW0gYXRyaWJ1w61kb3MgYSB1bSBwcm9jZWRpbWVudG8gZXNwZWPDrWZpY28gbmVzdGUgdHV0b3JpYWwuIEENCnByb3ZlbmnDqm5jaWEgZSBlc3NhIGxpbWl0YcOnw6NvIGVzdMOjbyBkb2N1bWVudGFkYXMgZW0gYGRhdGEvUkVBRE1FLm1kYC4NCg0KQSBhdWRpdG9yaWEgbsOjbyBtb2RpZmljYSBvcyBkYWRvcy4gRWxhIGFwZW5hcyB2ZXJpZmljYSBhIGVzdHJ1dHVyYSBkbyBhcnF1aXZvIGUNCnNhbHZhIG9zIG9iamV0b3MgcXVlIHNlcsOjbyB1c2Fkb3MgbmEgcHLDs3hpbWEgZXRhcGEuDQoNCiMjIDIuIExlaXR1cmEgZG8gYXJxdWl2bw0KDQpPIGFycXVpdm8gYW5hbMOtdGljbyBkZXZlIGVzdGFyIGVtIGBkYXRhL2RhZG9zX2dibHVwLmNzdmAuDQoNCmBgYHtyIGxlaXR1cmEtZGFkb3N9DQpEQVRBX0ZJTEUgPC0gImRhdGEvZGFkb3NfZ2JsdXAuY3N2Ig0KDQppZiAoIWZpbGUuZXhpc3RzKERBVEFfRklMRSkpIHsNCiAgc3RvcCgNCiAgICAiQXJxdWl2byBuw6NvIGVuY29udHJhZG86ICIsIERBVEFfRklMRSwNCiAgICAiLiBDb2xvcXVlIGRhZG9zX2dibHVwLmNzdiBkZW50cm8gZGEgcGFzdGEgZGF0YS8uIg0KICApDQp9DQoNCmRhZG9zIDwtIHJlYWQuY3N2KA0KICBEQVRBX0ZJTEUsDQogIGNoZWNrLm5hbWVzID0gRkFMU0UNCikNCg0KZGltKGRhZG9zKQ0KYGBgDQoNCk8gcHJvamV0byB2YWxpZGFkbyBwb3NzdWkgMS4zNzkgaW5kaXbDrWR1b3MgZSA0LjMyNiBjb2x1bmFzOiB1bWEgY29sdW5hDQpmZW5vdMOtcGljYSBlIDQuMzI1IFNOUHMuDQoNCiMjIDMuIElkZW50aWZpY2HDp8OjbyBkbyBmZW7Ds3RpcG8gZSBkb3MgU05Qcw0KDQpQcmltZWlybyBzZXBhcmFtb3MgbyBub21lIGRhIGNhcmFjdGVyw61zdGljYSBmZW5vdMOtcGljYSBkb3Mgbm9tZXMgZG9zDQptYXJjYWRvcmVzLg0KDQpgYGB7ciBpZGVudGlmaWNhci1jb2x1bmFzfQ0KaWYgKHN1bShuYW1lcyhkYWRvcykgPT0gInlpZWxkIikgIT0gMSkgew0KICBzdG9wKCJPIGFycXVpdm8gZGV2ZSBwb3NzdWlyIGV4YXRhbWVudGUgdW1hIGNvbHVuYSBjaGFtYWRhIHlpZWxkLiIpDQp9DQoNCmlmIChhbnlEdXBsaWNhdGVkKG5hbWVzKGRhZG9zKSkgPiAwKSB7DQogIHN0b3AoIkV4aXN0ZW0gbm9tZXMgZGUgY29sdW5hcyBkdXBsaWNhZG9zLiIpDQp9DQoNCm1hcmtlcl9uYW1lcyA8LSBzZXRkaWZmKA0KICBuYW1lcyhkYWRvcyksDQogICJ5aWVsZCINCikNCg0KbGVuZ3RoKG1hcmtlcl9uYW1lcykNCmBgYA0KDQpPcyBub21lcyBkb3MgU05QcyBzZWd1ZW0gbyBwYWRyw6NvIGFkb3RhZG8gbm8gYXJxdWl2byBhbmFsw610aWNvLCBwb3IgZXhlbXBsbw0KYEdtMDFfLi4uX0FfR2AuDQoNCmBgYHtyIGNvbmZlcmlyLW5vbWVzLXNucH0NCnBhdHRlcm5fc25wIDwtICJeR21bMC05XXsyfV9bMC05XStfW0FDR1RdX1tBQ0dUXSQiDQoNCmlmICghYWxsKGdyZXBsKHBhdHRlcm5fc25wLCBtYXJrZXJfbmFtZXMpKSkgew0KICBzdG9wKCJIw6EgbWFyY2Fkb3JlcyBjb20gbm9tZXMgZm9yYSBkbyBwYWRyw6NvIGVzcGVyYWRvLiIpDQp9DQpgYGANCg0KIyMgNC4gQ29uc3RydcOnw6NvIGRhIG1hdHJpeiBkZSBtYXJjYWRvcmVzIGUgZG8gdmV0b3IgZmVub3TDrXBpY28NCg0KQSBtYXRyaXogYE1gIGNvbnTDqW0gYXBlbmFzIG9zIFNOUHMuIE8gdmV0b3IgYHlgIGNvbnTDqW0gYSBwcm9kdXRpdmlkYWRlLg0KDQpgYGB7ciBjb25zdHJ1aXItb2JqZXRvc30NCk0gPC0gYXMubWF0cml4KA0KICBkYWRvc1ssIG1hcmtlcl9uYW1lcywgZHJvcCA9IEZBTFNFXQ0KKQ0KDQpzdG9yYWdlLm1vZGUoTSkgPC0gIm51bWVyaWMiDQoNCnkgPC0gYXMubnVtZXJpYygNCiAgZGFkb3MkeWllbGQNCikNCg0KZGltKE0pDQpsZW5ndGgoeSkNCmBgYA0KDQojIyA1LiBWYWxvcmVzIGF1c2VudGVzIGUgY29kaWZpY2HDp8OjbyBkb3MgU05Qcw0KDQpPcyBtb2RlbG9zIGRlc3RlIHR1dG9yaWFsIHV0aWxpemFtIG8gYXJxdWl2byBhbmFsw610aWNvIGrDoSBmaWx0cmFkby4gUG9yIGlzc28sDQpuw6NvIGVzcGVyYW1vcyB2YWxvcmVzIGF1c2VudGVzIG5vcyBTTlBzIG5lbSBubyBmZW7Ds3RpcG8uDQoNClRhbWLDqW0gdmVyaWZpY2Ftb3Mgc2UgdG9kb3Mgb3MgZ2Vuw7N0aXBvcyBlc3TDo28gY29kaWZpY2Fkb3MgY29tbyBgMGAsIGAxYCBvdQ0KYDJgLg0KDQpgYGB7ciBjb25mZXJpci12YWxvcmVzfQ0KYXVkaXRvcmlhX3ZhbG9yZXMgPC0gZGF0YS5mcmFtZSgNCiAgVmVyaWZpY2FjYW8gPSBjKA0KICAgICJGZW7Ds3RpcG9zIGF1c2VudGVzIiwNCiAgICAiR2Vuw7N0aXBvcyBhdXNlbnRlcyIsDQogICAgIlZhbG9yZXMgU05QIGZvcmEgZGUgMC8xLzIiDQogICksDQogIFZhbG9yID0gYygNCiAgICBzdW0oaXMubmEoeSkpLA0KICAgIHN1bShpcy5uYShNKSksDQogICAgc3VtKCEoTSAlaW4lIGMoMCwgMSwgMikpKQ0KICApDQopDQoNCmtuaXRyOjprYWJsZSgNCiAgYXVkaXRvcmlhX3ZhbG9yZXMsDQogIGNhcHRpb24gPSAiVmVyaWZpY2HDp8O1ZXMgYsOhc2ljYXMgZG8gYXJxdWl2byBhbmFsw610aWNvIg0KKQ0KDQppZiAoYW55TkEoeSkpIHN0b3AoIkV4aXN0ZW0gZmVuw7N0aXBvcyBhdXNlbnRlcyBubyBhcnF1aXZvIGFuYWzDrXRpY28uIikNCmlmIChhbnlOQShNKSkgc3RvcCgiRXhpc3RlbSBTTlBzIGF1c2VudGVzIG5vIGFycXVpdm8gYW5hbMOtdGljby4iKQ0KaWYgKCFhbGwoTSAlaW4lIGMoMCwgMSwgMikpKSBzdG9wKCJPcyBTTlBzIGRldmVtIGVzdGFyIGNvZGlmaWNhZG9zIGNvbW8gMCwgMSBvdSAyLiIpDQpgYGANCg0KIyMgNi4gTWFyY2Fkb3JlcyBzZW0gdmFyaWHDp8OjbyBlIHJlZ2lzdHJvcyBkdXBsaWNhZG9zDQoNClVtIG1hcmNhZG9yIG1vbm9tw7NyZmljbyBhcHJlc2VudGEgbyBtZXNtbyB2YWxvciBwYXJhIHRvZG9zIG9zIGluZGl2w61kdW9zIGUgbsOjbw0KY29udHJpYnVpIHBhcmEgZGlmZXJlbmNpYXIgZ2VuZXRpY2FtZW50ZSBhIHBvcHVsYcOnw6NvLiBUYW1iw6ltIHZlcmlmaWNhbW9zIHNlIGjDoQ0KbGluaGFzIG91IHBlcmZpcyBnZW7DtG1pY29zIGV4YXRhbWVudGUgZHVwbGljYWRvcy4NCg0KYGBge3IgZHVwbGljYXRhcy1lLXZhcmlhY2FvfQ0Kbl9jbGFzc2VzIDwtIGludGVnZXIobmNvbChNKSkNCg0KZm9yIChqIGluIHNlcV9sZW4obmNvbChNKSkpIHsNCiAgbl9jbGFzc2VzW2pdIDwtIGxlbmd0aCgNCiAgICB1bmlxdWUoTVssIGpdKQ0KICApDQp9DQoNCm5fbW9ub21vcmZpY29zIDwtIHN1bShuX2NsYXNzZXMgPD0gMSkNCm5fbGluaGFzX2R1cGxpY2FkYXMgPC0gc3VtKGR1cGxpY2F0ZWQoZGFkb3MpKQ0Kbl9wZXJmaXNfZHVwbGljYWRvcyA8LSBzdW0oDQogIGR1cGxpY2F0ZWQoDQogICAgYXMuZGF0YS5mcmFtZShNKQ0KICApDQopDQoNCmF1ZGl0b3JpYV9lc3RydXR1cmEgPC0gZGF0YS5mcmFtZSgNCiAgVmVyaWZpY2FjYW8gPSBjKA0KICAgICJJbmRpdsOtZHVvcyIsDQogICAgIlNOUHMiLA0KICAgICJNYXJjYWRvcmVzIG1vbm9tw7NyZmljb3MiLA0KICAgICJMaW5oYXMgZHVwbGljYWRhcyIsDQogICAgIlBlcmZpcyBnZW7DtG1pY29zIGR1cGxpY2Fkb3MiDQogICksDQogIFZhbG9yID0gYygNCiAgICBucm93KE0pLA0KICAgIG5jb2woTSksDQogICAgbl9tb25vbW9yZmljb3MsDQogICAgbl9saW5oYXNfZHVwbGljYWRhcywNCiAgICBuX3BlcmZpc19kdXBsaWNhZG9zDQogICkNCikNCg0Ka25pdHI6OmthYmxlKA0KICBhdWRpdG9yaWFfZXN0cnV0dXJhLA0KICBjYXB0aW9uID0gIkVzdHJ1dHVyYSB2YWxpZGFkYSBkb3MgZGFkb3MiDQopDQoNCnN0b3BpZm5vdChucm93KE0pID09IDEzNzkpDQpzdG9waWZub3QobmNvbChNKSA9PSA0MzI1KQ0Kc3RvcGlmbm90KG5fbW9ub21vcmZpY29zID09IDApDQpzdG9waWZub3Qobl9saW5oYXNfZHVwbGljYWRhcyA9PSAwKQ0Kc3RvcGlmbm90KG5fcGVyZmlzX2R1cGxpY2Fkb3MgPT0gMCkNCmBgYA0KDQojIyA3LiBSZXN1bW8gZG8gZmVuw7N0aXBvDQoNCk8gcmVzdW1vIGFiYWl4byBwZXJtaXRlIGNvbmhlY2VyIGEgZXNjYWxhIGRhIHByb2R1dGl2aWRhZGUgYW50ZXMgZGEgbW9kZWxhZ2VtLg0KT3MgdmFsb3JlcyBkZSBgeWllbGRgIGVzdMOjbyBleHByZXNzb3MgZW0ga2cvaGEuDQoNCmBgYHtyIHJlc3Vtby1mZW5vdGlwb30NCnJlc3Vtb195aWVsZCA8LSBkYXRhLmZyYW1lKA0KICBOID0gbGVuZ3RoKHkpLA0KICBNZWRpYSA9IG1lYW4oeSksDQogIERlc3Zpb19wYWRyYW8gPSBzZCh5KSwNCiAgTWluaW1vID0gbWluKHkpLA0KICBRMSA9IHVubmFtZShxdWFudGlsZSh5LCAwLjI1KSksDQogIE1lZGlhbmEgPSBtZWRpYW4oeSksDQogIFEzID0gdW5uYW1lKHF1YW50aWxlKHksIDAuNzUpKSwNCiAgTWF4aW1vID0gbWF4KHkpDQopDQoNCmtuaXRyOjprYWJsZSgNCiAgcmVzdW1vX3lpZWxkLA0KICBkaWdpdHMgPSAyLA0KICBjYXB0aW9uID0gIlJlc3VtbyBkYSBwcm9kdXRpdmlkYWRlIChrZy9oYSkiDQopDQpgYGANCg0KQSBkaXN0cmlidWnDp8OjbyB0YW1iw6ltIMOpIGFwcmVzZW50YWRhIGdyYWZpY2FtZW50ZS4gQSBmaWd1cmEgc2VndWUgbyBwYWRyw6NvDQp2aXN1YWwgR0RvY3MgYWRvdGFkbyBubyB0dXRvcmlhbC4NCg0KYGBge3IgaGlzdG9ncmFtYS15aWVsZCwgZmlnLmhlaWdodD00LjgsIGZpZy53aWR0aD04LCBmaWcuY2FwPSJEaXN0cmlidWnDp8OjbyBkYSBwcm9kdXRpdmlkYWRlLCBlbSBrZy9oYSwgZG9zIDEuMzc5IGluZGl2w61kdW9zLiJ9DQppZiAoIXJlcXVpcmVOYW1lc3BhY2UoImdncGxvdDIiLCBxdWlldGx5ID0gVFJVRSkpIHsNCiAgc3RvcCgiSW5zdGFsZSBvIHBhY290ZSBnZ3Bsb3QyIHBhcmEgZ2VyYXIgYXMgZmlndXJhcyBkbyB0dXRvcmlhbC4iKQ0KfQ0KDQppZiAoIXJlcXVpcmVOYW1lc3BhY2UoImdndGhlbWVzIiwgcXVpZXRseSA9IFRSVUUpKSB7DQogIHN0b3AoIkluc3RhbGUgbyBwYWNvdGUgZ2d0aGVtZXMgcGFyYSB1c2FyIG8gcGFkcsOjbyBncsOhZmljbyBHRG9jcy4iKQ0KfQ0KDQpkYWRvc195aWVsZCA8LSBkYXRhLmZyYW1lKA0KICBQcm9kdXRpdmlkYWRlID0geQ0KKQ0KDQpmaWd1cmFfeWllbGQgPC0gZ2dwbG90Mjo6Z2dwbG90KA0KICBkYWRvc195aWVsZCwNCiAgZ2dwbG90Mjo6YWVzKHggPSBQcm9kdXRpdmlkYWRlKQ0KKSArDQogIGdncGxvdDI6Omdlb21faGlzdG9ncmFtKA0KICAgIGJpbnMgPSAzMCwNCiAgICBmaWxsID0gZ2d0aGVtZXM6Omdkb2NzX3BhbCgpKDEpLA0KICAgIGNvbG9yID0gIndoaXRlIiwNCiAgICBsaW5ld2lkdGggPSAwLjI1DQogICkgKw0KICBnZ3Bsb3QyOjpsYWJzKA0KICAgIHRpdGxlID0gIkRpc3RyaWJ1acOnw6NvIGRhIHByb2R1dGl2aWRhZGUiLA0KICAgIHggPSAiUHJvZHV0aXZpZGFkZSAoa2cvaGEpIiwNCiAgICB5ID0gIkZyZXF1w6puY2lhIg0KICApICsNCiAgZ2d0aGVtZXM6OnRoZW1lX2dkb2NzKA0KICAgIGJhc2Vfc2l6ZSA9IDEyDQogICkgKw0KICBnZ3Bsb3QyOjp0aGVtZSgNCiAgICBwbG90LnRpdGxlID0gZ2dwbG90Mjo6ZWxlbWVudF90ZXh0KA0KICAgICAgZmFjZSA9ICJib2xkIg0KICAgICkNCiAgKQ0KDQpmaWd1cmFfeWllbGQNCg0KZ2dwbG90Mjo6Z2dzYXZlKA0KICBmaWxlbmFtZSA9ICJvdXRwdXQvZmlndXJlcy8wMV9kaXN0cmlidWljYW9fcHJvZHV0aXZpZGFkZS5wbmciLA0KICBwbG90ID0gZmlndXJhX3lpZWxkLA0KICB3aWR0aCA9IDgsDQogIGhlaWdodCA9IDQuOCwNCiAgZHBpID0gMzAwDQopDQpgYGANCg0KIyMgOC4gT2JqZXRvIHNhbHZvIHBhcmEgYSBwcsOzeGltYSBldGFwYQ0KDQpOw6NvIHByZWNpc2Ftb3MgcmVsZXIgZSByZW9yZ2FuaXphciBvIENTViBlbSB0b2RvcyBvcyBtw7NkdWxvcy4gU2FsdmFtb3MgYXBlbmFzIG8NCm9iamV0byBqw6EgYXVkaXRhZG8gZW0gYG91dHB1dC8wMV9kYXRhX29iamVjdHMucmRzYC4NCg0KYGBge3Igc2FsdmFyLW9iamV0b3N9DQpkYXRhX29iamVjdHMgPC0gbGlzdCgNCiAgeSA9IHksDQogIE0gPSBNLA0KICBuID0gbnJvdyhNKSwNCiAgbSA9IG5jb2woTSksDQogIG1hcmtlcl9uYW1lcyA9IG1hcmtlcl9uYW1lcw0KKQ0KDQpzYXZlUkRTKA0KICBkYXRhX29iamVjdHMsDQogICJvdXRwdXQvMDFfZGF0YV9vYmplY3RzLnJkcyINCikNCmBgYA0KDQpOYSBwcsOzeGltYSBldGFwYSwgZXNzZSBvYmpldG8gc2Vyw6EgdXNhZG8gcGFyYSBzZXBhcmFyIGFsZWF0b3JpYW1lbnRlIG9zDQppbmRpdsOtZHVvcyBkZSB0cmVpbmFtZW50byBlIHZhbGlkYcOnw6NvLg==</div>
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+https://docs.mathjax.org/en/latest/web/configuration.html. This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeSourceEmbed("01_data_audit.Rmd");
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

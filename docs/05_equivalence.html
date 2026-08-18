@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Weverton Gomes da Costa" />
+
+<meta name="date" content="2026-08-17" />
+
+<title>5. Equivalência com T100</title>
+
+<script src="site_libs/header-attrs-2.30/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<script src="site_libs/navigation-1.1/sourceembed.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet" />
+<script src="site_libs/pagedtable-1.1/js/pagedtable.js"></script>
+<link href="site_libs/font-awesome-6.5.2/css/all.min.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet" />
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/main/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+<style type="text/css">
+#rmd-source-code {
+  display: none;
+}
+</style>
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Predição genômica</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Início</a>
+</li>
+<li>
+  <a href="01_data_audit.html">1. Dados</a>
+</li>
+<li>
+  <a href="02_sampling_splits.html">2. Amostragem</a>
+</li>
+<li>
+  <a href="03_genomic_matrix.html">3. Matriz G</a>
+</li>
+<li>
+  <a href="04_gblup_baseline.html">4. GBLUP</a>
+</li>
+<li>
+  <a href="05_equivalence.html">5. Equivalência</a>
+</li>
+<li>
+  <a href="06_data_augmentation.html">6. Aumento de dados</a>
+</li>
+<li>
+  <a href="about.html">Sobre</a>
+</li>
+<li>
+  <a href="license.html">Licença</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation">
+    <span class="fa fa-github"></span>
+     
+    Código-fonte
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+<li role="separator" class="divider"></li>
+<li><a id="rmd-download-source" href="#">Download Rmd</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">5. Equivalência com T100</h1>
+<h4 class="author">Weverton Gomes da Costa</h4>
+<h4 class="date">2026-08-17</h4>
+
+</div>
+
+
+<div id="objetivo" class="section level2">
+<h2>1. Objetivo</h2>
+<p>A curva de aprendizado mostrou que T75 apresenta desempenho próximo
+de T100. Agora precisamos responder uma pergunta mais específica:</p>
+<blockquote>
+<p>A diferença é pequena o suficiente para considerar uma amostra
+reduzida praticamente equivalente a T100?</p>
+</blockquote>
+<p>Não procuramos provar que as correlações são exatamente iguais.
+Definimos uma margem de diferença considerada pequena para este
+estudo:</p>
+<p><span class="math display">\[
+\delta = 0.05.
+\]</span></p>
+<p>Neste tutorial, <code>delta = 0.05</code> representa a menor
+diferença de interesse científico, conhecida pela sigla SESOI
+(<em>Smallest Effect Size of Interest</em>). Essa margem foi definida
+especificamente para este estudo e não deve ser interpretada como um
+limiar universal para estudos de predição genômica.</p>
+<p>Uma estratégia será considerada equivalente quando o intervalo de
+confiança do efeito estiver totalmente dentro de:</p>
+<p><span class="math display">\[
+[-0.05,\,+0.05].
+\]</span></p>
+</div>
+<div id="resultados-de-referência-com-dados-reais"
+class="section level2">
+<h2>2. Resultados de referência com dados reais</h2>
+<p>Esta etapa utiliza apenas os 120 resultados com indivíduos reais já
+produzidos na Etapa 4. Nenhum GBLUP é reajustado.</p>
+<pre class="r"><code>BASELINE_FILE &lt;- &quot;output/04_baseline_results.csv&quot;
+
+if (!file.exists(BASELINE_FILE)) {
+  stop(&quot;Arquivo ausente: output/04_baseline_results.csv&quot;)
+}
+
+baseline &lt;- read.csv(BASELINE_FILE)
+
+PROPORCOES &lt;- sort(unique(baseline$proporcao_pool))
+PROP_T100 &lt;- max(PROPORCOES)
+PROPORCOES_REDUZIDAS &lt;- PROPORCOES[PROPORCOES &lt; PROP_T100]
+
+N_REP &lt;- length(unique(baseline$repeticao))
+N_TAMANHOS &lt;- length(PROPORCOES)
+N_CENARIOS &lt;- N_REP * N_TAMANHOS
+
+N_TEST &lt;- unique(baseline$n_validacao)
+N_TRAIN_POOL &lt;- unique(
+  baseline$n_treino[
+    baseline$proporcao_pool == PROP_T100
+  ]
+)
+
+LABELS_REDUZIDOS &lt;- paste0(
+  &quot;T&quot;,
+  PROPORCOES_REDUZIDAS * 100
+)
+
+stopifnot(length(N_TEST) == 1L)
+stopifnot(length(N_TRAIN_POOL) == 1L)
+stopifnot(nrow(baseline) == N_CENARIOS)</code></pre>
+</div>
+<div id="diferenças-pareadas-contra-t100" class="section level2">
+<h2>3. Diferenças pareadas contra T100</h2>
+<p>Cada cenário reduzido é comparado com T100 <strong>na mesma
+repetição</strong>. Isso é possível porque ambos foram avaliados
+exatamente nos mesmos 276 indivíduos de validação.</p>
+<pre class="r"><code>t100 &lt;- baseline[
+  baseline$proporcao_pool == PROP_T100,
+  c(&quot;repeticao&quot;, &quot;correlacao&quot;)
+]
+
+names(t100)[2] &lt;- &quot;correlacao_T100&quot;
+
+reduzidos &lt;- baseline[
+  baseline$proporcao_pool &lt; PROP_T100,
+  c(
+    &quot;repeticao&quot;,
+    &quot;proporcao_pool&quot;,
+    &quot;n_treino&quot;,
+    &quot;correlacao&quot;
+  )
+]
+
+diferencas &lt;- merge(
+  reduzidos,
+  t100,
+  by = &quot;repeticao&quot;
+)
+
+diferencas$delta_cor &lt;-
+  diferencas$correlacao -
+  diferencas$correlacao_T100
+
+resumo_diferencas &lt;- aggregate(
+  delta_cor ~ proporcao_pool,
+  data = diferencas,
+  FUN = mean
+)
+
+names(resumo_diferencas) &lt;- c(
+  &quot;Proporção do pool&quot;,
+  &quot;Diferença média de correlação&quot;
+)
+
+knitr::kable(
+  resumo_diferencas,
+  digits = 4,
+  caption = &quot;Diferença média de correlação em relação a T100&quot;
+)</code></pre>
+<table>
+<caption>Diferença média de correlação em relação a T100</caption>
+<thead>
+<tr class="header">
+<th align="right">Proporção do pool</th>
+<th align="right">Diferença média de correlação</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">0.25</td>
+<td align="right">-0.1330</td>
+</tr>
+<tr class="even">
+<td align="right">0.50</td>
+<td align="right">-0.0542</td>
+</tr>
+<tr class="odd">
+<td align="right">0.75</td>
+<td align="right">-0.0185</td>
+</tr>
+</tbody>
+</table>
+<p>Valores negativos indicam que a amostra reduzida teve correlação
+menor que T100.</p>
+</div>
+<div id="por-que-corrigir-o-erro-padrão" class="section level2">
+<h2>4. Por que corrigir o erro-padrão?</h2>
+<p>As 30 repetições não são 30 experimentos completamente independentes.
+Os conjuntos de validação são sorteados da mesma população e um mesmo
+indivíduo pode aparecer em várias repetições.</p>
+<p>Por isso usamos a aproximação de Nadeau-Bengio para aumentar o
+erro-padrão em relação ao teste pareado ingênuo. O procedimento original
+foi proposto para comparações sob reamostragem repetida; aqui utilizamos
+esse erro-padrão corrigido dentro do TOST como uma adaptação para a
+análise de equivalência:</p>
+<p><span class="math display">\[
+SE_{NB}=
+\sqrt{
+\left(
+\frac{1}{R}+
+\frac{n_{test}}{n_{train}}
+\right)s_d^2
+}.
+\]</span></p>
+<p>Aqui:</p>
+<ul>
+<li><code>R = 30</code> repetições;</li>
+<li><code>n_test = 276</code> indivíduos de validação;</li>
+<li><code>n_train = 1103</code> para a análise primária;</li>
+<li><code>s_d</code> é o desvio-padrão das diferenças pareadas.</li>
+</ul>
+</div>
+<div id="tost-com-correção-de-nadeau-bengio" class="section level2">
+<h2>5. TOST com correção de Nadeau-Bengio</h2>
+<p>O TOST (<em>Two One-Sided Tests</em>) é um procedimento de
+equivalência baseado em dois testes unilaterais. Para declarar
+equivalência, precisamos rejeitar simultaneamente que a diferença seja
+menor ou igual a <code>-0.05</code> e que seja maior ou igual a
+<code>+0.05</code>.</p>
+<p>O código abaixo apresenta diretamente o cálculo utilizado.</p>
+<pre class="r"><code>DELTA &lt;- 0.05
+ALPHA &lt;- 0.05
+
+resultado_equivalencia &lt;- data.frame()
+
+for (proporcao in PROPORCOES_REDUZIDAS) {
+  d &lt;- diferencas$delta_cor[
+    diferencas$proporcao_pool == proporcao
+  ]
+
+  media_d &lt;- mean(d)
+  sd_d &lt;- sd(d)
+
+  fator_NB &lt;-
+    1 / N_REP +
+    N_TEST / N_TRAIN_POOL
+
+  se_NB &lt;- sqrt(
+    fator_NB * sd_d^2
+  )
+
+  gl &lt;- length(d) - 1
+
+  p_inferior &lt;- 1 - pt(
+    (media_d + DELTA) / se_NB,
+    df = gl
+  )
+
+  p_superior &lt;- pt(
+    (media_d - DELTA) / se_NB,
+    df = gl
+  )
+
+  t_critico &lt;- qt(
+    1 - ALPHA,
+    df = gl
+  )
+
+  ic90_inf &lt;- media_d - t_critico * se_NB
+  ic90_sup &lt;- media_d + t_critico * se_NB
+
+  p_TOST &lt;- max(
+    p_inferior,
+    p_superior
+  )
+
+  equivalente &lt;-
+    p_inferior &lt; ALPHA &amp;&amp;
+    p_superior &lt; ALPHA &amp;&amp;
+    ic90_inf &gt; -DELTA &amp;&amp;
+    ic90_sup &lt; DELTA
+
+  resultado_equivalencia &lt;- rbind(
+    resultado_equivalencia,
+    data.frame(
+      Proporcao = proporcao,
+      N_real = unique(
+        diferencas$n_treino[
+          diferencas$proporcao_pool == proporcao
+        ]
+      ),
+      Delta_cor_media = media_d,
+      SE_NB = se_NB,
+      IC90_inf = ic90_inf,
+      IC90_sup = ic90_sup,
+      p_TOST = p_TOST,
+      Equivalente = equivalente
+    )
+  )
+}
+
+resultado_equivalencia_exibicao &lt;- resultado_equivalencia
+names(resultado_equivalencia_exibicao) &lt;- c(
+  &quot;Proporção do pool&quot;,
+  &quot;Indivíduos reais&quot;,
+  &quot;Diferença média de correlação&quot;,
+  &quot;Erro-padrão corrigido&quot;,
+  &quot;IC90% inferior&quot;,
+  &quot;IC90% superior&quot;,
+  &quot;p-valor TOST&quot;,
+  &quot;Equivalente&quot;
+)
+
+knitr::kable(
+  resultado_equivalencia_exibicao,
+  digits = 4,
+  caption = &quot;Equivalência das amostras reais reduzidas com T100&quot;
+)</code></pre>
+<table style="width:100%;">
+<caption>Equivalência das amostras reais reduzidas com T100</caption>
+<colgroup>
+<col width="12%" />
+<col width="11%" />
+<col width="21%" />
+<col width="15%" />
+<col width="10%" />
+<col width="10%" />
+<col width="9%" />
+<col width="8%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="right">Proporção do pool</th>
+<th align="right">Indivíduos reais</th>
+<th align="right">Diferença média de correlação</th>
+<th align="right">Erro-padrão corrigido</th>
+<th align="right">IC90% inferior</th>
+<th align="right">IC90% superior</th>
+<th align="right">p-valor TOST</th>
+<th align="left">Equivalente</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">0.25</td>
+<td align="right">275</td>
+<td align="right">-0.1330</td>
+<td align="right">0.0225</td>
+<td align="right">-0.1713</td>
+<td align="right">-0.0947</td>
+<td align="right">0.9995</td>
+<td align="left">FALSE</td>
+</tr>
+<tr class="even">
+<td align="right">0.50</td>
+<td align="right">551</td>
+<td align="right">-0.0542</td>
+<td align="right">0.0132</td>
+<td align="right">-0.0767</td>
+<td align="right">-0.0318</td>
+<td align="right">0.6250</td>
+<td align="left">FALSE</td>
+</tr>
+<tr class="odd">
+<td align="right">0.75</td>
+<td align="right">827</td>
+<td align="right">-0.0185</td>
+<td align="right">0.0060</td>
+<td align="right">-0.0288</td>
+<td align="right">-0.0082</td>
+<td align="right">0.0000</td>
+<td align="left">TRUE</td>
+</tr>
+</tbody>
+</table>
+<p>O resultado identifica T75 como a menor amostra real cujo intervalo
+de 90% permanece completamente dentro da margem de equivalência.</p>
+</div>
+<div id="visualização-da-equivalência" class="section level2">
+<h2>6. Visualização da equivalência</h2>
+<p>A figura mostra a mesma análise da tabela anterior. O ponto
+representa a diferença média de correlação em relação a T100 e a barra
+vertical representa o intervalo de confiança de 90% corrigido por
+Nadeau-Bengio.</p>
+<p>As linhas tracejadas em <code>-0.05</code> e <code>+0.05</code>
+delimitam a região de equivalência. Um cenário só é equivalente quando
+todo o seu intervalo permanece dentro dessa região.</p>
+<pre class="r"><code>if (!requireNamespace(&quot;ggplot2&quot;, quietly = TRUE)) {
+  stop(&quot;Instale o pacote ggplot2 para gerar as figuras do tutorial.&quot;)
+}
+
+if (!requireNamespace(&quot;ggthemes&quot;, quietly = TRUE)) {
+  stop(&quot;Instale o pacote ggthemes para usar o padrão gráfico GDocs.&quot;)
+}
+
+dados_equivalencia &lt;- resultado_equivalencia
+
+dados_equivalencia$Cenario &lt;- factor(
+  dados_equivalencia$Proporcao,
+  levels = PROPORCOES_REDUZIDAS,
+  labels = LABELS_REDUZIDOS
+)
+
+dados_equivalencia$Status &lt;- factor(
+  ifelse(
+    dados_equivalencia$Equivalente,
+    &quot;Equivalente&quot;,
+    &quot;Não equivalente&quot;
+  ),
+  levels = c(&quot;Não equivalente&quot;, &quot;Equivalente&quot;)
+)
+
+figura_equivalencia &lt;- ggplot2::ggplot(
+  dados_equivalencia,
+  ggplot2::aes(
+    x = Cenario,
+    y = Delta_cor_media,
+    color = Status
+  )
+) +
+  ggplot2::geom_hline(
+    yintercept = 0,
+    color = &quot;grey40&quot;,
+    linewidth = 0.6
+  ) +
+  ggplot2::geom_hline(
+    yintercept = c(-DELTA, DELTA),
+    color = &quot;grey45&quot;,
+    linetype = &quot;dashed&quot;,
+    linewidth = 0.7
+  ) +
+  ggplot2::geom_errorbar(
+    ggplot2::aes(
+      ymin = IC90_inf,
+      ymax = IC90_sup
+    ),
+    width = 0.12,
+    linewidth = 0.8
+  ) +
+  ggplot2::geom_point(
+    size = 3.5
+  ) +
+  ggthemes::scale_color_gdocs() +
+  ggplot2::labs(
+    title = &quot;Equivalência preditiva em relação a T100&quot;,
+    x = &quot;Conjunto real de treinamento&quot;,
+    y = expression(Delta * &quot; correlação em relação a T100&quot;),
+    color = &quot;Resultado&quot;
+  ) +
+  ggthemes::theme_gdocs() +
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(
+      face = &quot;bold&quot;,
+      hjust = 0.5
+    ),
+    legend.position = &quot;top&quot;
+  )
+
+figura_equivalencia</code></pre>
+<div class="figure" style="text-align: center">
+<img src="figure/05_equivalence.Rmd/figura-equivalencia-1.png" alt="Diferença de correlação em relação a T100 e intervalos de confiança de 90% corrigidos por Nadeau-Bengio." width="100%" />
+<p class="caption">
+Diferença de correlação em relação a T100 e intervalos de confiança de
+90% corrigidos por Nadeau-Bengio.
+</p>
+</div>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-figura-equivalencia-1">
+Past versions of figura-equivalencia-1.png
+</button>
+</p>
+<div id="fig-figura-equivalencia-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/blob/d648821de44e35cc5c1497746f8e8694daaaf9d7/docs/figure/05_equivalence.Rmd/figura-equivalencia-1.png" target="_blank">d648821</a>
+</td>
+<td>
+WevertonGomesCosta
+</td>
+<td>
+2026-08-12
+</td>
+</tr>
+<tr>
+<td>
+<a href="https://github.com/WevertonGomesCosta/genomic-prediction-data-augmentation/blob/db45d13e26a47d0fb6981c58229aad355d09def9/docs/figure/05_equivalence.Rmd/figura-equivalencia-1.png" target="_blank">db45d13</a>
+</td>
+<td>
+WevertonGomesCosta
+</td>
+<td>
+2026-08-11
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<pre class="r"><code>ggplot2::ggsave(
+  filename = &quot;output/figures/05_equivalencia_vs_T100.png&quot;,
+  plot = figura_equivalencia,
+  width = 8,
+  height = 5.5,
+  dpi = 300
+)</code></pre>
+<p>Visualmente, T25 e T50 permanecem fora da região de equivalência,
+enquanto o intervalo de T75 está inteiramente entre <code>-0.05</code> e
+<code>+0.05</code>.</p>
+</div>
+<div id="análise-de-sensibilidade-usando-o-tamanho-real-de-treinamento"
+class="section level2">
+<h2>7. Análise de sensibilidade usando o tamanho real de
+treinamento</h2>
+<p>Na análise principal usamos <code>n_train = 1103</code>,
+correspondente ao pool de treinamento. Como verificação de
+sensibilidade, repetimos a correção usando o tamanho efetivo de cada
+estratégia: 275, 551 ou 827.</p>
+<pre class="r"><code>sensibilidade &lt;- data.frame()
+
+for (proporcao in PROPORCOES_REDUZIDAS) {
+  d &lt;- diferencas$delta_cor[
+    diferencas$proporcao_pool == proporcao
+  ]
+
+  n_train_efetivo &lt;- unique(
+    diferencas$n_treino[
+      diferencas$proporcao_pool == proporcao
+    ]
+  )
+
+  stopifnot(length(n_train_efetivo) == 1L)
+
+  media_d &lt;- mean(d)
+  sd_d &lt;- sd(d)
+
+  fator_NB &lt;-
+    1 / N_REP +
+    N_TEST / n_train_efetivo
+
+  se_NB &lt;- sqrt(
+    fator_NB * sd_d^2
+  )
+
+  gl &lt;- length(d) - 1
+
+  p_inferior &lt;- 1 - pt(
+    (media_d + DELTA) / se_NB,
+    df = gl
+  )
+
+  p_superior &lt;- pt(
+    (media_d - DELTA) / se_NB,
+    df = gl
+  )
+
+  t_critico &lt;- qt(
+    1 - ALPHA,
+    df = gl
+  )
+
+  ic90_inf &lt;- media_d - t_critico * se_NB
+  ic90_sup &lt;- media_d + t_critico * se_NB
+
+  equivalente &lt;-
+    p_inferior &lt; ALPHA &amp;&amp;
+    p_superior &lt; ALPHA &amp;&amp;
+    ic90_inf &gt; -DELTA &amp;&amp;
+    ic90_sup &lt; DELTA
+
+  sensibilidade &lt;- rbind(
+    sensibilidade,
+    data.frame(
+      Proporcao = proporcao,
+      N_train_correcao = n_train_efetivo,
+      Delta_cor_media = media_d,
+      IC90_inf = ic90_inf,
+      IC90_sup = ic90_sup,
+      p_TOST = max(p_inferior, p_superior),
+      Equivalente = equivalente
+    )
+  )
+}
+
+sensibilidade_exibicao &lt;- sensibilidade
+names(sensibilidade_exibicao) &lt;- c(
+  &quot;Proporção do pool&quot;,
+  &quot;N usado na correção&quot;,
+  &quot;Diferença média de correlação&quot;,
+  &quot;IC90% inferior&quot;,
+  &quot;IC90% superior&quot;,
+  &quot;p-valor TOST&quot;,
+  &quot;Equivalente&quot;
+)
+
+knitr::kable(
+  sensibilidade_exibicao,
+  digits = 4,
+  caption = &quot;Sensibilidade da correção ao tamanho efetivo de treinamento&quot;
+)</code></pre>
+<table>
+<caption>Sensibilidade da correção ao tamanho efetivo de
+treinamento</caption>
+<colgroup>
+<col width="14%" />
+<col width="16%" />
+<col width="24%" />
+<col width="12%" />
+<col width="12%" />
+<col width="10%" />
+<col width="9%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="right">Proporção do pool</th>
+<th align="right">N usado na correção</th>
+<th align="right">Diferença média de correlação</th>
+<th align="right">IC90% inferior</th>
+<th align="right">IC90% superior</th>
+<th align="right">p-valor TOST</th>
+<th align="left">Equivalente</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">0.25</td>
+<td align="right">275</td>
+<td align="right">-0.1330</td>
+<td align="right">-0.2062</td>
+<td align="right">-0.0598</td>
+<td align="right">0.9680</td>
+<td align="left">FALSE</td>
+</tr>
+<tr class="even">
+<td align="right">0.50</td>
+<td align="right">551</td>
+<td align="right">-0.0542</td>
+<td align="right">-0.0851</td>
+<td align="right">-0.0234</td>
+<td align="right">0.5918</td>
+<td align="left">FALSE</td>
+</tr>
+<tr class="odd">
+<td align="right">0.75</td>
+<td align="right">827</td>
+<td align="right">-0.0185</td>
+<td align="right">-0.0302</td>
+<td align="right">-0.0068</td>
+<td align="right">0.0000</td>
+<td align="left">TRUE</td>
+</tr>
+</tbody>
+</table>
+<p>A conclusão não muda: T75 permanece equivalente e T25/T50 não são
+equivalentes.</p>
+</div>
+<div id="conclusão-desta-etapa" class="section level2">
+<h2>8. Conclusão desta etapa</h2>
+<p>Sem aumento de dados, o menor conjunto real equivalente a T100 é:</p>
+<p><span class="math display">\[
+\boxed{T75 = 827\text{ indivíduos reais}}.
+\]</span></p>
+<p>Esse valor será a referência da próxima etapa. O aumento de dados só
+terá benefício prático se permitir que T50 ou T25 também se tornem
+equivalentes a T100.</p>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 4.5.1 (2025-06-13 ucrt)
+Platform: x86_64-w64-mingw32/x64
+Running under: Windows 11 x64 (build 26200)
+
+Matrix products: default
+  LAPACK version 3.12.1
+
+locale:
+[1] LC_COLLATE=Portuguese_Brazil.utf8  LC_CTYPE=Portuguese_Brazil.utf8   
+[3] LC_MONETARY=Portuguese_Brazil.utf8 LC_NUMERIC=C                      
+[5] LC_TIME=Portuguese_Brazil.utf8    
+
+time zone: America/Sao_Paulo
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices datasets  utils     methods   base     
+
+loaded via a namespace (and not attached):
+ [1] gtable_0.3.6       jsonlite_2.0.0     compiler_4.5.1     renv_1.1.8        
+ [5] promises_1.5.0     Rcpp_1.1.2         stringr_1.6.0      git2r_0.36.2      
+ [9] later_1.4.4        jquerylib_0.1.4    scales_1.4.0       yaml_2.3.12       
+[13] fastmap_1.2.0      ggplot2_4.0.0      R6_2.6.1           labeling_0.4.3    
+[17] workflowr_1.7.2    knitr_1.50         tibble_3.3.1       rprojroot_2.1.1   
+[21] bslib_0.9.0        pillar_1.11.1      RColorBrewer_1.1-3 ggthemes_5.2.0    
+[25] rlang_1.1.7        cachem_1.1.0       stringi_1.8.7      httpuv_1.6.16     
+[29] xfun_0.54          S7_0.2.1           fs_1.6.6           sass_0.4.10       
+[33] otel_0.2.0         cli_3.6.5          withr_3.0.2        magrittr_2.0.4    
+[37] digest_0.6.39      grid_4.5.1         rstudioapi_0.17.1  lifecycle_1.0.5   
+[41] vctrs_0.7.1        evaluate_1.0.5     glue_1.8.0         whisker_0.4.1     
+[45] farver_2.1.2       purrr_1.2.1        rmarkdown_2.30     tools_4.5.1       
+[49] pkgconfig_2.0.3    htmltools_0.5.9   </code></pre>
+</div>
+</div>
+
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIjUuIEVxdWl2YWzDqm5jaWEgY29tIFQxMDAiDQphdXRob3I6ICJXZXZlcnRvbiBHb21lcyBkYSBDb3N0YSINCmRhdGU6ICJgciBTeXMuRGF0ZSgpYCINCnNpdGU6IHdvcmtmbG93cjo6d2Zsb3dfc2l0ZQ0Kb3V0cHV0Og0KICB3b3JrZmxvd3I6OndmbG93X2h0bWw6DQogICAgdG9jOiB0cnVlDQogICAgdG9jX2RlcHRoOiAzDQogICAgdG9jX2Zsb2F0OiB0cnVlDQogICAgY29kZV9kb3dubG9hZDogdHJ1ZQ0KICAgIGNvZGVfZm9sZGluZzogc2hvdw0KZWRpdG9yX29wdGlvbnM6DQogIGNodW5rX291dHB1dF90eXBlOiBjb25zb2xlDQotLS0NCg0KYGBge3Igc2V0dXAsIGluY2x1ZGU9RkFMU0V9DQprbml0cjo6b3B0c19jaHVuayRzZXQoDQogIGVjaG8gPSBUUlVFLA0KICB3YXJuaW5nID0gRkFMU0UsDQogIG1lc3NhZ2UgPSBGQUxTRSwNCiAgY2FjaGUgPSBGQUxTRSwNCiAgZmlnLmFsaWduID0gImNlbnRlciIsDQogIG91dC53aWR0aCA9ICIxMDAlIg0KKQ0KZGlyLmNyZWF0ZSgib3V0cHV0L2ZpZ3VyZXMiLCBzaG93V2FybmluZ3MgPSBGQUxTRSwgcmVjdXJzaXZlID0gVFJVRSkNCmBgYA0KDQojIyAxLiBPYmpldGl2bw0KDQpBIGN1cnZhIGRlIGFwcmVuZGl6YWRvIG1vc3Ryb3UgcXVlIFQ3NSBhcHJlc2VudGEgZGVzZW1wZW5obyBwcsOzeGltbyBkZSBUMTAwLg0KQWdvcmEgcHJlY2lzYW1vcyByZXNwb25kZXIgdW1hIHBlcmd1bnRhIG1haXMgZXNwZWPDrWZpY2E6DQoNCj4gQSBkaWZlcmVuw6dhIMOpIHBlcXVlbmEgbyBzdWZpY2llbnRlIHBhcmEgY29uc2lkZXJhciB1bWEgYW1vc3RyYSByZWR1emlkYQ0KPiBwcmF0aWNhbWVudGUgZXF1aXZhbGVudGUgYSBUMTAwPw0KDQpOw6NvIHByb2N1cmFtb3MgcHJvdmFyIHF1ZSBhcyBjb3JyZWxhw6fDtWVzIHPDo28gZXhhdGFtZW50ZSBpZ3VhaXMuIERlZmluaW1vcyB1bWENCm1hcmdlbSBkZSBkaWZlcmVuw6dhIGNvbnNpZGVyYWRhIHBlcXVlbmEgcGFyYSBlc3RlIGVzdHVkbzoNCg0KXFsNClxkZWx0YSA9IDAuMDUuDQpcXQ0KDQpOZXN0ZSB0dXRvcmlhbCwgYGRlbHRhID0gMC4wNWAgcmVwcmVzZW50YSBhIG1lbm9yIGRpZmVyZW7Dp2EgZGUgaW50ZXJlc3NlDQpjaWVudMOtZmljbywgY29uaGVjaWRhIHBlbGEgc2lnbGEgU0VTT0kgKCpTbWFsbGVzdCBFZmZlY3QgU2l6ZSBvZiBJbnRlcmVzdCopLg0KRXNzYSBtYXJnZW0gZm9pIGRlZmluaWRhIGVzcGVjaWZpY2FtZW50ZSBwYXJhIGVzdGUgZXN0dWRvIGUgbsOjbyBkZXZlIHNlcg0KaW50ZXJwcmV0YWRhIGNvbW8gdW0gbGltaWFyIHVuaXZlcnNhbCBwYXJhIGVzdHVkb3MgZGUgcHJlZGnDp8OjbyBnZW7DtG1pY2EuDQoNClVtYSBlc3RyYXTDqWdpYSBzZXLDoSBjb25zaWRlcmFkYSBlcXVpdmFsZW50ZSBxdWFuZG8gbyBpbnRlcnZhbG8gZGUgY29uZmlhbsOnYSBkbw0KZWZlaXRvIGVzdGl2ZXIgdG90YWxtZW50ZSBkZW50cm8gZGU6DQoNClxbDQpbLTAuMDUsXCwrMC4wNV0uDQpcXQ0KDQojIyAyLiBSZXN1bHRhZG9zIGRlIHJlZmVyw6puY2lhIGNvbSBkYWRvcyByZWFpcw0KDQpFc3RhIGV0YXBhIHV0aWxpemEgYXBlbmFzIG9zIDEyMCByZXN1bHRhZG9zIGNvbSBpbmRpdsOtZHVvcyByZWFpcyBqw6EgcHJvZHV6aWRvcw0KbmEgRXRhcGEgNC4gTmVuaHVtIEdCTFVQIMOpIHJlYWp1c3RhZG8uDQoNCmBgYHtyIGNhcnJlZ2FyLWJhc2VsaW5lfQ0KQkFTRUxJTkVfRklMRSA8LSAib3V0cHV0LzA0X2Jhc2VsaW5lX3Jlc3VsdHMuY3N2Ig0KDQppZiAoIWZpbGUuZXhpc3RzKEJBU0VMSU5FX0ZJTEUpKSB7DQogIHN0b3AoIkFycXVpdm8gYXVzZW50ZTogb3V0cHV0LzA0X2Jhc2VsaW5lX3Jlc3VsdHMuY3N2IikNCn0NCg0KYmFzZWxpbmUgPC0gcmVhZC5jc3YoQkFTRUxJTkVfRklMRSkNCg0KUFJPUE9SQ09FUyA8LSBzb3J0KHVuaXF1ZShiYXNlbGluZSRwcm9wb3JjYW9fcG9vbCkpDQpQUk9QX1QxMDAgPC0gbWF4KFBST1BPUkNPRVMpDQpQUk9QT1JDT0VTX1JFRFVaSURBUyA8LSBQUk9QT1JDT0VTW1BST1BPUkNPRVMgPCBQUk9QX1QxMDBdDQoNCk5fUkVQIDwtIGxlbmd0aCh1bmlxdWUoYmFzZWxpbmUkcmVwZXRpY2FvKSkNCk5fVEFNQU5IT1MgPC0gbGVuZ3RoKFBST1BPUkNPRVMpDQpOX0NFTkFSSU9TIDwtIE5fUkVQICogTl9UQU1BTkhPUw0KDQpOX1RFU1QgPC0gdW5pcXVlKGJhc2VsaW5lJG5fdmFsaWRhY2FvKQ0KTl9UUkFJTl9QT09MIDwtIHVuaXF1ZSgNCiAgYmFzZWxpbmUkbl90cmVpbm9bDQogICAgYmFzZWxpbmUkcHJvcG9yY2FvX3Bvb2wgPT0gUFJPUF9UMTAwDQogIF0NCikNCg0KTEFCRUxTX1JFRFVaSURPUyA8LSBwYXN0ZTAoDQogICJUIiwNCiAgUFJPUE9SQ09FU19SRURVWklEQVMgKiAxMDANCikNCg0Kc3RvcGlmbm90KGxlbmd0aChOX1RFU1QpID09IDFMKQ0Kc3RvcGlmbm90KGxlbmd0aChOX1RSQUlOX1BPT0wpID09IDFMKQ0Kc3RvcGlmbm90KG5yb3coYmFzZWxpbmUpID09IE5fQ0VOQVJJT1MpDQpgYGANCg0KIyMgMy4gRGlmZXJlbsOnYXMgcGFyZWFkYXMgY29udHJhIFQxMDANCg0KQ2FkYSBjZW7DoXJpbyByZWR1emlkbyDDqSBjb21wYXJhZG8gY29tIFQxMDAgKipuYSBtZXNtYSByZXBldGnDp8OjbyoqLiBJc3NvIMOpDQpwb3Nzw612ZWwgcG9ycXVlIGFtYm9zIGZvcmFtIGF2YWxpYWRvcyBleGF0YW1lbnRlIG5vcyBtZXNtb3MgMjc2IGluZGl2w61kdW9zIGRlDQp2YWxpZGHDp8Ojby4NCg0KYGBge3IgZGlmZXJlbmNhcy1wYXJlYWRhc30NCnQxMDAgPC0gYmFzZWxpbmVbDQogIGJhc2VsaW5lJHByb3BvcmNhb19wb29sID09IFBST1BfVDEwMCwNCiAgYygicmVwZXRpY2FvIiwgImNvcnJlbGFjYW8iKQ0KXQ0KDQpuYW1lcyh0MTAwKVsyXSA8LSAiY29ycmVsYWNhb19UMTAwIg0KDQpyZWR1emlkb3MgPC0gYmFzZWxpbmVbDQogIGJhc2VsaW5lJHByb3BvcmNhb19wb29sIDwgUFJPUF9UMTAwLA0KICBjKA0KICAgICJyZXBldGljYW8iLA0KICAgICJwcm9wb3JjYW9fcG9vbCIsDQogICAgIm5fdHJlaW5vIiwNCiAgICAiY29ycmVsYWNhbyINCiAgKQ0KXQ0KDQpkaWZlcmVuY2FzIDwtIG1lcmdlKA0KICByZWR1emlkb3MsDQogIHQxMDAsDQogIGJ5ID0gInJlcGV0aWNhbyINCikNCg0KZGlmZXJlbmNhcyRkZWx0YV9jb3IgPC0NCiAgZGlmZXJlbmNhcyRjb3JyZWxhY2FvIC0NCiAgZGlmZXJlbmNhcyRjb3JyZWxhY2FvX1QxMDANCg0KcmVzdW1vX2RpZmVyZW5jYXMgPC0gYWdncmVnYXRlKA0KICBkZWx0YV9jb3IgfiBwcm9wb3JjYW9fcG9vbCwNCiAgZGF0YSA9IGRpZmVyZW5jYXMsDQogIEZVTiA9IG1lYW4NCikNCg0KbmFtZXMocmVzdW1vX2RpZmVyZW5jYXMpIDwtIGMoDQogICJQcm9wb3LDp8OjbyBkbyBwb29sIiwNCiAgIkRpZmVyZW7Dp2EgbcOpZGlhIGRlIGNvcnJlbGHDp8OjbyINCikNCg0Ka25pdHI6OmthYmxlKA0KICByZXN1bW9fZGlmZXJlbmNhcywNCiAgZGlnaXRzID0gNCwNCiAgY2FwdGlvbiA9ICJEaWZlcmVuw6dhIG3DqWRpYSBkZSBjb3JyZWxhw6fDo28gZW0gcmVsYcOnw6NvIGEgVDEwMCINCikNCmBgYA0KDQpWYWxvcmVzIG5lZ2F0aXZvcyBpbmRpY2FtIHF1ZSBhIGFtb3N0cmEgcmVkdXppZGEgdGV2ZSBjb3JyZWxhw6fDo28gbWVub3IgcXVlDQpUMTAwLg0KDQojIyA0LiBQb3IgcXVlIGNvcnJpZ2lyIG8gZXJyby1wYWRyw6NvPw0KDQpBcyAzMCByZXBldGnDp8O1ZXMgbsOjbyBzw6NvIDMwIGV4cGVyaW1lbnRvcyBjb21wbGV0YW1lbnRlIGluZGVwZW5kZW50ZXMuIE9zDQpjb25qdW50b3MgZGUgdmFsaWRhw6fDo28gc8OjbyBzb3J0ZWFkb3MgZGEgbWVzbWEgcG9wdWxhw6fDo28gZSB1bSBtZXNtbyBpbmRpdsOtZHVvDQpwb2RlIGFwYXJlY2VyIGVtIHbDoXJpYXMgcmVwZXRpw6fDtWVzLg0KDQpQb3IgaXNzbyB1c2Ftb3MgYSBhcHJveGltYcOnw6NvIGRlIE5hZGVhdS1CZW5naW8gcGFyYSBhdW1lbnRhciBvIGVycm8tcGFkcsOjbyBlbQ0KcmVsYcOnw6NvIGFvIHRlc3RlIHBhcmVhZG8gaW5nw6pudW8uIE8gcHJvY2VkaW1lbnRvIG9yaWdpbmFsIGZvaSBwcm9wb3N0byBwYXJhDQpjb21wYXJhw6fDtWVzIHNvYiByZWFtb3N0cmFnZW0gcmVwZXRpZGE7IGFxdWkgdXRpbGl6YW1vcyBlc3NlIGVycm8tcGFkcsOjbyBjb3JyaWdpZG8NCmRlbnRybyBkbyBUT1NUIGNvbW8gdW1hIGFkYXB0YcOnw6NvIHBhcmEgYSBhbsOhbGlzZSBkZSBlcXVpdmFsw6puY2lhOg0KDQpcWw0KU0Vfe05CfT0NClxzcXJ0ew0KXGxlZnQoDQpcZnJhY3sxfXtSfSsNClxmcmFje25fe3Rlc3R9fXtuX3t0cmFpbn19DQpccmlnaHQpc19kXjINCn0uDQpcXQ0KDQpBcXVpOg0KDQotIGBSID0gMzBgIHJlcGV0acOnw7VlczsNCi0gYG5fdGVzdCA9IDI3NmAgaW5kaXbDrWR1b3MgZGUgdmFsaWRhw6fDo287DQotIGBuX3RyYWluID0gMTEwM2AgcGFyYSBhIGFuw6FsaXNlIHByaW3DoXJpYTsNCi0gYHNfZGAgw6kgbyBkZXN2aW8tcGFkcsOjbyBkYXMgZGlmZXJlbsOnYXMgcGFyZWFkYXMuDQoNCiMjIDUuIFRPU1QgY29tIGNvcnJlw6fDo28gZGUgTmFkZWF1LUJlbmdpbw0KDQpPIFRPU1QgKCpUd28gT25lLVNpZGVkIFRlc3RzKikgw6kgdW0gcHJvY2VkaW1lbnRvIGRlIGVxdWl2YWzDqm5jaWEgYmFzZWFkbyBlbQ0KZG9pcyB0ZXN0ZXMgdW5pbGF0ZXJhaXMuIFBhcmEgZGVjbGFyYXIgZXF1aXZhbMOqbmNpYSwgcHJlY2lzYW1vcyByZWplaXRhcg0Kc2ltdWx0YW5lYW1lbnRlIHF1ZSBhIGRpZmVyZW7Dp2Egc2VqYSBtZW5vciBvdSBpZ3VhbCBhIGAtMC4wNWAgZSBxdWUgc2VqYSBtYWlvcg0Kb3UgaWd1YWwgYSBgKzAuMDVgLg0KDQpPIGPDs2RpZ28gYWJhaXhvIGFwcmVzZW50YSBkaXJldGFtZW50ZSBvIGPDoWxjdWxvIHV0aWxpemFkby4NCg0KYGBge3IgdG9zdC1wcmluY2lwYWx9DQpERUxUQSA8LSAwLjA1DQpBTFBIQSA8LSAwLjA1DQoNCnJlc3VsdGFkb19lcXVpdmFsZW5jaWEgPC0gZGF0YS5mcmFtZSgpDQoNCmZvciAocHJvcG9yY2FvIGluIFBST1BPUkNPRVNfUkVEVVpJREFTKSB7DQogIGQgPC0gZGlmZXJlbmNhcyRkZWx0YV9jb3JbDQogICAgZGlmZXJlbmNhcyRwcm9wb3JjYW9fcG9vbCA9PSBwcm9wb3JjYW8NCiAgXQ0KDQogIG1lZGlhX2QgPC0gbWVhbihkKQ0KICBzZF9kIDwtIHNkKGQpDQoNCiAgZmF0b3JfTkIgPC0NCiAgICAxIC8gTl9SRVAgKw0KICAgIE5fVEVTVCAvIE5fVFJBSU5fUE9PTA0KDQogIHNlX05CIDwtIHNxcnQoDQogICAgZmF0b3JfTkIgKiBzZF9kXjINCiAgKQ0KDQogIGdsIDwtIGxlbmd0aChkKSAtIDENCg0KICBwX2luZmVyaW9yIDwtIDEgLSBwdCgNCiAgICAobWVkaWFfZCArIERFTFRBKSAvIHNlX05CLA0KICAgIGRmID0gZ2wNCiAgKQ0KDQogIHBfc3VwZXJpb3IgPC0gcHQoDQogICAgKG1lZGlhX2QgLSBERUxUQSkgLyBzZV9OQiwNCiAgICBkZiA9IGdsDQogICkNCg0KICB0X2NyaXRpY28gPC0gcXQoDQogICAgMSAtIEFMUEhBLA0KICAgIGRmID0gZ2wNCiAgKQ0KDQogIGljOTBfaW5mIDwtIG1lZGlhX2QgLSB0X2NyaXRpY28gKiBzZV9OQg0KICBpYzkwX3N1cCA8LSBtZWRpYV9kICsgdF9jcml0aWNvICogc2VfTkINCg0KICBwX1RPU1QgPC0gbWF4KA0KICAgIHBfaW5mZXJpb3IsDQogICAgcF9zdXBlcmlvcg0KICApDQoNCiAgZXF1aXZhbGVudGUgPC0NCiAgICBwX2luZmVyaW9yIDwgQUxQSEEgJiYNCiAgICBwX3N1cGVyaW9yIDwgQUxQSEEgJiYNCiAgICBpYzkwX2luZiA+IC1ERUxUQSAmJg0KICAgIGljOTBfc3VwIDwgREVMVEENCg0KICByZXN1bHRhZG9fZXF1aXZhbGVuY2lhIDwtIHJiaW5kKA0KICAgIHJlc3VsdGFkb19lcXVpdmFsZW5jaWEsDQogICAgZGF0YS5mcmFtZSgNCiAgICAgIFByb3BvcmNhbyA9IHByb3BvcmNhbywNCiAgICAgIE5fcmVhbCA9IHVuaXF1ZSgNCiAgICAgICAgZGlmZXJlbmNhcyRuX3RyZWlub1sNCiAgICAgICAgICBkaWZlcmVuY2FzJHByb3BvcmNhb19wb29sID09IHByb3BvcmNhbw0KICAgICAgICBdDQogICAgICApLA0KICAgICAgRGVsdGFfY29yX21lZGlhID0gbWVkaWFfZCwNCiAgICAgIFNFX05CID0gc2VfTkIsDQogICAgICBJQzkwX2luZiA9IGljOTBfaW5mLA0KICAgICAgSUM5MF9zdXAgPSBpYzkwX3N1cCwNCiAgICAgIHBfVE9TVCA9IHBfVE9TVCwNCiAgICAgIEVxdWl2YWxlbnRlID0gZXF1aXZhbGVudGUNCiAgICApDQogICkNCn0NCg0KcmVzdWx0YWRvX2VxdWl2YWxlbmNpYV9leGliaWNhbyA8LSByZXN1bHRhZG9fZXF1aXZhbGVuY2lhDQpuYW1lcyhyZXN1bHRhZG9fZXF1aXZhbGVuY2lhX2V4aWJpY2FvKSA8LSBjKA0KICAiUHJvcG9yw6fDo28gZG8gcG9vbCIsDQogICJJbmRpdsOtZHVvcyByZWFpcyIsDQogICJEaWZlcmVuw6dhIG3DqWRpYSBkZSBjb3JyZWxhw6fDo28iLA0KICAiRXJyby1wYWRyw6NvIGNvcnJpZ2lkbyIsDQogICJJQzkwJSBpbmZlcmlvciIsDQogICJJQzkwJSBzdXBlcmlvciIsDQogICJwLXZhbG9yIFRPU1QiLA0KICAiRXF1aXZhbGVudGUiDQopDQoNCmtuaXRyOjprYWJsZSgNCiAgcmVzdWx0YWRvX2VxdWl2YWxlbmNpYV9leGliaWNhbywNCiAgZGlnaXRzID0gNCwNCiAgY2FwdGlvbiA9ICJFcXVpdmFsw6puY2lhIGRhcyBhbW9zdHJhcyByZWFpcyByZWR1emlkYXMgY29tIFQxMDAiDQopDQpgYGANCg0KTyByZXN1bHRhZG8gaWRlbnRpZmljYSBUNzUgY29tbyBhIG1lbm9yIGFtb3N0cmEgcmVhbCBjdWpvIGludGVydmFsbyBkZSA5MCUNCnBlcm1hbmVjZSBjb21wbGV0YW1lbnRlIGRlbnRybyBkYSBtYXJnZW0gZGUgZXF1aXZhbMOqbmNpYS4NCg0KIyMgNi4gVmlzdWFsaXphw6fDo28gZGEgZXF1aXZhbMOqbmNpYQ0KDQpBIGZpZ3VyYSBtb3N0cmEgYSBtZXNtYSBhbsOhbGlzZSBkYSB0YWJlbGEgYW50ZXJpb3IuIE8gcG9udG8gcmVwcmVzZW50YSBhDQpkaWZlcmVuw6dhIG3DqWRpYSBkZSBjb3JyZWxhw6fDo28gZW0gcmVsYcOnw6NvIGEgVDEwMCBlIGEgYmFycmEgdmVydGljYWwgcmVwcmVzZW50YSBvDQppbnRlcnZhbG8gZGUgY29uZmlhbsOnYSBkZSA5MCUgY29ycmlnaWRvIHBvciBOYWRlYXUtQmVuZ2lvLg0KDQpBcyBsaW5oYXMgdHJhY2VqYWRhcyBlbSBgLTAuMDVgIGUgYCswLjA1YCBkZWxpbWl0YW0gYSByZWdpw6NvIGRlIGVxdWl2YWzDqm5jaWEuIFVtDQpjZW7DoXJpbyBzw7Mgw6kgZXF1aXZhbGVudGUgcXVhbmRvIHRvZG8gbyBzZXUgaW50ZXJ2YWxvIHBlcm1hbmVjZSBkZW50cm8gZGVzc2ENCnJlZ2nDo28uDQoNCmBgYHtyIGZpZ3VyYS1lcXVpdmFsZW5jaWEsIGZpZy5oZWlnaHQ9NS41LCBmaWcud2lkdGg9OCwgZmlnLmNhcD0iRGlmZXJlbsOnYSBkZSBjb3JyZWxhw6fDo28gZW0gcmVsYcOnw6NvIGEgVDEwMCBlIGludGVydmFsb3MgZGUgY29uZmlhbsOnYSBkZSA5MCUgY29ycmlnaWRvcyBwb3IgTmFkZWF1LUJlbmdpby4ifQ0KaWYgKCFyZXF1aXJlTmFtZXNwYWNlKCJnZ3Bsb3QyIiwgcXVpZXRseSA9IFRSVUUpKSB7DQogIHN0b3AoIkluc3RhbGUgbyBwYWNvdGUgZ2dwbG90MiBwYXJhIGdlcmFyIGFzIGZpZ3VyYXMgZG8gdHV0b3JpYWwuIikNCn0NCg0KaWYgKCFyZXF1aXJlTmFtZXNwYWNlKCJnZ3RoZW1lcyIsIHF1aWV0bHkgPSBUUlVFKSkgew0KICBzdG9wKCJJbnN0YWxlIG8gcGFjb3RlIGdndGhlbWVzIHBhcmEgdXNhciBvIHBhZHLDo28gZ3LDoWZpY28gR0RvY3MuIikNCn0NCg0KZGFkb3NfZXF1aXZhbGVuY2lhIDwtIHJlc3VsdGFkb19lcXVpdmFsZW5jaWENCg0KZGFkb3NfZXF1aXZhbGVuY2lhJENlbmFyaW8gPC0gZmFjdG9yKA0KICBkYWRvc19lcXVpdmFsZW5jaWEkUHJvcG9yY2FvLA0KICBsZXZlbHMgPSBQUk9QT1JDT0VTX1JFRFVaSURBUywNCiAgbGFiZWxzID0gTEFCRUxTX1JFRFVaSURPUw0KKQ0KDQpkYWRvc19lcXVpdmFsZW5jaWEkU3RhdHVzIDwtIGZhY3RvcigNCiAgaWZlbHNlKA0KICAgIGRhZG9zX2VxdWl2YWxlbmNpYSRFcXVpdmFsZW50ZSwNCiAgICAiRXF1aXZhbGVudGUiLA0KICAgICJOw6NvIGVxdWl2YWxlbnRlIg0KICApLA0KICBsZXZlbHMgPSBjKCJOw6NvIGVxdWl2YWxlbnRlIiwgIkVxdWl2YWxlbnRlIikNCikNCg0KZmlndXJhX2VxdWl2YWxlbmNpYSA8LSBnZ3Bsb3QyOjpnZ3Bsb3QoDQogIGRhZG9zX2VxdWl2YWxlbmNpYSwNCiAgZ2dwbG90Mjo6YWVzKA0KICAgIHggPSBDZW5hcmlvLA0KICAgIHkgPSBEZWx0YV9jb3JfbWVkaWEsDQogICAgY29sb3IgPSBTdGF0dXMNCiAgKQ0KKSArDQogIGdncGxvdDI6Omdlb21faGxpbmUoDQogICAgeWludGVyY2VwdCA9IDAsDQogICAgY29sb3IgPSAiZ3JleTQwIiwNCiAgICBsaW5ld2lkdGggPSAwLjYNCiAgKSArDQogIGdncGxvdDI6Omdlb21faGxpbmUoDQogICAgeWludGVyY2VwdCA9IGMoLURFTFRBLCBERUxUQSksDQogICAgY29sb3IgPSAiZ3JleTQ1IiwNCiAgICBsaW5ldHlwZSA9ICJkYXNoZWQiLA0KICAgIGxpbmV3aWR0aCA9IDAuNw0KICApICsNCiAgZ2dwbG90Mjo6Z2VvbV9lcnJvcmJhcigNCiAgICBnZ3Bsb3QyOjphZXMoDQogICAgICB5bWluID0gSUM5MF9pbmYsDQogICAgICB5bWF4ID0gSUM5MF9zdXANCiAgICApLA0KICAgIHdpZHRoID0gMC4xMiwNCiAgICBsaW5ld2lkdGggPSAwLjgNCiAgKSArDQogIGdncGxvdDI6Omdlb21fcG9pbnQoDQogICAgc2l6ZSA9IDMuNQ0KICApICsNCiAgZ2d0aGVtZXM6OnNjYWxlX2NvbG9yX2dkb2NzKCkgKw0KICBnZ3Bsb3QyOjpsYWJzKA0KICAgIHRpdGxlID0gIkVxdWl2YWzDqm5jaWEgcHJlZGl0aXZhIGVtIHJlbGHDp8OjbyBhIFQxMDAiLA0KICAgIHggPSAiQ29uanVudG8gcmVhbCBkZSB0cmVpbmFtZW50byIsDQogICAgeSA9IGV4cHJlc3Npb24oRGVsdGEgKiAiIGNvcnJlbGHDp8OjbyBlbSByZWxhw6fDo28gYSBUMTAwIiksDQogICAgY29sb3IgPSAiUmVzdWx0YWRvIg0KICApICsNCiAgZ2d0aGVtZXM6OnRoZW1lX2dkb2NzKCkgKw0KICBnZ3Bsb3QyOjp0aGVtZSgNCiAgICBwbG90LnRpdGxlID0gZ2dwbG90Mjo6ZWxlbWVudF90ZXh0KA0KICAgICAgZmFjZSA9ICJib2xkIiwNCiAgICAgIGhqdXN0ID0gMC41DQogICAgKSwNCiAgICBsZWdlbmQucG9zaXRpb24gPSAidG9wIg0KICApDQoNCmZpZ3VyYV9lcXVpdmFsZW5jaWENCg0KZ2dwbG90Mjo6Z2dzYXZlKA0KICBmaWxlbmFtZSA9ICJvdXRwdXQvZmlndXJlcy8wNV9lcXVpdmFsZW5jaWFfdnNfVDEwMC5wbmciLA0KICBwbG90ID0gZmlndXJhX2VxdWl2YWxlbmNpYSwNCiAgd2lkdGggPSA4LA0KICBoZWlnaHQgPSA1LjUsDQogIGRwaSA9IDMwMA0KKQ0KYGBgDQoNClZpc3VhbG1lbnRlLCBUMjUgZSBUNTAgcGVybWFuZWNlbSBmb3JhIGRhIHJlZ2nDo28gZGUgZXF1aXZhbMOqbmNpYSwgZW5xdWFudG8gbw0KaW50ZXJ2YWxvIGRlIFQ3NSBlc3TDoSBpbnRlaXJhbWVudGUgZW50cmUgYC0wLjA1YCBlIGArMC4wNWAuDQoNCiMjIDcuIEFuw6FsaXNlIGRlIHNlbnNpYmlsaWRhZGUgdXNhbmRvIG8gdGFtYW5obyByZWFsIGRlIHRyZWluYW1lbnRvDQoNCk5hIGFuw6FsaXNlIHByaW5jaXBhbCB1c2Ftb3MgYG5fdHJhaW4gPSAxMTAzYCwgY29ycmVzcG9uZGVudGUgYW8gcG9vbCBkZQ0KdHJlaW5hbWVudG8uIENvbW8gdmVyaWZpY2HDp8OjbyBkZSBzZW5zaWJpbGlkYWRlLCByZXBldGltb3MgYSBjb3JyZcOnw6NvIHVzYW5kbyBvDQp0YW1hbmhvIGVmZXRpdm8gZGUgY2FkYSBlc3RyYXTDqWdpYTogMjc1LCA1NTEgb3UgODI3Lg0KDQpgYGB7ciBzZW5zaWJpbGlkYWRlLW50cmFpbn0NCnNlbnNpYmlsaWRhZGUgPC0gZGF0YS5mcmFtZSgpDQoNCmZvciAocHJvcG9yY2FvIGluIFBST1BPUkNPRVNfUkVEVVpJREFTKSB7DQogIGQgPC0gZGlmZXJlbmNhcyRkZWx0YV9jb3JbDQogICAgZGlmZXJlbmNhcyRwcm9wb3JjYW9fcG9vbCA9PSBwcm9wb3JjYW8NCiAgXQ0KDQogIG5fdHJhaW5fZWZldGl2byA8LSB1bmlxdWUoDQogICAgZGlmZXJlbmNhcyRuX3RyZWlub1sNCiAgICAgIGRpZmVyZW5jYXMkcHJvcG9yY2FvX3Bvb2wgPT0gcHJvcG9yY2FvDQogICAgXQ0KICApDQoNCiAgc3RvcGlmbm90KGxlbmd0aChuX3RyYWluX2VmZXRpdm8pID09IDFMKQ0KDQogIG1lZGlhX2QgPC0gbWVhbihkKQ0KICBzZF9kIDwtIHNkKGQpDQoNCiAgZmF0b3JfTkIgPC0NCiAgICAxIC8gTl9SRVAgKw0KICAgIE5fVEVTVCAvIG5fdHJhaW5fZWZldGl2bw0KDQogIHNlX05CIDwtIHNxcnQoDQogICAgZmF0b3JfTkIgKiBzZF9kXjINCiAgKQ0KDQogIGdsIDwtIGxlbmd0aChkKSAtIDENCg0KICBwX2luZmVyaW9yIDwtIDEgLSBwdCgNCiAgICAobWVkaWFfZCArIERFTFRBKSAvIHNlX05CLA0KICAgIGRmID0gZ2wNCiAgKQ0KDQogIHBfc3VwZXJpb3IgPC0gcHQoDQogICAgKG1lZGlhX2QgLSBERUxUQSkgLyBzZV9OQiwNCiAgICBkZiA9IGdsDQogICkNCg0KICB0X2NyaXRpY28gPC0gcXQoDQogICAgMSAtIEFMUEhBLA0KICAgIGRmID0gZ2wNCiAgKQ0KDQogIGljOTBfaW5mIDwtIG1lZGlhX2QgLSB0X2NyaXRpY28gKiBzZV9OQg0KICBpYzkwX3N1cCA8LSBtZWRpYV9kICsgdF9jcml0aWNvICogc2VfTkINCg0KICBlcXVpdmFsZW50ZSA8LQ0KICAgIHBfaW5mZXJpb3IgPCBBTFBIQSAmJg0KICAgIHBfc3VwZXJpb3IgPCBBTFBIQSAmJg0KICAgIGljOTBfaW5mID4gLURFTFRBICYmDQogICAgaWM5MF9zdXAgPCBERUxUQQ0KDQogIHNlbnNpYmlsaWRhZGUgPC0gcmJpbmQoDQogICAgc2Vuc2liaWxpZGFkZSwNCiAgICBkYXRhLmZyYW1lKA0KICAgICAgUHJvcG9yY2FvID0gcHJvcG9yY2FvLA0KICAgICAgTl90cmFpbl9jb3JyZWNhbyA9IG5fdHJhaW5fZWZldGl2bywNCiAgICAgIERlbHRhX2Nvcl9tZWRpYSA9IG1lZGlhX2QsDQogICAgICBJQzkwX2luZiA9IGljOTBfaW5mLA0KICAgICAgSUM5MF9zdXAgPSBpYzkwX3N1cCwNCiAgICAgIHBfVE9TVCA9IG1heChwX2luZmVyaW9yLCBwX3N1cGVyaW9yKSwNCiAgICAgIEVxdWl2YWxlbnRlID0gZXF1aXZhbGVudGUNCiAgICApDQogICkNCn0NCg0Kc2Vuc2liaWxpZGFkZV9leGliaWNhbyA8LSBzZW5zaWJpbGlkYWRlDQpuYW1lcyhzZW5zaWJpbGlkYWRlX2V4aWJpY2FvKSA8LSBjKA0KICAiUHJvcG9yw6fDo28gZG8gcG9vbCIsDQogICJOIHVzYWRvIG5hIGNvcnJlw6fDo28iLA0KICAiRGlmZXJlbsOnYSBtw6lkaWEgZGUgY29ycmVsYcOnw6NvIiwNCiAgIklDOTAlIGluZmVyaW9yIiwNCiAgIklDOTAlIHN1cGVyaW9yIiwNCiAgInAtdmFsb3IgVE9TVCIsDQogICJFcXVpdmFsZW50ZSINCikNCg0Ka25pdHI6OmthYmxlKA0KICBzZW5zaWJpbGlkYWRlX2V4aWJpY2FvLA0KICBkaWdpdHMgPSA0LA0KICBjYXB0aW9uID0gIlNlbnNpYmlsaWRhZGUgZGEgY29ycmXDp8OjbyBhbyB0YW1hbmhvIGVmZXRpdm8gZGUgdHJlaW5hbWVudG8iDQopDQpgYGANCg0KQSBjb25jbHVzw6NvIG7Do28gbXVkYTogVDc1IHBlcm1hbmVjZSBlcXVpdmFsZW50ZSBlIFQyNS9UNTAgbsOjbyBzw6NvIGVxdWl2YWxlbnRlcy4NCg0KIyMgOC4gQ29uY2x1c8OjbyBkZXN0YSBldGFwYQ0KDQpTZW0gYXVtZW50byBkZSBkYWRvcywgbyBtZW5vciBjb25qdW50byByZWFsIGVxdWl2YWxlbnRlIGEgVDEwMCDDqToNCg0KXFsNClxib3hlZHtUNzUgPSA4MjdcdGV4dHsgaW5kaXbDrWR1b3MgcmVhaXN9fS4NClxdDQoNCkVzc2UgdmFsb3Igc2Vyw6EgYSByZWZlcsOqbmNpYSBkYSBwcsOzeGltYSBldGFwYS4gTyBhdW1lbnRvIGRlIGRhZG9zIHPDsyB0ZXLDoQ0KYmVuZWbDrWNpbyBwcsOhdGljbyBzZSBwZXJtaXRpciBxdWUgVDUwIG91IFQyNSB0YW1iw6ltIHNlIHRvcm5lbSBlcXVpdmFsZW50ZXMgYQ0KVDEwMC4NCg==</div>
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+https://docs.mathjax.org/en/latest/web/configuration.html. This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeSourceEmbed("05_equivalence.Rmd");
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -134,18 +134,69 @@ possível identificar em um único ponto os tamanhos de treinamento, o número d
 repetições, os parâmetros do BGLR e as regras usadas para gerar `lambda`.
 
 ```{r parametros-da}
-# Tamanho de referência e tamanhos reais avaliados.
-N_T100 <- 1103
-PROPORCOES <- c(0.25, 0.50, 0.75)
-N_REP <- 30
+# Arquivos com os resultados primários usados nas comparações.
+DA_RESULTS_FILE <- "output/06_da_results.csv"
+REAL_RESULTS_FILE <- "output/04_baseline_results.csv"
+
+# Estrutura experimental derivada do baseline já validado.
+baseline_ref <- read.csv(REAL_RESULTS_FILE)
+
+PROPORCOES_TODAS <- sort(unique(baseline_ref$proporcao_pool))
+PROP_T100 <- max(PROPORCOES_TODAS)
+PROPORCOES <- PROPORCOES_TODAS[PROPORCOES_TODAS < PROP_T100]
+
+N_REP <- length(unique(baseline_ref$repeticao))
+N_VALIDACAO <- unique(baseline_ref$n_validacao)
+N_T100 <- unique(
+  baseline_ref$n_treino[
+    baseline_ref$proporcao_pool == PROP_T100
+  ]
+)
+
+stopifnot(length(N_VALIDACAO) == 1L)
+stopifnot(length(N_T100) == 1L)
+
+N_CENARIOS_BASELINE <- N_REP * length(PROPORCOES_TODAS)
+
+N_REAIS_POR_PROP <- vapply(
+  PROPORCOES,
+  function(proporcao) {
+    valores <- unique(
+      baseline_ref$n_treino[
+        baseline_ref$proporcao_pool == proporcao
+      ]
+    )
+    stopifnot(length(valores) == 1L)
+    valores
+  },
+  numeric(1)
+)
+
+N_SYN_POR_PROP <- N_T100 - N_REAIS_POR_PROP
+
+LABELS_CENARIOS_DA <- paste0(
+  "T",
+  PROPORCOES * 100,
+  " — ",
+  N_REAIS_POR_PROP,
+  " reais + ",
+  N_SYN_POR_PROP,
+  " sintéticos"
+)
+
+BREAKS_PROP <- PROPORCOES_TODAS * 100
+LABELS_PROP <- paste0(BREAKS_PROP, "%")
 
 # Parâmetros do BGLR, iguais aos utilizados com os dados reais.
 N_ITER <- 10000
 BURN_IN <- 5000
 
-# Arquivos com os resultados primários usados nas comparações.
-DA_RESULTS_FILE <- "output/06_da_results.csv"
-REAL_RESULTS_FILE <- "output/04_baseline_results.csv"
+# Parâmetros numéricos e sementes deste módulo.
+EPS_DIAGONAL <- 1e-6
+TOL_SIMETRIA <- 1e-8
+TOL_BLOCO_REAL <- 1e-12
+SEED_DA_BASE <- 200000
+SEED_BGLR_BASE <- 260000
 
 # Regras de mistura avaliadas.
 configs <- data.frame(
@@ -175,6 +226,9 @@ configs <- data.frame(
   ),
   stringsAsFactors = FALSE
 )
+
+N_CONFIGS <- nrow(configs)
+N_CENARIOS_DA <- N_CONFIGS * length(PROPORCOES) * N_REP
 
 configs_exibicao <- data.frame(
   Regra = c(
@@ -216,7 +270,7 @@ anteriores. Os fenótipos e marcadores vêm da Etapa 1, os conjuntos de
 treinamento e validação vêm da Etapa 2 e os componentes da matriz genômica vêm
 da Etapa 3.
 
-```{r objetos-da, eval=FALSE}
+```{r objetos-da}
 # Fenótipos e marcadores dos 1.379 indivíduos reais.
 obj <- readRDS("output/01_data_objects.rds")
 y <- obj$y
@@ -247,7 +301,7 @@ Primeiro construímos uma tabela que identifica os 360 cenários. Para cada regr
 de mistura, tamanho real e repetição, recuperamos o mesmo conjunto de treinamento
 e a mesma validação usados com os dados reais.
 
-```{r cenarios-da, eval=FALSE}
+```{r cenarios-da}
 cenarios_da <- data.frame()
 
 for (ci in seq_len(nrow(configs))) {
@@ -264,7 +318,7 @@ for (ci in seq_len(nrow(configs))) {
       n_real <- length(treino)
       n_syn <- N_T100 - n_real
 
-      stopifnot(length(validacao) == 276)
+      stopifnot(length(validacao) == N_VALIDACAO)
       stopifnot(n_real + n_syn == N_T100)
 
       # Registra a combinação atual.
@@ -287,7 +341,7 @@ for (ci in seq_len(nrow(configs))) {
   }
 }
 
-stopifnot(nrow(cenarios_da) == 360)
+stopifnot(nrow(cenarios_da) == N_CENARIOS_DA)
 ```
 
 Essa tabela torna explícito que a variação entre os cenários ocorre em três
@@ -304,7 +358,7 @@ O sorteio dos doadores e a geração de `lambda` permanecem na mesma etapa porqu
 fazem parte da mesma realização aleatória do Mixup. Para as distribuições Beta,
 `lambda` é gerado depois dos dois doadores.
 
-```{r doadores-lambda-da, eval=FALSE}
+```{r doadores-lambda-da}
 misturas_da <- vector(
   "list",
   nrow(cenarios_da)
@@ -324,7 +378,7 @@ for (s in seq_len(nrow(cenarios_da))) {
 
   # Semente específica da regra, tamanho e repetição atuais.
   seed_da <-
-    200000 +
+    SEED_DA_BASE +
     cenario$ci * 10000 +
     as.integer(cenario$proporcao_pool * 100) * 100 +
     cenario$repeticao
@@ -387,7 +441,7 @@ marcadores e do fenótipo. O mesmo `lambda` é aplicado aos dois tipos de
 informação para manter coerência entre a posição genômica interpolada e o valor
 fenotípico atribuído ao pseudoindivíduo.
 
-```{r pseudoindividuos-da, eval=FALSE}
+```{r pseudoindividuos-da}
 for (s in seq_len(nrow(cenarios_da))) {
 
   # Recupera o cenário e o conjunto real de treinamento.
@@ -440,7 +494,7 @@ de relacionamento.
 A matriz real-real `G` é preservada integralmente. São acrescentados apenas os
 blocos sintético-real, real-sintético e sintético-sintético.
 
-```{r matriz-expandida-da, eval=FALSE}
+```{r matriz-expandida-da}
 for (s in seq_len(nrow(cenarios_da))) {
 
   # Recupera cenário, treinamento e definição do Mixup.
@@ -499,13 +553,13 @@ for (s in seq_len(nrow(cenarios_da))) {
     cbind(idx_syn, idx_syn)
   ] <-
     G_expanded[cbind(idx_syn, idx_syn)] +
-    1e-6
+    EPS_DIAGONAL
 
   # Confere simetria e preservação do bloco real-real.
   stopifnot(
     max(
       abs(G_expanded - t(G_expanded))
-    ) < 1e-8
+    ) < TOL_SIMETRIA
   )
 
   stopifnot(
@@ -513,7 +567,7 @@ for (s in seq_len(nrow(cenarios_da))) {
       abs(
         G_expanded[seq_len(n), seq_len(n)] - G
       )
-    ) < 1e-12
+    ) < TOL_BLOCO_REAL
   )
 }
 ```
@@ -540,7 +594,7 @@ treinamento e pseudoindivíduos.
 Os indivíduos reais fora do treinamento, incluindo toda a validação, permanecem
 com `NA`.
 
-```{r fenotipo-expandido-da, eval=FALSE}
+```{r fenotipo-expandido-da}
 for (s in seq_len(nrow(cenarios_da))) {
 
   # Recupera cenário e conjunto correspondente.
@@ -591,7 +645,7 @@ imediatamente no GBLUP. A forma em blocos de `G_expanded` e a construção diret
 de `y_modelo` deixam esse loop concentrado apenas nas operações necessárias ao
 modelo.
 
-```{r ajuste-gblup-da, eval=FALSE}
+```{r ajuste-gblup-da}
 predicoes_da <- vector(
   "list",
   nrow(cenarios_da)
@@ -631,7 +685,7 @@ for (s in seq_len(nrow(cenarios_da))) {
 
   idx_syn <- (n + 1):(n + cenario$n_syn)
   G_expanded[cbind(idx_syn, idx_syn)] <-
-    G_expanded[cbind(idx_syn, idx_syn)] + 1e-6
+    G_expanded[cbind(idx_syn, idx_syn)] + EPS_DIAGONAL
 
   # 4. Fornece fenótipos apenas para treinamento real e pseudoindivíduos.
   y_modelo <- c(
@@ -649,7 +703,7 @@ for (s in seq_len(nrow(cenarios_da))) {
   )
 
   seed_bglr <-
-    260000 +
+    SEED_BGLR_BASE +
     cenario$ci * 10000 +
     as.integer(cenario$proporcao_pool * 100) * 100 +
     cenario$repeticao
@@ -681,7 +735,7 @@ Por fim, percorremos as 360 predições e calculamos correlação, RMSE, MAE e
 inclinação de calibração. Cada linha da tabela final representa uma regra de
 mistura, um tamanho real e uma repetição.
 
-```{r metricas-da, eval=FALSE}
+```{r metricas-da}
 resultados_da_calculados <- data.frame()
 
 for (s in seq_len(nrow(cenarios_da))) {
@@ -745,7 +799,7 @@ for (s in seq_len(nrow(cenarios_da))) {
   )
 }
 
-stopifnot(nrow(resultados_da_calculados) == 360)
+stopifnot(nrow(resultados_da_calculados) == N_CENARIOS_DA)
 
 write.csv(
   resultados_da_calculados,
@@ -777,11 +831,11 @@ chaves_da <- paste(
   sep = "__"
 )
 
-stopifnot(nrow(resultados_da) == 360)
+stopifnot(nrow(resultados_da) == N_CENARIOS_DA)
 stopifnot(anyDuplicated(chaves_da) == 0)
-stopifnot(all(resultados_da$repeticao %in% 1:30))
-stopifnot(all(resultados_da$n_total_treino == 1103))
-stopifnot(all(resultados_da$n_real + resultados_da$n_syn == 1103))
+stopifnot(all(resultados_da$repeticao %in% seq_len(N_REP)))
+stopifnot(all(resultados_da$n_total_treino == N_T100))
+stopifnot(all(resultados_da$n_real + resultados_da$n_syn == N_T100))
 stopifnot(
   !anyNA(
     resultados_da[
@@ -802,7 +856,7 @@ contagem_cenarios <- aggregate(
   FUN = length
 )
 
-stopifnot(all(contagem_cenarios$repeticao == 30))
+stopifnot(all(contagem_cenarios$repeticao == N_REP))
 ```
 
 ## 8. Resumo dos 12 cenários de aumento de dados
@@ -927,11 +981,11 @@ baseline <- read.csv(
   REAL_RESULTS_FILE
 )
 
-stopifnot(nrow(baseline) == 120)
+stopifnot(nrow(baseline) == N_CENARIOS_BASELINE)
 
 # Mantém apenas T25, T50 e T75 do conjunto de referência com dados reais.
 baseline_reduzido <- baseline[
-  baseline$proporcao_pool < 1,
+  baseline$proporcao_pool < PROP_T100,
   c(
     "repeticao",
     "proporcao_pool",
@@ -957,7 +1011,7 @@ comparacao_real <- merge(
   )
 )
 
-stopifnot(nrow(comparacao_real) == 360)
+stopifnot(nrow(comparacao_real) == N_CENARIOS_DA)
 
 # Diferenças: aumento de dados menos o modelo com somente dados reais.
 comparacao_real$delta_cor_DA_real <-
@@ -1083,14 +1137,11 @@ dados_evolucao$Estrategia <- factor(
   dados_evolucao$Estrategia,
   levels = c(
     "Somente dados reais",
-    "DA: lambda = 0,5",
-    "DA: Beta(0,1; 0,1)",
-    "DA: Beta(0,2; 0,2)",
-    "DA: Beta(0,4; 0,4)"
+    unname(rotulos_config[configs$config_mistura])
   )
 )
 
-cores_evolucao <- ggthemes::gdocs_pal()(5)
+cores_evolucao <- ggthemes::gdocs_pal()(N_CONFIGS + 1L)
 
 figura_evolucao_da <- ggplot2::ggplot(
   dados_evolucao,
@@ -1120,8 +1171,8 @@ figura_evolucao_da <- ggplot2::ggplot(
     values = cores_evolucao
   ) +
   ggplot2::scale_x_continuous(
-    breaks = c(25, 50, 75, 100),
-    labels = c("25%", "50%", "75%", "100%")
+    breaks = BREAKS_PROP,
+    labels = LABELS_PROP
   ) +
   ggplot2::labs(
     title = "Evolução da correlação preditiva com aumento de dados",
@@ -1168,7 +1219,7 @@ mesma repetição.
 ```{r preparar-da-vs-t100}
 # T100 real usado como referência em cada repetição.
 t100 <- baseline[
-  baseline$proporcao_pool == 1,
+  baseline$proporcao_pool == PROP_T100,
   c(
     "repeticao",
     "correlacao",
@@ -1190,7 +1241,7 @@ comparacao_t100 <- merge(
   by = "repeticao"
 )
 
-stopifnot(nrow(comparacao_t100) == 360)
+stopifnot(nrow(comparacao_t100) == N_CENARIOS_DA)
 
 # Diferenças em relação ao T100 real.
 comparacao_t100$delta_cor_vs_T100 <-
@@ -1218,8 +1269,9 @@ A diferença de correlação é considerada praticamente equivalente a T100 quan
 o intervalo de confiança de 90% permanece totalmente dentro de
 `[-0.05, +0.05]` e os dois testes unilaterais do TOST são significativos.
 
-Como as 30 repetições utilizam amostras sobrepostas da mesma população,
-aplicamos a correção de Nadeau-Bengio:
+Como as repetições utilizam amostras sobrepostas da mesma população,
+utilizamos, como na Etapa 5, o erro-padrão corrigido de Nadeau-Bengio dentro do
+TOST como uma adaptação para a análise de equivalência:
 
 \[
 SE_{NB}=
@@ -1241,9 +1293,6 @@ correção.
 ```{r equivalencia-da}
 DELTA <- 0.05
 ALPHA <- 0.05
-R <- 30
-N_TEST <- 276
-N_TRAIN <- 1103
 
 resultado_equivalencia_da <- data.frame()
 
@@ -1258,15 +1307,15 @@ for (config in configs$config_mistura) {
 
     d <- grupo$delta_cor_vs_T100
 
-    stopifnot(length(d) == 30)
+    stopifnot(length(d) == N_REP)
 
     media_d <- mean(d)
     sd_d <- sd(d)
 
     # 2. Erro-padrão corrigido de Nadeau-Bengio.
     fator_NB <-
-      1 / R +
-      N_TEST / N_TRAIN
+      1 / N_REP +
+      N_VALIDACAO / N_T100
 
     se_NB <- sqrt(
       fator_NB * sd_d^2
@@ -1382,12 +1431,8 @@ dados_equiv_da$Configuracao_rotulo <- unname(
 
 dados_equiv_da$Cenario_real <- factor(
   dados_equiv_da$Proporcao,
-  levels = c(0.25, 0.50, 0.75),
-  labels = c(
-    "T25 — 275 reais + 828 sintéticos",
-    "T50 — 551 reais + 552 sintéticos",
-    "T75 — 827 reais + 276 sintéticos"
-  )
+  levels = PROPORCOES,
+  labels = LABELS_CENARIOS_DA
 )
 
 dados_equiv_da$Situacao <- ifelse(
@@ -1504,7 +1549,7 @@ for (config in configs$config_mistura) {
     d <- grupo$delta_cor_vs_T100
     n_train_real <- unique(grupo$n_real)
 
-    stopifnot(length(d) == 30)
+    stopifnot(length(d) == N_REP)
     stopifnot(length(n_train_real) == 1)
 
     media_d <- mean(d)
@@ -1512,8 +1557,8 @@ for (config in configs$config_mistura) {
 
     # 2. Usa somente o número de indivíduos reais no termo de correção.
     fator_NB_real <-
-      1 / R +
-      N_TEST / n_train_real
+      1 / N_REP +
+      N_VALIDACAO / n_train_real
 
     se_NB_real <- sqrt(
       fator_NB_real * sd_d^2
