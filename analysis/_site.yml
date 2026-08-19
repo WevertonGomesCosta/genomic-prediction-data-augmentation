@@ -18,6 +18,8 @@ navbar:
       href: 05_equivalence.html
     - text: "6. Aumento de dados"
       href: 06_data_augmentation.html
+    - text: "7. Mixup populacional"
+      href: 07_population_informed_mixup.html
     - text: "Sobre"
       href: about.html
     - text: "Licença"

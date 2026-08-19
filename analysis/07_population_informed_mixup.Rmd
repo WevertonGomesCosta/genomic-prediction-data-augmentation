@@ -1,0 +1,2018 @@
+---
+title: "7. Mixup informado pela população"
+author: "Weverton Gomes da Costa"
+date: "`r Sys.Date()`"
+site: workflowr::wflow_site
+output:
+  workflowr::wflow_html:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    code_download: true
+    code_folding: show
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  cache = FALSE,
+  fig.align = "center",
+  out.width = "100%"
+)
+dir.create("output", showWarnings = FALSE, recursive = TRUE)
+dir.create("output/figures", showWarnings = FALSE, recursive = TRUE)
+```
+
+## 1. Objetivo
+
+A Etapa 6 avaliou quatro parametrizações usuais de Mixup: `lambda = 0.5` e
+distribuições simétricas `Beta(alpha, alpha)` com `alpha = 0.1`, `0.2` e `0.4`.
+Nenhuma delas tornou T25 ou T50 equivalente a T100.
+
+Nesta etapa mantemos o **Mixup padrão** e modificamos somente a forma de definir
+`alpha`. Em vez de escolher uma pequena grade de valores, estimamos um único
+parâmetro a partir da relação entre a variabilidade genômica e a variabilidade
+residual da população analítica.
+
+O objetivo principal continua sendo verificar se o aumento de dados permite que
+
+\[
+T_{25}+DA
+\]
+
+ou
+
+\[
+T_{50}+DA
+\]
+
+atinja desempenho praticamente equivalente ao T100 formado por 1.103
+indivíduos reais. T75 + DA é mantido como diagnóstico, porque a Etapa 5 já
+mostrou que T75 sem aumento de dados é equivalente a T100.
+
+A calibração do parâmetro utiliza os fenótipos dos 1.379 indivíduos e, por isso,
+é tratada explicitamente como uma análise **population-informed/oracle**. Essa
+calibração não representa validação preditiva cega. Depois que o parâmetro é
+estimado, os pseudoindivíduos de cada cenário são construídos exclusivamente a
+partir dos indivíduos reais daquele conjunto de treinamento, e os fenótipos dos
+indivíduos de validação permanecem mascarados no ajuste preditivo.
+
+## 2. Parâmetro populacional da mistura
+
+O componente genômico usado nas etapas anteriores é ajustado no `BGLR` como
+
+\[
+g \sim N(0,G\sigma_u^2),
+\]
+
+em que `G` é a matriz de relacionamento genômico construída na Etapa 3 e
+\(\sigma_u^2\) é o parâmetro de variância associado ao kernel.
+
+Como a escala numérica de `G` influencia a interpretação direta de
+\(\sigma_u^2\), usamos a variabilidade média induzida por `G` na população
+analítica. Definimos
+
+\[
+P=I-\frac{\mathbf{1}\mathbf{1}^{\mathsf T}}{n}
+\]
+
+e
+
+\[
+c_G=
+\frac{\operatorname{tr}(PG)}{n-1}.
+\]
+
+A variabilidade genômica populacional correspondente é
+
+\[
+V_{G,pop}=c_G\sigma_u^2.
+\]
+
+A razão entre o desvio-padrão genômico populacional e o desvio-padrão residual é
+
+\[
+R_{Ge,pop}
+=
+\sqrt{
+\frac{V_{G,pop}}{\sigma_e^2}
+}
+=
+\sqrt{
+\frac{c_G\sigma_u^2}{\sigma_e^2}
+}.
+\]
+
+Esse parâmetro é adimensional. Não o denominamos `CV_A/CV_e`, porque o
+coeficiente de variação residual não possui interpretação convencional quando o
+efeito residual tem média zero.
+
+A relação correspondente com a proporção de variância genômica é
+
+\[
+h_G^2=
+\frac{V_{G,pop}}
+{V_{G,pop}+\sigma_e^2},
+\]
+
+de forma que
+
+\[
+R_{Ge,pop}
+=
+\sqrt{
+\frac{h_G^2}{1-h_G^2}
+}.
+\]
+
+A regra proposta para o Mixup é então
+
+\[
+\lambda
+\sim
+Beta(\alpha_{pop},\alpha_{pop}),
+\]
+
+com
+
+\[
+\boxed{
+\alpha_{pop}
+=
+E(R_{Ge,pop}\mid y)
+}.
+\]
+
+Portanto, `alpha_pop` é a média posterior da própria razão de desvios-padrão,
+calculada a partir das amostras MCMC. Não há tuning, busca em grade ou seleção
+do valor de `alpha` com base no desempenho da validação.
+
+## 3. Objetos e parâmetros do experimento
+
+```{r parametros-population-mixup}
+DATA_OBJECTS <- "output/01_data_objects.rds"
+SPLITS_FILE <- "output/02_splits_mestre_30rep.rds"
+GENOMIC_OBJECTS <- "output/03_genomic_objects.rds"
+REAL_RESULTS_FILE <- "output/04_baseline_results.csv"
+HISTORICAL_DA_FILE <- "output/06_da_results.csv"
+
+POP_PARAMETER_FILE <- "output/07_population_parameter.csv"
+DA_RESULTS_FILE <- "output/07_population_informed_mixup_results.csv"
+
+obj <- readRDS(DATA_OBJECTS)
+splits_mestre <- readRDS(SPLITS_FILE)
+gobj <- readRDS(GENOMIC_OBJECTS)
+baseline_ref <- read.csv(REAL_RESULTS_FILE)
+
+y <- obj$y
+M <- obj$M
+n <- obj$n
+
+p <- gobj$p
+Z <- gobj$Z
+G <- gobj$G
+denominador <- gobj$denom
+
+PROPORCOES_TODAS <- sort(
+  unique(baseline_ref$proporcao_pool)
+)
+PROP_T100 <- max(PROPORCOES_TODAS)
+PROPORCOES <- PROPORCOES_TODAS[
+  PROPORCOES_TODAS < PROP_T100
+]
+
+N_REP <- length(
+  unique(baseline_ref$repeticao)
+)
+N_VALIDACAO <- unique(
+  baseline_ref$n_validacao
+)
+N_T100 <- unique(
+  baseline_ref$n_treino[
+    baseline_ref$proporcao_pool == PROP_T100
+  ]
+)
+
+stopifnot(length(N_VALIDACAO) == 1L)
+stopifnot(length(N_T100) == 1L)
+
+N_REAIS_POR_PROP <- vapply(
+  PROPORCOES,
+  function(proporcao) {
+    valores <- unique(
+      baseline_ref$n_treino[
+        baseline_ref$proporcao_pool == proporcao
+      ]
+    )
+    stopifnot(length(valores) == 1L)
+    valores
+  },
+  numeric(1)
+)
+
+N_SYN_POR_PROP <- N_T100 - N_REAIS_POR_PROP
+N_CENARIOS_DA <- length(PROPORCOES) * N_REP
+N_CENARIOS_BASELINE <- length(PROPORCOES_TODAS) * N_REP
+
+LABELS_PROP <- paste0(
+  PROPORCOES_TODAS * 100,
+  "%"
+)
+
+LABELS_CENARIOS_DA <- paste0(
+  "T",
+  PROPORCOES * 100,
+  " — ",
+  N_REAIS_POR_PROP,
+  " reais + ",
+  N_SYN_POR_PROP,
+  " sintéticos"
+)
+
+N_ITER <- 10000
+BURN_IN <- 5000
+THIN_ORACLE <- 5
+
+EPS_DIAGONAL <- 1e-6
+TOL_SIMETRIA <- 1e-8
+TOL_BLOCO_REAL <- 1e-12
+
+SEED_ORACLE <- 310000
+SEED_DA_BASE <- 320000
+SEED_BGLR_BASE <- 330000
+
+DELTA <- 0.05
+ALPHA_TOST <- 0.05
+
+CONFIG_MISTURA <- "beta_alpha_population_informed"
+
+stopifnot(
+  nrow(M) == n,
+  nrow(G) == n,
+  ncol(G) == n,
+  !anyNA(y),
+  all(is.finite(G)),
+  N_CENARIOS_DA == 90
+)
+```
+
+## 4. Calibração population-informed/oracle
+
+A calibração utiliza os 1.379 fenótipos observados para estimar um único
+parâmetro global. O ajuste usa exatamente a mesma matriz `G`, o mesmo componente
+`RKHS`, 10.000 iterações e 5.000 iterações de *burn-in* usados no baseline.
+
+Essa etapa é deliberadamente separada da avaliação preditiva. O valor estimado
+aqui será congelado e reutilizado em T25, T50 e T75 nas 30 repetições.
+
+```{r calibracao-oracle}
+VERSAO_BGLR <- as.character(
+  packageVersion("BGLR")
+)
+
+stopifnot(
+  VERSAO_BGLR == "1.1.4"
+)
+
+media_diag_G <- mean(
+  diag(G)
+)
+
+c_G <- (
+  sum(diag(G)) -
+  sum(G) / n
+) / (n - 1)
+
+stopifnot(
+  is.finite(c_G),
+  c_G > 0
+)
+
+saveAt_oracle <- file.path(
+  tempdir(),
+  paste0(
+    "07_alpha_pop_",
+    Sys.getpid(),
+    "_"
+  )
+)
+
+set.seed(
+  SEED_ORACLE
+)
+
+ajuste_oracle <- BGLR::BGLR(
+  y = y,
+  ETA = list(
+    list(
+      K = G,
+      model = "RKHS"
+    )
+  ),
+  nIter = N_ITER,
+  burnIn = BURN_IN,
+  thin = THIN_ORACLE,
+  saveAt = saveAt_oracle,
+  verbose = FALSE
+)
+
+varU_oracle <- ajuste_oracle$ETA[[1]]$varU
+varE_oracle <- ajuste_oracle$varE
+
+arquivo_varU <- paste0(
+  saveAt_oracle,
+  "ETA_1_varU.dat"
+)
+
+arquivo_varE <- paste0(
+  saveAt_oracle,
+  "varE.dat"
+)
+
+stopifnot(
+  file.exists(arquivo_varU),
+  file.exists(arquivo_varE)
+)
+
+varU_chain <- scan(
+  arquivo_varU,
+  quiet = TRUE
+)
+
+varE_chain <- scan(
+  arquivo_varE,
+  quiet = TRUE
+)
+
+stopifnot(
+  length(varU_chain) ==
+    length(varE_chain)
+)
+
+n_burn_saved <- floor(
+  BURN_IN / THIN_ORACLE
+)
+
+stopifnot(
+  length(varU_chain) > n_burn_saved
+)
+
+keep <- seq_along(
+  varU_chain
+) > n_burn_saved
+
+varU_post <- varU_chain[keep]
+varE_post <- varE_chain[keep]
+
+V_G_post <- c_G * varU_post
+
+R_Ge_post <- sqrt(
+  V_G_post / varE_post
+)
+
+h2_G_post <- V_G_post / (
+  V_G_post + varE_post
+)
+
+alpha_pop <- mean(
+  R_Ge_post
+)
+
+V_G_plugin <- c_G * varU_oracle
+
+R_Ge_plugin <- sqrt(
+  V_G_plugin / varE_oracle
+)
+
+h2_G_plugin <- V_G_plugin / (
+  V_G_plugin + varE_oracle
+)
+
+stopifnot(
+  is.finite(alpha_pop),
+  alpha_pop > 0,
+  all(is.finite(R_Ge_post)),
+  all(is.finite(h2_G_post))
+)
+
+parametro_populacional <- data.frame(
+  versao_BGLR = VERSAO_BGLR,
+  n_individuos = n,
+  media_diagonal_G = media_diag_G,
+  c_G = c_G,
+  varU_media_posterior = varU_oracle,
+  varE_media_posterior = varE_oracle,
+  V_G_plugin = V_G_plugin,
+  h2_G_plugin = h2_G_plugin,
+  R_Ge_plugin = R_Ge_plugin,
+  alpha_pop = alpha_pop,
+  R_Ge_mediana = median(R_Ge_post),
+  R_Ge_q025 = unname(
+    quantile(R_Ge_post, 0.025)
+  ),
+  R_Ge_q975 = unname(
+    quantile(R_Ge_post, 0.975)
+  ),
+  h2_G_media = mean(h2_G_post),
+  h2_G_mediana = median(h2_G_post),
+  h2_G_q025 = unname(
+    quantile(h2_G_post, 0.025)
+  ),
+  h2_G_q975 = unname(
+    quantile(h2_G_post, 0.975)
+  ),
+  seed_oracle = SEED_ORACLE,
+  nIter = N_ITER,
+  burnIn = BURN_IN,
+  thin_oracle = THIN_ORACLE
+)
+
+write.csv(
+  parametro_populacional,
+  POP_PARAMETER_FILE,
+  row.names = FALSE
+)
+
+arquivos_oracle <- Sys.glob(
+  paste0(
+    saveAt_oracle,
+    "*"
+  )
+)
+
+unlink(
+  arquivos_oracle
+)
+
+stopifnot(
+  !file.exists(arquivo_varU),
+  !file.exists(arquivo_varE)
+)
+
+parametro_exibicao <- data.frame(
+  Quantidade = c(
+    "Média da diagonal de G",
+    "c_G",
+    "varU",
+    "varE",
+    "V_G = c_G × varU",
+    "h²_G plug-in",
+    "R_Ge plug-in",
+    "alpha_pop = média posterior de R_Ge",
+    "Mediana posterior de R_Ge",
+    "IC95% posterior de R_Ge"
+  ),
+  Valor = c(
+    media_diag_G,
+    c_G,
+    varU_oracle,
+    varE_oracle,
+    V_G_plugin,
+    h2_G_plugin,
+    R_Ge_plugin,
+    alpha_pop,
+    median(R_Ge_post),
+    paste0(
+      "[",
+      round(
+        quantile(R_Ge_post, 0.025),
+        6
+      ),
+      "; ",
+      round(
+        quantile(R_Ge_post, 0.975),
+        6
+      ),
+      "]"
+    )
+  )
+)
+
+knitr::kable(
+  parametro_exibicao,
+  caption = "Calibração population-informed/oracle do parâmetro de Mixup"
+)
+```
+
+O parâmetro usado nas misturas seguintes é, portanto,
+
+\[
+\alpha_{pop}=
+\text{`r format(round(alpha_pop, 6), nsmall = 6)`}.
+\]
+
+Esse valor foi estimado antes de qualquer avaliação do desempenho de T25, T50
+ou T75 com a nova regra.
+
+## 5. Distribuição de lambda determinada pela população
+
+Como a distribuição é simétrica,
+
+\[
+E(\lambda)=0.5.
+\]
+
+Para `Beta(alpha_pop, alpha_pop)`, o desvio-padrão teórico é
+
+\[
+SD(\lambda)
+=
+\frac{1}
+{2\sqrt{2\alpha_{pop}+1}}.
+\]
+
+```{r resumo-distribuicao-lambda}
+sd_lambda_teorico <- 1 / (
+  2 * sqrt(
+    2 * alpha_pop + 1
+  )
+)
+
+quantis_lambda <- qbeta(
+  c(
+    0.025,
+    0.25,
+    0.50,
+    0.75,
+    0.975
+  ),
+  shape1 = alpha_pop,
+  shape2 = alpha_pop
+)
+
+resumo_lambda <- data.frame(
+  Quantidade = c(
+    "alpha_pop",
+    "E(lambda)",
+    "SD(lambda)",
+    "Q2,5%",
+    "Q25%",
+    "Mediana",
+    "Q75%",
+    "Q97,5%"
+  ),
+  Valor = c(
+    alpha_pop,
+    0.5,
+    sd_lambda_teorico,
+    quantis_lambda
+  )
+)
+
+knitr::kable(
+  resumo_lambda,
+  digits = 6,
+  caption = "Distribuição de lambda determinada pela calibração populacional"
+)
+```
+
+Como `alpha_pop` é estimado a partir da população, a forma da distribuição é uma
+consequência da calibração e não uma decisão posterior baseada no desempenho.
+
+```{r figura-lambda-pop, fig.height=4.8, fig.width=8, fig.cap="Densidade da distribuição Beta(alpha_pop, alpha_pop) usada no Mixup population-informed."}
+if (!requireNamespace("ggplot2", quietly = TRUE)) {
+  stop("Instale o pacote ggplot2 para gerar as figuras do tutorial.")
+}
+
+if (!requireNamespace("ggthemes", quietly = TRUE)) {
+  stop("Instale o pacote ggthemes para usar o padrão gráfico GDocs.")
+}
+
+lambda_grid <- seq(
+  0.001,
+  0.999,
+  length.out = 1000
+)
+
+dados_lambda <- data.frame(
+  Lambda = lambda_grid,
+  Densidade = dbeta(
+    lambda_grid,
+    shape1 = alpha_pop,
+    shape2 = alpha_pop
+  )
+)
+
+figura_lambda_pop <- ggplot2::ggplot(
+  dados_lambda,
+  ggplot2::aes(
+    x = Lambda,
+    y = Densidade
+  )
+) +
+  ggplot2::geom_line(
+    linewidth = 1
+  ) +
+  ggplot2::geom_vline(
+    xintercept = 0.5,
+    linetype = "dashed",
+    linewidth = 0.6
+  ) +
+  ggplot2::labs(
+    title = paste0(
+      "Beta(",
+      round(alpha_pop, 3),
+      ", ",
+      round(alpha_pop, 3),
+      ")"
+    ),
+    x = expression(lambda),
+    y = "Densidade"
+  ) +
+  ggthemes::theme_gdocs() +
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(
+      face = "bold",
+      hjust = 0.5
+    )
+  )
+
+figura_lambda_pop
+
+ggplot2::ggsave(
+  filename = "output/figures/07a_distribuicao_lambda_population_informed.png",
+  plot = figura_lambda_pop,
+  width = 8,
+  height = 4.8,
+  dpi = 300
+)
+```
+
+## 6. Cenários de aumento de dados
+
+Mantemos exatamente os mesmos tamanhos reais avaliados na Etapa 6. Cada conjunto
+é completado até T100:
+
+| Cenário | Reais | Sintéticos | Total |
+|---|---:|---:|---:|
+| T25 + DA | 275 | 828 | 1.103 |
+| T50 + DA | 551 | 552 | 1.103 |
+| T75 + DA | 827 | 276 | 1.103 |
+
+Com uma única regra de mistura, três tamanhos e 30 repetições, temos
+
+\[
+1\times3\times30=90
+\]
+
+ajustes preditivos.
+
+```{r cenarios-population-mixup}
+cenarios_da <- data.frame()
+
+for (proporcao in PROPORCOES) {
+  for (rep in seq_len(N_REP)) {
+
+    split <- splits_mestre[[as.character(proporcao)]][[rep]]
+
+    n_real <- length(
+      split$treino
+    )
+
+    n_syn <- N_T100 - n_real
+
+    stopifnot(
+      length(split$valid) == N_VALIDACAO,
+      n_real + n_syn == N_T100
+    )
+
+    cenarios_da <- rbind(
+      cenarios_da,
+      data.frame(
+        config_mistura = CONFIG_MISTURA,
+        alpha = alpha_pop,
+        repeticao = rep,
+        proporcao_pool = proporcao,
+        n_real = n_real,
+        n_syn = n_syn,
+        n_total_treino = n_real + n_syn
+      )
+    )
+  }
+}
+
+stopifnot(
+  nrow(cenarios_da) == N_CENARIOS_DA
+)
+```
+
+## 7. Ajuste dos 90 cenários
+
+A geração dos pseudoindivíduos segue exatamente as equações da Etapa 6:
+
+\[
+\widetilde M
+=
+\lambda M_i+(1-\lambda)M_j
+\]
+
+e
+
+\[
+\widetilde y
+=
+\lambda y_i+(1-\lambda)y_j.
+\]
+
+Os dois doadores de uma mesma mistura são sempre indivíduos reais distintos do
+conjunto de treinamento. Há reposição entre pseudoindivíduos, mas nenhum
+indivíduo de validação pode atuar como doador.
+
+A matriz expandida usa as mesmas frequências alélicas e o mesmo denominador de
+VanRaden empregados na Etapa 3. O bloco real-real de `G` é preservado
+integralmente.
+
+```{r ajuste-population-mixup}
+resultados_da_calculados <- data.frame()
+
+for (s in seq_len(nrow(cenarios_da))) {
+
+  cenario <- cenarios_da[s, ]
+  proporcao_chave <- as.character(
+    cenario$proporcao_pool
+  )
+
+  split <- splits_mestre[[proporcao_chave]][[cenario$repeticao]]
+
+  treino <- split$treino
+  validacao <- split$valid
+
+  stopifnot(
+    length(
+      intersect(
+        treino,
+        validacao
+      )
+    ) == 0
+  )
+
+  M_train <- M[
+    treino,
+    ,
+    drop = FALSE
+  ]
+
+  y_train <- y[
+    treino
+  ]
+
+  n_real <- length(
+    treino
+  )
+
+  n_syn <- cenario$n_syn
+
+  # Semente da geração dos pseudoindivíduos.
+  seed_da <-
+    SEED_DA_BASE +
+    as.integer(
+      cenario$proporcao_pool * 100
+    ) * 100 +
+    cenario$repeticao
+
+  set.seed(
+    seed_da
+  )
+
+  idx1 <- sample(
+    seq_len(n_real),
+    n_syn,
+    replace = TRUE
+  )
+
+  idx2_base <- sample(
+    seq_len(n_real - 1),
+    n_syn,
+    replace = TRUE
+  )
+
+  idx2 <- ifelse(
+    idx2_base >= idx1,
+    idx2_base + 1L,
+    idx2_base
+  )
+
+  stopifnot(
+    all(idx1 != idx2)
+  )
+
+  lambda <- rbeta(
+    n_syn,
+    shape1 = alpha_pop,
+    shape2 = alpha_pop
+  )
+
+  M_syn <-
+    lambda * M_train[
+      idx1,
+      ,
+      drop = FALSE
+    ] +
+    (1 - lambda) * M_train[
+      idx2,
+      ,
+      drop = FALSE
+    ]
+
+  y_syn <-
+    lambda * y_train[idx1] +
+    (1 - lambda) * y_train[idx2]
+
+  stopifnot(
+    nrow(M_syn) == n_syn,
+    length(y_syn) == n_syn
+  )
+
+  # Expansão da matriz de relacionamento.
+  Z_syn <- sweep(
+    M_syn,
+    2,
+    2 * p,
+    FUN = "-"
+  )
+
+  G_syn_real <- tcrossprod(
+    Z_syn,
+    Z
+  ) / denominador
+
+  G_syn_syn <- tcrossprod(
+    Z_syn
+  ) / denominador
+
+  G_expanded <- rbind(
+    cbind(
+      G,
+      t(G_syn_real)
+    ),
+    cbind(
+      G_syn_real,
+      G_syn_syn
+    )
+  )
+
+  idx_syn <- (n + 1):(
+    n + n_syn
+  )
+
+  G_expanded[
+    cbind(
+      idx_syn,
+      idx_syn
+    )
+  ] <-
+    G_expanded[
+      cbind(
+        idx_syn,
+        idx_syn
+      )
+    ] +
+    EPS_DIAGONAL
+
+  stopifnot(
+    max(
+      abs(
+        G_expanded -
+          t(G_expanded)
+      )
+    ) < TOL_SIMETRIA
+  )
+
+  stopifnot(
+    max(
+      abs(
+        G_expanded[
+          seq_len(n),
+          seq_len(n)
+        ] -
+          G
+      )
+    ) < TOL_BLOCO_REAL
+  )
+
+  # Fenótipos observados apenas para treinamento real e sintéticos.
+  y_modelo <- c(
+    rep(
+      NA_real_,
+      n
+    ),
+    y_syn
+  )
+
+  y_modelo[
+    treino
+  ] <- y_train
+
+  reais_fora_treino <- setdiff(
+    seq_len(n),
+    treino
+  )
+
+  stopifnot(
+    all(
+      is.na(
+        y_modelo[
+          validacao
+        ]
+      )
+    ),
+    all(
+      is.na(
+        y_modelo[
+          reais_fora_treino
+        ]
+      )
+    ),
+    sum(
+      !is.na(
+        y_modelo
+      )
+    ) == N_T100
+  )
+
+  # Mesmo modelo preditivo das etapas anteriores.
+  ETA <- list(
+    list(
+      K = G_expanded,
+      model = "RKHS"
+    )
+  )
+
+  seed_bglr <-
+    SEED_BGLR_BASE +
+    as.integer(
+      cenario$proporcao_pool * 100
+    ) * 100 +
+    cenario$repeticao
+
+  set.seed(
+    seed_bglr
+  )
+
+  saveAt_fit <- file.path(
+    tempdir(),
+    paste0(
+      "07_fit_",
+      s,
+      "_"
+    )
+  )
+
+  ajuste <- BGLR::BGLR(
+    y = y_modelo,
+    ETA = ETA,
+    nIter = N_ITER,
+    burnIn = BURN_IN,
+    saveAt = saveAt_fit,
+    verbose = FALSE
+  )
+
+  predicao <- ajuste$yHat[
+    validacao
+  ]
+
+  observado <- y[
+    validacao
+  ]
+
+  correlacao <- cor(
+    observado,
+    predicao
+  )
+
+  RMSE <- sqrt(
+    mean(
+      (
+        observado -
+          predicao
+      )^2
+    )
+  )
+
+  MAE <- mean(
+    abs(
+      observado -
+        predicao
+    )
+  )
+
+  calibracao <- lm(
+    observado ~ predicao
+  )
+
+  slope_calibracao <- unname(
+    coef(
+      calibracao
+    )[2]
+  )
+
+  resultados_da_calculados <- rbind(
+    resultados_da_calculados,
+    data.frame(
+      config_mistura = CONFIG_MISTURA,
+      alpha = alpha_pop,
+      repeticao = cenario$repeticao,
+      proporcao_pool = cenario$proporcao_pool,
+      n_real = n_real,
+      n_syn = n_syn,
+      n_total_treino = n_real + n_syn,
+      correlacao = correlacao,
+      RMSE = RMSE,
+      MAE = MAE,
+      slope_calibracao = slope_calibracao,
+      media_lambda = mean(lambda),
+      sd_lambda = sd(lambda),
+      seed_da = seed_da,
+      seed_bglr = seed_bglr
+    )
+  )
+
+  unlink(
+    Sys.glob(
+      paste0(
+        saveAt_fit,
+        "*"
+      )
+    )
+  )
+}
+
+stopifnot(
+  nrow(
+    resultados_da_calculados
+  ) == N_CENARIOS_DA
+)
+
+write.csv(
+  resultados_da_calculados,
+  DA_RESULTS_FILE,
+  row.names = FALSE
+)
+```
+
+## 8. Auditoria e resumo dos resultados
+
+```{r auditar-resultados-population-mixup}
+resultados_da <- read.csv(
+  DA_RESULTS_FILE
+)
+
+chaves_da <- paste(
+  resultados_da$proporcao_pool,
+  resultados_da$repeticao,
+  sep = "__"
+)
+
+stopifnot(
+  nrow(resultados_da) == N_CENARIOS_DA,
+  anyDuplicated(chaves_da) == 0,
+  all(
+    resultados_da$repeticao %in%
+      seq_len(N_REP)
+  ),
+  all(
+    resultados_da$n_total_treino ==
+      N_T100
+  ),
+  all(
+    resultados_da$n_real +
+      resultados_da$n_syn ==
+      N_T100
+  ),
+  all(
+    abs(
+      resultados_da$alpha -
+        alpha_pop
+    ) < 1e-12
+  ),
+  !anyNA(
+    resultados_da[
+      ,
+      c(
+        "correlacao",
+        "RMSE",
+        "MAE",
+        "slope_calibracao",
+        "media_lambda",
+        "sd_lambda"
+      )
+    ]
+  )
+)
+
+contagem_cenarios <- aggregate(
+  repeticao ~ proporcao_pool,
+  data = resultados_da,
+  FUN = length
+)
+
+stopifnot(
+  all(
+    contagem_cenarios$repeticao ==
+      N_REP
+  )
+)
+```
+
+```{r resumo-population-mixup}
+resumo_media <- aggregate(
+  cbind(
+    correlacao,
+    RMSE,
+    MAE,
+    slope_calibracao,
+    media_lambda,
+    sd_lambda
+  ) ~ proporcao_pool + n_real + n_syn,
+  data = resultados_da,
+  FUN = mean
+)
+
+names(
+  resumo_media
+)[4:9] <- c(
+  "mean_cor",
+  "mean_RMSE",
+  "mean_MAE",
+  "mean_slope",
+  "mean_lambda",
+  "mean_sd_lambda"
+)
+
+resumo_sd <- aggregate(
+  cbind(
+    correlacao,
+    RMSE,
+    MAE,
+    slope_calibracao
+  ) ~ proporcao_pool + n_real + n_syn,
+  data = resultados_da,
+  FUN = sd
+)
+
+names(
+  resumo_sd
+)[4:7] <- c(
+  "sd_cor",
+  "sd_RMSE",
+  "sd_MAE",
+  "sd_slope"
+)
+
+resumo_da <- merge(
+  resumo_media,
+  resumo_sd,
+  by = c(
+    "proporcao_pool",
+    "n_real",
+    "n_syn"
+  )
+)
+
+resumo_exibicao <- resumo_da[
+  order(
+    resumo_da$proporcao_pool
+  ),
+  c(
+    "n_real",
+    "n_syn",
+    "mean_cor",
+    "sd_cor",
+    "mean_RMSE",
+    "mean_MAE",
+    "mean_slope",
+    "mean_lambda",
+    "mean_sd_lambda"
+  )
+]
+
+names(
+  resumo_exibicao
+) <- c(
+  "Indivíduos reais",
+  "Pseudoindivíduos",
+  "Correlação média",
+  "DP da correlação",
+  "RMSE médio",
+  "MAE médio",
+  "Inclinação média",
+  "Lambda médio",
+  "DP médio de lambda"
+)
+
+knitr::kable(
+  resumo_exibicao,
+  digits = 4,
+  caption = "Desempenho do Mixup population-informed nas 30 repetições"
+)
+```
+
+## 9. Comparação com o mesmo conjunto real
+
+Para avaliar se os pseudoindivíduos acrescentam informação preditiva útil, cada
+cenário é comparado com o baseline que utiliza o mesmo conjunto real na mesma
+repetição.
+
+```{r population-da-vs-real}
+baseline <- read.csv(
+  REAL_RESULTS_FILE
+)
+
+stopifnot(
+  nrow(baseline) ==
+    N_CENARIOS_BASELINE
+)
+
+baseline_reduzido <- baseline[
+  baseline$proporcao_pool <
+    PROP_T100,
+  c(
+    "repeticao",
+    "proporcao_pool",
+    "correlacao",
+    "RMSE",
+    "MAE"
+  )
+]
+
+names(
+  baseline_reduzido
+)[3:5] <- c(
+  "correlacao_real",
+  "RMSE_real",
+  "MAE_real"
+)
+
+comparacao_real <- merge(
+  resultados_da,
+  baseline_reduzido,
+  by = c(
+    "repeticao",
+    "proporcao_pool"
+  )
+)
+
+stopifnot(
+  nrow(comparacao_real) ==
+    N_CENARIOS_DA
+)
+
+comparacao_real$delta_cor_DA_real <-
+  comparacao_real$correlacao -
+  comparacao_real$correlacao_real
+
+comparacao_real$delta_RMSE_DA_real <-
+  comparacao_real$RMSE -
+  comparacao_real$RMSE_real
+
+comparacao_real$delta_MAE_DA_real <-
+  comparacao_real$MAE -
+  comparacao_real$MAE_real
+
+resumo_da_vs_real <- aggregate(
+  cbind(
+    delta_cor_DA_real,
+    delta_RMSE_DA_real,
+    delta_MAE_DA_real
+  ) ~ proporcao_pool + n_real,
+  data = comparacao_real,
+  FUN = mean
+)
+
+names(
+  resumo_da_vs_real
+) <- c(
+  "Proporção do pool",
+  "Indivíduos reais",
+  "Diferença média de correlação",
+  "Diferença média de RMSE",
+  "Diferença média de MAE"
+)
+
+knitr::kable(
+  resumo_da_vs_real,
+  digits = 4,
+  caption = "Mixup population-informed versus o mesmo tamanho de amostra real"
+)
+```
+
+Para a correlação, valores positivos favorecem o aumento de dados. Para RMSE e
+MAE, valores negativos indicam menor erro com os pseudoindivíduos.
+
+## 10. Comparação descritiva com o Mixup histórico
+
+A Etapa 6 contém quatro regras históricas. Como essas configurações utilizaram
+fluxos aleatórios próprios para sorteio de doadores e de `lambda`, a comparação
+abaixo é **descritiva** e não constitui um teste pareado direto entre
+parametrizações.
+
+```{r comparacao-historica}
+if (!file.exists(HISTORICAL_DA_FILE)) {
+  stop(
+    "Arquivo ausente: ",
+    HISTORICAL_DA_FILE
+  )
+}
+
+historico <- read.csv(
+  HISTORICAL_DA_FILE
+)
+
+historico_media <- aggregate(
+  correlacao ~
+    config_mistura +
+    proporcao_pool,
+  data = historico,
+  FUN = mean
+)
+
+melhor_historico <- do.call(
+  rbind,
+  lapply(
+    split(
+      historico_media,
+      historico_media$proporcao_pool
+    ),
+    function(x) {
+      x[
+        which.max(
+          x$correlacao
+        ),
+        ,
+        drop = FALSE
+      ]
+    }
+  )
+)
+
+novo_media <- aggregate(
+  correlacao ~ proporcao_pool,
+  data = resultados_da,
+  FUN = mean
+)
+
+comparacao_historica <- merge(
+  novo_media,
+  melhor_historico,
+  by = "proporcao_pool",
+  suffixes = c(
+    "_novo",
+    "_historico"
+  )
+)
+
+comparacao_historica$delta_novo_melhor_historico <-
+  comparacao_historica$correlacao_novo -
+  comparacao_historica$correlacao_historico
+
+comparacao_historica_exibicao <- comparacao_historica[
+  ,
+  c(
+    "proporcao_pool",
+    "correlacao_novo",
+    "config_mistura",
+    "correlacao_historico",
+    "delta_novo_melhor_historico"
+  )
+]
+
+names(
+  comparacao_historica_exibicao
+) <- c(
+  "Proporção do pool",
+  "Correlação média — population-informed",
+  "Melhor regra histórica",
+  "Correlação média — melhor histórica",
+  "Diferença descritiva"
+)
+
+knitr::kable(
+  comparacao_historica_exibicao,
+  digits = 4,
+  caption = "Comparação descritiva com a melhor regra histórica de Mixup"
+)
+```
+
+## 11. Evolução da correlação preditiva
+
+```{r figura-evolucao-population-mixup, fig.height=5.8, fig.width=8.8, fig.cap="Evolução da correlação preditiva com dados reais e com Mixup population-informed."}
+baseline_media <- aggregate(
+  correlacao ~ proporcao_pool,
+  data = baseline,
+  FUN = mean
+)
+
+baseline_sd <- aggregate(
+  correlacao ~ proporcao_pool,
+  data = baseline,
+  FUN = sd
+)
+
+baseline_media$sd_cor <- baseline_sd$correlacao[
+  match(
+    baseline_media$proporcao_pool,
+    baseline_sd$proporcao_pool
+  )
+]
+
+plot_real <- data.frame(
+  Proporcao = baseline_media$proporcao_pool,
+  Media = baseline_media$correlacao,
+  SD = baseline_media$sd_cor,
+  Estrategia = "Somente dados reais"
+)
+
+plot_da <- data.frame(
+  Proporcao = resumo_da$proporcao_pool,
+  Media = resumo_da$mean_cor,
+  SD = resumo_da$sd_cor,
+  Estrategia = "Mixup population-informed"
+)
+
+dados_evolucao <- rbind(
+  plot_real,
+  plot_da
+)
+
+dados_evolucao$Proporcao_percentual <-
+  dados_evolucao$Proporcao * 100
+
+dados_evolucao$Estrategia <- factor(
+  dados_evolucao$Estrategia,
+  levels = c(
+    "Somente dados reais",
+    "Mixup population-informed"
+  )
+)
+
+cores_evolucao <- ggthemes::gdocs_pal()(2)
+
+figura_evolucao <- ggplot2::ggplot(
+  dados_evolucao,
+  ggplot2::aes(
+    x = Proporcao_percentual,
+    y = Media,
+    color = Estrategia,
+    group = Estrategia
+  )
+) +
+  ggplot2::geom_errorbar(
+    ggplot2::aes(
+      ymin = Media - SD,
+      ymax = Media + SD
+    ),
+    width = 2.5,
+    linewidth = 0.45,
+    alpha = 0.65
+  ) +
+  ggplot2::geom_line(
+    linewidth = 0.9
+  ) +
+  ggplot2::geom_point(
+    size = 2.6
+  ) +
+  ggplot2::scale_color_manual(
+    values = cores_evolucao
+  ) +
+  ggplot2::scale_x_continuous(
+    breaks = PROPORCOES_TODAS * 100,
+    labels = LABELS_PROP
+  ) +
+  ggplot2::labs(
+    title = "Evolução da correlação preditiva",
+    x = "Proporção de indivíduos reais no treinamento",
+    y = "Correlação preditiva média",
+    color = "Estratégia"
+  ) +
+  ggthemes::theme_gdocs() +
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(
+      face = "bold",
+      hjust = 0.5
+    ),
+    legend.position = "bottom"
+  )
+
+figura_evolucao
+
+ggplot2::ggsave(
+  filename = "output/figures/07b_evolucao_correlacao_population_informed.png",
+  plot = figura_evolucao,
+  width = 8.8,
+  height = 5.8,
+  dpi = 300
+)
+```
+
+## 12. Equivalência com T100
+
+Cada resultado do Mixup population-informed é pareado com T100 na mesma
+repetição.
+
+```{r preparar-population-da-vs-t100}
+t100 <- baseline[
+  baseline$proporcao_pool ==
+    PROP_T100,
+  c(
+    "repeticao",
+    "correlacao",
+    "RMSE",
+    "MAE"
+  )
+]
+
+names(
+  t100
+)[2:4] <- c(
+  "correlacao_T100",
+  "RMSE_T100",
+  "MAE_T100"
+)
+
+comparacao_t100 <- merge(
+  resultados_da,
+  t100,
+  by = "repeticao"
+)
+
+stopifnot(
+  nrow(comparacao_t100) ==
+    N_CENARIOS_DA
+)
+
+comparacao_t100$delta_cor_vs_T100 <-
+  comparacao_t100$correlacao -
+  comparacao_t100$correlacao_T100
+
+comparacao_t100$delta_RMSE_vs_T100 <-
+  comparacao_t100$RMSE -
+  comparacao_t100$RMSE_T100
+
+comparacao_t100$delta_MAE_vs_T100 <-
+  comparacao_t100$MAE -
+  comparacao_t100$MAE_T100
+```
+
+### 12.1. Análise principal
+
+Mantemos a mesma margem da Etapa 5:
+
+\[
+\delta=0.05.
+\]
+
+Na análise principal, o termo de Nadeau-Bengio usa `n_train = 1103`, como na
+Etapa 6.
+
+```{r equivalencia-population-da}
+resultado_equivalencia <- data.frame()
+
+for (proporcao in PROPORCOES) {
+
+  grupo <- comparacao_t100[
+    comparacao_t100$proporcao_pool ==
+      proporcao,
+  ]
+
+  d <- grupo$delta_cor_vs_T100
+
+  stopifnot(
+    length(d) == N_REP
+  )
+
+  media_d <- mean(d)
+  sd_d <- sd(d)
+
+  fator_NB <-
+    1 / N_REP +
+    N_VALIDACAO / N_T100
+
+  se_NB <- sqrt(
+    fator_NB * sd_d^2
+  )
+
+  gl <- length(d) - 1
+
+  p_inferior <- 1 - pt(
+    (media_d + DELTA) / se_NB,
+    df = gl
+  )
+
+  p_superior <- pt(
+    (media_d - DELTA) / se_NB,
+    df = gl
+  )
+
+  t_critico <- qt(
+    1 - ALPHA_TOST,
+    df = gl
+  )
+
+  ic90_inf <-
+    media_d -
+    t_critico * se_NB
+
+  ic90_sup <-
+    media_d +
+    t_critico * se_NB
+
+  equivalente <-
+    p_inferior < ALPHA_TOST &&
+    p_superior < ALPHA_TOST &&
+    ic90_inf > -DELTA &&
+    ic90_sup < DELTA
+
+  resultado_equivalencia <- rbind(
+    resultado_equivalencia,
+    data.frame(
+      Proporcao = proporcao,
+      N_real = unique(
+        grupo$n_real
+      ),
+      N_sintetico = unique(
+        grupo$n_syn
+      ),
+      Delta_cor_media = media_d,
+      SE_NB = se_NB,
+      IC90_inf = ic90_inf,
+      IC90_sup = ic90_sup,
+      p_TOST = max(
+        p_inferior,
+        p_superior
+      ),
+      Equivalente = equivalente
+    )
+  )
+}
+
+resultado_equivalencia_exibicao <-
+  resultado_equivalencia
+
+names(
+  resultado_equivalencia_exibicao
+) <- c(
+  "Proporção do pool",
+  "Indivíduos reais",
+  "Pseudoindivíduos",
+  "Diferença média de correlação",
+  "Erro-padrão corrigido",
+  "IC90% inferior",
+  "IC90% superior",
+  "p-valor TOST",
+  "Equivalente"
+)
+
+knitr::kable(
+  resultado_equivalencia_exibicao,
+  digits = 4,
+  caption = "Equivalência do Mixup population-informed com T100"
+)
+```
+
+### 12.2. Sensibilidade usando apenas indivíduos reais
+
+Como os pseudoindivíduos são interpolações dos indivíduos reais, repetimos o
+TOST usando o tamanho real de treinamento no termo de correção:
+
+\[
+n_{train}=n_{real}.
+\]
+
+Nenhum GBLUP é reajustado.
+
+```{r sensibilidade-equivalencia-population-da}
+sensibilidade_equivalencia <- data.frame()
+
+for (proporcao in PROPORCOES) {
+
+  grupo <- comparacao_t100[
+    comparacao_t100$proporcao_pool ==
+      proporcao,
+  ]
+
+  d <- grupo$delta_cor_vs_T100
+  n_train_real <- unique(
+    grupo$n_real
+  )
+
+  stopifnot(
+    length(d) == N_REP,
+    length(n_train_real) == 1L
+  )
+
+  media_d <- mean(d)
+  sd_d <- sd(d)
+
+  fator_NB_real <-
+    1 / N_REP +
+    N_VALIDACAO / n_train_real
+
+  se_NB_real <- sqrt(
+    fator_NB_real * sd_d^2
+  )
+
+  gl <- length(d) - 1
+
+  p_inferior <- 1 - pt(
+    (media_d + DELTA) /
+      se_NB_real,
+    df = gl
+  )
+
+  p_superior <- pt(
+    (media_d - DELTA) /
+      se_NB_real,
+    df = gl
+  )
+
+  t_critico <- qt(
+    1 - ALPHA_TOST,
+    df = gl
+  )
+
+  ic90_inf <-
+    media_d -
+    t_critico * se_NB_real
+
+  ic90_sup <-
+    media_d +
+    t_critico * se_NB_real
+
+  equivalente <-
+    p_inferior < ALPHA_TOST &&
+    p_superior < ALPHA_TOST &&
+    ic90_inf > -DELTA &&
+    ic90_sup < DELTA
+
+  sensibilidade_equivalencia <- rbind(
+    sensibilidade_equivalencia,
+    data.frame(
+      Proporcao = proporcao,
+      N_real = n_train_real,
+      Delta_cor_media = media_d,
+      SE_NB = se_NB_real,
+      IC90_inf = ic90_inf,
+      IC90_sup = ic90_sup,
+      p_TOST = max(
+        p_inferior,
+        p_superior
+      ),
+      Equivalente = equivalente
+    )
+  )
+}
+
+sensibilidade_exibicao <-
+  sensibilidade_equivalencia
+
+names(
+  sensibilidade_exibicao
+) <- c(
+  "Proporção do pool",
+  "Indivíduos reais",
+  "Diferença média de correlação",
+  "Erro-padrão corrigido",
+  "IC90% inferior",
+  "IC90% superior",
+  "p-valor TOST",
+  "Equivalente"
+)
+
+knitr::kable(
+  sensibilidade_exibicao,
+  digits = 4,
+  caption = "Sensibilidade da equivalência usando o número de indivíduos reais"
+)
+```
+
+### 12.3. Visualização
+
+```{r figura-equivalencia-population-da, fig.height=5.5, fig.width=8.2, fig.cap="Diferença de correlação do Mixup population-informed em relação a T100, com IC90% corrigido por Nadeau-Bengio."}
+dados_equiv <- resultado_equivalencia
+
+dados_equiv$Cenario <- factor(
+  dados_equiv$Proporcao,
+  levels = PROPORCOES,
+  labels = LABELS_CENARIOS_DA
+)
+
+dados_equiv$Situacao <- factor(
+  ifelse(
+    dados_equiv$Equivalente,
+    "Equivalente",
+    "Não equivalente"
+  ),
+  levels = c(
+    "Não equivalente",
+    "Equivalente"
+  )
+)
+
+cores_equivalencia <- ggthemes::gdocs_pal()(2)
+
+figura_equivalencia <- ggplot2::ggplot(
+  dados_equiv,
+  ggplot2::aes(
+    x = Cenario,
+    y = Delta_cor_media,
+    color = Situacao
+  )
+) +
+  ggplot2::geom_hline(
+    yintercept = c(
+      -DELTA,
+      DELTA
+    ),
+    linetype = "dashed",
+    linewidth = 0.6,
+    color = "grey45"
+  ) +
+  ggplot2::geom_hline(
+    yintercept = 0,
+    linewidth = 0.45,
+    color = "grey25"
+  ) +
+  ggplot2::geom_errorbar(
+    ggplot2::aes(
+      ymin = IC90_inf,
+      ymax = IC90_sup
+    ),
+    width = 0.12,
+    linewidth = 0.7
+  ) +
+  ggplot2::geom_point(
+    size = 3
+  ) +
+  ggplot2::scale_color_manual(
+    values = cores_equivalencia
+  ) +
+  ggplot2::coord_flip() +
+  ggplot2::labs(
+    title = "Equivalência do Mixup population-informed com T100",
+    x = "Cenário",
+    y = expression(
+      Delta *
+        " correlação em relação a T100"
+    ),
+    color = "Resultado"
+  ) +
+  ggthemes::theme_gdocs() +
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(
+      face = "bold",
+      hjust = 0.5
+    ),
+    legend.position = "bottom"
+  )
+
+figura_equivalencia
+
+ggplot2::ggsave(
+  filename = "output/figures/07c_equivalencia_population_informed_vs_T100.png",
+  plot = figura_equivalencia,
+  width = 8.2,
+  height = 5.5,
+  dpi = 300
+)
+```
+
+## 13. Conclusão do teste
+
+O parâmetro foi definido uma única vez pela calibração population-informed:
+
+\[
+\boxed{
+\alpha_{pop}
+=
+\text{`r format(round(alpha_pop, 6), nsmall = 6)`}
+}.
+\]
+
+A tabela abaixo resume simultaneamente a análise principal e a análise de
+sensibilidade.
+
+```{r conclusao-population-mixup}
+conclusao <- merge(
+  resultado_equivalencia[
+    ,
+    c(
+      "Proporcao",
+      "N_real",
+      "N_sintetico",
+      "Delta_cor_media",
+      "Equivalente"
+    )
+  ],
+  sensibilidade_equivalencia[
+    ,
+    c(
+      "Proporcao",
+      "Equivalente"
+    )
+  ],
+  by = "Proporcao",
+  suffixes = c(
+    "_principal",
+    "_sensibilidade"
+  )
+)
+
+conclusao$Equivalente_robusto <-
+  conclusao$Equivalente_principal &
+  conclusao$Equivalente_sensibilidade
+
+conclusao <- conclusao[
+  order(
+    conclusao$N_real
+  ),
+]
+
+conclusao_exibicao <- conclusao[
+  ,
+  c(
+    "N_real",
+    "N_sintetico",
+    "Delta_cor_media",
+    "Equivalente_principal",
+    "Equivalente_sensibilidade",
+    "Equivalente_robusto"
+  )
+]
+
+names(
+  conclusao_exibicao
+) <- c(
+  "Indivíduos reais",
+  "Pseudoindivíduos",
+  "Diferença média de correlação",
+  "Equivalente — análise principal",
+  "Equivalente — sensibilidade",
+  "Equivalente nas duas análises"
+)
+
+knitr::kable(
+  conclusao_exibicao,
+  digits = 4,
+  caption = "Conclusão do teste population-informed"
+)
+
+reducoes_robustas <- conclusao[
+  conclusao$Equivalente_robusto &
+    conclusao$N_real < max(
+      N_REAIS_POR_PROP
+    ),
+  ,
+  drop = FALSE
+]
+
+if (
+  any(
+    conclusao$Equivalente_robusto &
+      conclusao$N_real %in%
+        N_REAIS_POR_PROP[
+          PROPORCOES <= 0.50
+        ]
+  )
+) {
+  menor_robusto <- min(
+    conclusao$N_real[
+      conclusao$Equivalente_robusto
+    ]
+  )
+
+  cat(
+    "\nResultado: o Mixup population-informed tornou um cenário abaixo de T75 ",
+    "equivalente a T100 nas análises principal e de sensibilidade. ",
+    "O menor conjunto robustamente equivalente contém ",
+    menor_robusto,
+    " indivíduos reais.\n",
+    sep = ""
+  )
+} else {
+  cat(
+    "\nResultado: nenhum dos cenários T25, T50 ou T75 com Mixup ",
+    "population-informed foi equivalente a T100 simultaneamente nas ",
+    "análises principal e de sensibilidade. T75 já era equivalente a ",
+    "T100 usando somente indivíduos reais, portanto o aumento de dados ",
+    "não produziu redução adicional da amostra real e, neste cenário, ",
+    "fez T75 perder a equivalência observada no baseline.\n",
+    sep = ""
+  )
+}
+```
+
+O critério de sucesso do novo teste é objetivo: o aumento de dados só reduz a
+necessidade mínima de indivíduos reais se T25 ou T50 atingir equivalência com
+T100. Nos resultados obtidos, nenhum dos três cenários com Mixup
+population-informed foi equivalente a T100 simultaneamente nas análises
+principal e de sensibilidade.
+
+T25 e T50 permaneceram claramente não equivalentes. T75, que já era equivalente
+a T100 usando somente indivíduos reais, deixou de satisfazer o critério de
+equivalência após a inclusão dos pseudoindivíduos. Assim, a menor amostra
+sustentada pelos resultados permanece em 827 indivíduos reais, obtida pelo
+GBLUP sem aumento de dados.

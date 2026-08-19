@@ -41,6 +41,8 @@ por fim, o resultado é interpretado.
 praticamente equivalente ao conjunto completo de treinamento?
 2. Podemos reduzir ainda mais esse número usando pseudoindivíduos criados por
 Mixup?
+3. Uma parametrização de Mixup informada pela variabilidade genômica e residual
+da população altera essa conclusão?
 
 ## População e desenho
 
@@ -70,6 +72,8 @@ prática específica deste estudo, e correção de Nadeau-Bengio.
 5. Testar equivalência com T100
           ↓
 6. Criar pseudoindivíduos e avaliar o aumento de dados
+          ↓
+7. Testar Mixup informado pela população
 ```
 
 ## Módulos
@@ -86,6 +90,9 @@ como a curva de aprendizado é obtida.
 menor já é suficiente.
 6. [Aumento de dados](06_data_augmentation.html) — como o Mixup cria
 pseudoindivíduos e se isso reduz a necessidade de dados reais.
+7. [Mixup informado pela população](07_population_informed_mixup.html) — como
+estimar um único `alpha_pop` a partir da variabilidade genômica e residual e
+testar se essa parametrização altera a conclusão do experimento.
 
 ## Resultado principal
 
@@ -95,6 +102,11 @@ Sem aumento de dados, T75 foi a menor amostra equivalente a T100:
 827\text{ indivíduos reais} \approx 1103\text{ indivíduos reais}.
 \]
 
-Nenhuma estratégia de Mixup tornou T25 ou T50 equivalente a T100. Portanto, nas
-configurações avaliadas, o aumento de dados não reduziu o número mínimo de
-indivíduos reais necessário.
+Na Etapa 6, nenhuma das quatro regras históricas de Mixup tornou T25 ou T50
+equivalente a T100. Na Etapa 7, a calibração population-informed/oracle estimou
+`alpha_pop = 1.401041`; com essa parametrização, T25, T50 e T75 não foram
+equivalentes a T100 simultaneamente nas análises principal e de sensibilidade.
+
+Portanto, o aumento de dados não reduziu o número mínimo de indivíduos reais
+necessário. A menor amostra sustentada pelos resultados permanece T75, com 827
+indivíduos reais, usando GBLUP sem aumento de dados.

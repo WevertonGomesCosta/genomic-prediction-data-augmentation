@@ -16,12 +16,14 @@ O conjunto analítico possui 1.379 indivíduos genotipados. Em cada repetição,
 indivíduos são separados para validação e os 1.103 restantes formam o conjunto
 completo de treinamento, denominado `T100`.
 
-O tutorial responde duas perguntas principais:
+O tutorial responde três perguntas principais:
 
 1. Qual é o menor número de indivíduos reais que produz desempenho praticamente
    equivalente a T100?
 2. Ao completar uma amostra real reduzida com pseudoindivíduos Mixup, é possível
    utilizar menos indivíduos reais sem perder desempenho preditivo?
+3. Uma parametrização de Mixup informada pela variabilidade genômica e residual
+   da população altera essa conclusão?
 
 ## Pipeline analítico
 
@@ -38,7 +40,9 @@ Dados
   ↓
 5. Equivalência com T100
   ↓
-6. Aumento de dados com Mixup e comparação final
+6. Aumento de dados com Mixup
+  ↓
+7. Mixup informado pela população e comparação final
 ```
 
 Cada módulo apresenta primeiro a pergunta científica e a motivação da etapa.
@@ -93,6 +97,25 @@ de `alpha` são menores que 1, as distribuições favorecem pesos próximos de 0
 1 em diferentes intensidades, permitindo avaliar pseudoindivíduos mais ou menos
 próximos de um dos doadores.
 
+### Mixup informado pela população
+
+Como extensão do experimento histórico, a Etapa 7 substitui a grade de `alpha`
+por um único parâmetro estimado a partir da relação entre a variabilidade
+genômica e a variabilidade residual da população analítica. A calibração é
+explicitamente tratada como **population-informed/oracle**, porque utiliza os
+fenótipos dos 1.379 indivíduos para estimar o parâmetro global antes da
+avaliação preditiva.
+
+A regra resultante é:
+
+```text
+alpha_pop = E(R_Ge,pop | y) = 1.401041
+lambda ~ Beta(alpha_pop, alpha_pop)
+```
+
+Não há tuning de `alpha` nem escolha do parâmetro com base no desempenho das
+amostras reduzidas.
+
 ## Resultado principal
 
 Sem aumento de dados, T75 foi a menor amostra real equivalente a T100:
@@ -101,9 +124,14 @@ Sem aumento de dados, T75 foi a menor amostra real equivalente a T100:
 827 indivíduos reais ≈ 1.103 indivíduos reais
 ```
 
-Nenhuma configuração de Mixup tornou T25 ou T50 equivalente a T100. Portanto,
-para as estratégias avaliadas, o aumento de dados não reduziu o número mínimo
-de indivíduos reais necessário.
+No experimento histórico, nenhuma configuração de Mixup tornou T25 ou T50
+equivalente a T100. Com a parametrização population-informed, T25, T50 e T75
+não foram equivalentes a T100 simultaneamente nas análises principal e de
+sensibilidade.
+
+Portanto, o aumento de dados não reduziu o número mínimo de indivíduos reais
+necessário. A menor amostra sustentada pelos resultados permanece T75, com 827
+indivíduos reais, usando GBLUP sem aumento de dados.
 
 ## Módulos do tutorial
 
@@ -114,6 +142,7 @@ analysis/03_genomic_matrix.Rmd
 analysis/04_gblup_baseline.Rmd
 analysis/05_equivalence.Rmd
 analysis/06_data_augmentation.Rmd
+analysis/07_population_informed_mixup.Rmd
 ```
 
 Os objetos intermediários usados entre etapas são armazenados em `output/`. As
