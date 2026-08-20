@@ -16,20 +16,35 @@ editor_options:
 
 ## Licença do projeto
 
-Este repositório é destinado à pesquisa científica reproduzível e ao ensino do
-fluxo analítico de predição genômica com aumento de dados (*Data Augmentation*).
+Salvo indicação diferente em um arquivo específico, os materiais analíticos
+originais deste repositório, incluindo código e documentação, estão licenciados
+sob a **Creative Commons Atribuição-NãoComercial-CompartilhaIgual 4.0
+Internacional (CC BY-NC-SA 4.0)**.
 
-Uma licença formal para o **código deste repositório** deverá ser definida
-antes da versão final de publicação do projeto.
+Isso significa que o material pode ser compartilhado e adaptado desde que:
 
-Os dados de referência utilizados no tutorial são publicados no Dryad sob
+- seja fornecida a atribuição apropriada e as alterações sejam indicadas;
+- o material não seja utilizado para fins comerciais; e
+- as adaptações sejam distribuídas sob a mesma licença.
+
+O texto jurídico completo da licença está disponível em:
+
+<https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode>
+
+## Dados de referência
+
+Os dados de referência utilizados neste tutorial permanecem sujeitos às suas
+condições originais de licenciamento.
+
+O conjunto SoyNAM utilizado como referência é disponibilizado pelo Dryad sob
 **CC0 (Creative Commons Zero)**, que permite reutilização, modificação,
-compartilhamento e redistribuição. A fonte de referência é o conjunto SoyNAM
-documentado em `data/README.md`, associado ao DOI
+compartilhamento e redistribuição. A fonte de referência está associada ao DOI
 `10.5061/dryad.2fqz6133v`.
 
+A proveniência do conjunto analítico e as limitações relativas à reconstrução
+da sequência de filtragem e imputação estão documentadas em
+`data/README.md`.
+
 O arquivo `data/dados_gblup.csv` permanece local e explicitamente ignorado pelo
-Git como uma escolha organizacional e de proveniência, pois a sequência
-histórica exata de filtragem e imputação que gerou essa entrada analítica não foi
-reconstruída integralmente. Objetos derivados necessários à reprodução das
-etapas seguintes são versionados em `output/`.
+Git por razões organizacionais e de proveniência. Objetos derivados necessários
+à reprodução das etapas seguintes permanecem versionados em `output/`.

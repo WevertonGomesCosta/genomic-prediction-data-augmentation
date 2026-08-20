@@ -411,23 +411,40 @@ div.tocify {
 
 <div id="licença-do-projeto" class="section level2">
 <h2>Licença do projeto</h2>
-<p>Este repositório é destinado à pesquisa científica reproduzível e ao
-ensino do fluxo analítico de predição genômica com aumento de dados
-(<em>Data Augmentation</em>).</p>
-<p>Uma licença formal para o <strong>código deste repositório</strong>
-deverá ser definida antes da versão final de publicação do projeto.</p>
-<p>Os dados de referência utilizados no tutorial são publicados no Dryad
-sob <strong>CC0 (Creative Commons Zero)</strong>, que permite
+<p>Salvo indicação diferente em um arquivo específico, os materiais
+analíticos originais deste repositório, incluindo código e documentação,
+estão licenciados sob a <strong>Creative Commons
+Atribuição-NãoComercial-CompartilhaIgual 4.0 Internacional (CC BY-NC-SA
+4.0)</strong>.</p>
+<p>Isso significa que o material pode ser compartilhado e adaptado desde
+que:</p>
+<ul>
+<li>seja fornecida a atribuição apropriada e as alterações sejam
+indicadas;</li>
+<li>o material não seja utilizado para fins comerciais; e</li>
+<li>as adaptações sejam distribuídas sob a mesma licença.</li>
+</ul>
+<p>O texto jurídico completo da licença está disponível em:</p>
+<p><a href="https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode"
+class="uri">https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode</a></p>
+</div>
+<div id="dados-de-referência" class="section level2">
+<h2>Dados de referência</h2>
+<p>Os dados de referência utilizados neste tutorial permanecem sujeitos
+às suas condições originais de licenciamento.</p>
+<p>O conjunto SoyNAM utilizado como referência é disponibilizado pelo
+Dryad sob <strong>CC0 (Creative Commons Zero)</strong>, que permite
 reutilização, modificação, compartilhamento e redistribuição. A fonte de
-referência é o conjunto SoyNAM documentado em
-<code>data/README.md</code>, associado ao DOI
+referência está associada ao DOI
 <code>10.5061/dryad.2fqz6133v</code>.</p>
+<p>A proveniência do conjunto analítico e as limitações relativas à
+reconstrução da sequência de filtragem e imputação estão documentadas em
+<code>data/README.md</code>.</p>
 <p>O arquivo <code>data/dados_gblup.csv</code> permanece local e
-explicitamente ignorado pelo Git como uma escolha organizacional e de
-proveniência, pois a sequência histórica exata de filtragem e imputação
-que gerou essa entrada analítica não foi reconstruída integralmente.
-Objetos derivados necessários à reprodução das etapas seguintes são
-versionados em <code>output/</code>.</p>
+explicitamente ignorado pelo Git por razões organizacionais e de
+proveniência. Objetos derivados necessários à reprodução das etapas
+seguintes permanecem versionados em <code>output/</code>.</p>
+</div>
 <br>
 <p>
 <button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
@@ -469,7 +486,7 @@ loaded via a namespace (and not attached):
 </div>
 </div>
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIkxpY2Vuw6dhIg0KYXV0aG9yOiAiV2V2ZXJ0b24gR29tZXMgZGEgQ29zdGEiDQpkYXRlOiAiYHIgU3lzLkRhdGUoKWAiDQpzaXRlOiB3b3JrZmxvd3I6OndmbG93X3NpdGUNCm91dHB1dDoNCiAgd29ya2Zsb3dyOjp3Zmxvd19odG1sOg0KICAgIHRvYzogdHJ1ZQ0KICAgIHRvY19kZXB0aDogMw0KICAgIHRvY19mbG9hdDogdHJ1ZQ0KICAgIGNvZGVfZG93bmxvYWQ6IHRydWUNCiAgICBjb2RlX2ZvbGRpbmc6IHNob3cNCmVkaXRvcl9vcHRpb25zOg0KICBjaHVua19vdXRwdXRfdHlwZTogY29uc29sZQ0KLS0tDQoNCiMjIExpY2Vuw6dhIGRvIHByb2pldG8NCg0KRXN0ZSByZXBvc2l0w7NyaW8gw6kgZGVzdGluYWRvIMOgIHBlc3F1aXNhIGNpZW50w61maWNhIHJlcHJvZHV6w612ZWwgZSBhbyBlbnNpbm8gZG8NCmZsdXhvIGFuYWzDrXRpY28gZGUgcHJlZGnDp8OjbyBnZW7DtG1pY2EgY29tIGF1bWVudG8gZGUgZGFkb3MgKCpEYXRhIEF1Z21lbnRhdGlvbiopLg0KDQpVbWEgbGljZW7Dp2EgZm9ybWFsIHBhcmEgbyAqKmPDs2RpZ28gZGVzdGUgcmVwb3NpdMOzcmlvKiogZGV2ZXLDoSBzZXIgZGVmaW5pZGENCmFudGVzIGRhIHZlcnPDo28gZmluYWwgZGUgcHVibGljYcOnw6NvIGRvIHByb2pldG8uDQoNCk9zIGRhZG9zIGRlIHJlZmVyw6puY2lhIHV0aWxpemFkb3Mgbm8gdHV0b3JpYWwgc8OjbyBwdWJsaWNhZG9zIG5vIERyeWFkIHNvYg0KKipDQzAgKENyZWF0aXZlIENvbW1vbnMgWmVybykqKiwgcXVlIHBlcm1pdGUgcmV1dGlsaXphw6fDo28sIG1vZGlmaWNhw6fDo28sDQpjb21wYXJ0aWxoYW1lbnRvIGUgcmVkaXN0cmlidWnDp8Ojby4gQSBmb250ZSBkZSByZWZlcsOqbmNpYSDDqSBvIGNvbmp1bnRvIFNveU5BTQ0KZG9jdW1lbnRhZG8gZW0gYGRhdGEvUkVBRE1FLm1kYCwgYXNzb2NpYWRvIGFvIERPSQ0KYDEwLjUwNjEvZHJ5YWQuMmZxejYxMzN2YC4NCg0KTyBhcnF1aXZvIGBkYXRhL2RhZG9zX2dibHVwLmNzdmAgcGVybWFuZWNlIGxvY2FsIGUgZXhwbGljaXRhbWVudGUgaWdub3JhZG8gcGVsbw0KR2l0IGNvbW8gdW1hIGVzY29saGEgb3JnYW5pemFjaW9uYWwgZSBkZSBwcm92ZW5pw6puY2lhLCBwb2lzIGEgc2VxdcOqbmNpYQ0KaGlzdMOzcmljYSBleGF0YSBkZSBmaWx0cmFnZW0gZSBpbXB1dGHDp8OjbyBxdWUgZ2Vyb3UgZXNzYSBlbnRyYWRhIGFuYWzDrXRpY2EgbsOjbyBmb2kNCnJlY29uc3RydcOtZGEgaW50ZWdyYWxtZW50ZS4gT2JqZXRvcyBkZXJpdmFkb3MgbmVjZXNzw6FyaW9zIMOgIHJlcHJvZHXDp8OjbyBkYXMNCmV0YXBhcyBzZWd1aW50ZXMgc8OjbyB2ZXJzaW9uYWRvcyBlbSBgb3V0cHV0L2AuDQo=</div>
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIkxpY2Vuw6dhIg0KYXV0aG9yOiAiV2V2ZXJ0b24gR29tZXMgZGEgQ29zdGEiDQpkYXRlOiAiYHIgU3lzLkRhdGUoKWAiDQpzaXRlOiB3b3JrZmxvd3I6OndmbG93X3NpdGUNCm91dHB1dDoNCiAgd29ya2Zsb3dyOjp3Zmxvd19odG1sOg0KICAgIHRvYzogdHJ1ZQ0KICAgIHRvY19kZXB0aDogMw0KICAgIHRvY19mbG9hdDogdHJ1ZQ0KICAgIGNvZGVfZG93bmxvYWQ6IHRydWUNCiAgICBjb2RlX2ZvbGRpbmc6IHNob3cNCmVkaXRvcl9vcHRpb25zOg0KICBjaHVua19vdXRwdXRfdHlwZTogY29uc29sZQ0KLS0tDQoNCiMjIExpY2Vuw6dhIGRvIHByb2pldG8NCg0KU2Fsdm8gaW5kaWNhw6fDo28gZGlmZXJlbnRlIGVtIHVtIGFycXVpdm8gZXNwZWPDrWZpY28sIG9zIG1hdGVyaWFpcyBhbmFsw610aWNvcw0Kb3JpZ2luYWlzIGRlc3RlIHJlcG9zaXTDs3JpbywgaW5jbHVpbmRvIGPDs2RpZ28gZSBkb2N1bWVudGHDp8OjbywgZXN0w6NvIGxpY2VuY2lhZG9zDQpzb2IgYSAqKkNyZWF0aXZlIENvbW1vbnMgQXRyaWJ1acOnw6NvLU7Do29Db21lcmNpYWwtQ29tcGFydGlsaGFJZ3VhbCA0LjANCkludGVybmFjaW9uYWwgKENDIEJZLU5DLVNBIDQuMCkqKi4NCg0KSXNzbyBzaWduaWZpY2EgcXVlIG8gbWF0ZXJpYWwgcG9kZSBzZXIgY29tcGFydGlsaGFkbyBlIGFkYXB0YWRvIGRlc2RlIHF1ZToNCg0KLSBzZWphIGZvcm5lY2lkYSBhIGF0cmlidWnDp8OjbyBhcHJvcHJpYWRhIGUgYXMgYWx0ZXJhw6fDtWVzIHNlamFtIGluZGljYWRhczsNCi0gbyBtYXRlcmlhbCBuw6NvIHNlamEgdXRpbGl6YWRvIHBhcmEgZmlucyBjb21lcmNpYWlzOyBlDQotIGFzIGFkYXB0YcOnw7VlcyBzZWphbSBkaXN0cmlidcOtZGFzIHNvYiBhIG1lc21hIGxpY2Vuw6dhLg0KDQpPIHRleHRvIGp1csOtZGljbyBjb21wbGV0byBkYSBsaWNlbsOnYSBlc3TDoSBkaXNwb27DrXZlbCBlbToNCg0KPGh0dHBzOi8vY3JlYXRpdmVjb21tb25zLm9yZy9saWNlbnNlcy9ieS1uYy1zYS80LjAvbGVnYWxjb2RlPg0KDQojIyBEYWRvcyBkZSByZWZlcsOqbmNpYQ0KDQpPcyBkYWRvcyBkZSByZWZlcsOqbmNpYSB1dGlsaXphZG9zIG5lc3RlIHR1dG9yaWFsIHBlcm1hbmVjZW0gc3VqZWl0b3Mgw6BzIHN1YXMNCmNvbmRpw6fDtWVzIG9yaWdpbmFpcyBkZSBsaWNlbmNpYW1lbnRvLg0KDQpPIGNvbmp1bnRvIFNveU5BTSB1dGlsaXphZG8gY29tbyByZWZlcsOqbmNpYSDDqSBkaXNwb25pYmlsaXphZG8gcGVsbyBEcnlhZCBzb2INCioqQ0MwIChDcmVhdGl2ZSBDb21tb25zIFplcm8pKiosIHF1ZSBwZXJtaXRlIHJldXRpbGl6YcOnw6NvLCBtb2RpZmljYcOnw6NvLA0KY29tcGFydGlsaGFtZW50byBlIHJlZGlzdHJpYnVpw6fDo28uIEEgZm9udGUgZGUgcmVmZXLDqm5jaWEgZXN0w6EgYXNzb2NpYWRhIGFvIERPSQ0KYDEwLjUwNjEvZHJ5YWQuMmZxejYxMzN2YC4NCg0KQSBwcm92ZW5pw6puY2lhIGRvIGNvbmp1bnRvIGFuYWzDrXRpY28gZSBhcyBsaW1pdGHDp8O1ZXMgcmVsYXRpdmFzIMOgIHJlY29uc3RydcOnw6NvDQpkYSBzZXF1w6puY2lhIGRlIGZpbHRyYWdlbSBlIGltcHV0YcOnw6NvIGVzdMOjbyBkb2N1bWVudGFkYXMgZW0NCmBkYXRhL1JFQURNRS5tZGAuDQoNCk8gYXJxdWl2byBgZGF0YS9kYWRvc19nYmx1cC5jc3ZgIHBlcm1hbmVjZSBsb2NhbCBlIGV4cGxpY2l0YW1lbnRlIGlnbm9yYWRvIHBlbG8NCkdpdCBwb3IgcmF6w7VlcyBvcmdhbml6YWNpb25haXMgZSBkZSBwcm92ZW5pw6puY2lhLiBPYmpldG9zIGRlcml2YWRvcyBuZWNlc3PDoXJpb3MNCsOgIHJlcHJvZHXDp8OjbyBkYXMgZXRhcGFzIHNlZ3VpbnRlcyBwZXJtYW5lY2VtIHZlcnNpb25hZG9zIGVtIGBvdXRwdXQvYC4NCg==</div>
 
 <!-- Adjust MathJax settings so that all math formulae are shown using
 TeX fonts only; see
