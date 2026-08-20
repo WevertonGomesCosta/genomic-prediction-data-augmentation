@@ -1303,9 +1303,9 @@ knitr::kable(
 Para a correlação, valores positivos favorecem o aumento de dados. Para RMSE e
 MAE, valores negativos indicam menor erro com os pseudoindivíduos.
 
-## 10. Comparação descritiva com o Mixup histórico
+## 10. Comparação descritiva com o Mixup da Etapa 6
 
-A Etapa 6 contém quatro regras históricas. Como essas configurações utilizaram
+A Etapa 6 contém quatro regras de Mixup. Como essas configurações utilizaram
 fluxos aleatórios próprios para sorteio de doadores e de `lambda`, a comparação
 abaixo é **descritiva** e não constitui um teste pareado direto entre
 parametrizações.
@@ -1385,15 +1385,15 @@ names(
 ) <- c(
   "Proporção do pool",
   "Correlação média — population-informed",
-  "Melhor regra histórica",
-  "Correlação média — melhor histórica",
+  "Melhor regra da Etapa 6",
+  "Correlação média — melhor regra da Etapa 6",
   "Diferença descritiva"
 )
 
 knitr::kable(
   comparacao_historica_exibicao,
   digits = 4,
-  caption = "Comparação descritiva com a melhor regra histórica de Mixup"
+  caption = "Comparação descritiva com a melhor regra de Mixup da Etapa 6"
 )
 ```
 

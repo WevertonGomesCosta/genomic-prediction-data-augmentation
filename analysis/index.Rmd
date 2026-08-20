@@ -102,7 +102,7 @@ Sem aumento de dados, T75 foi a menor amostra equivalente a T100:
 827\text{ indivíduos reais} \approx 1103\text{ indivíduos reais}.
 \]
 
-Na Etapa 6, nenhuma das quatro regras históricas de Mixup tornou T25 ou T50
+Na Etapa 6, nenhuma das quatro regras de Mixup tornou T25 ou T50
 equivalente a T100. Na Etapa 7, a calibração population-informed/oracle estimou
 `alpha_pop = 1.401041`; com essa parametrização, T25, T50 e T75 não foram
 equivalentes a T100 simultaneamente nas análises principal e de sensibilidade.

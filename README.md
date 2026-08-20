@@ -99,7 +99,7 @@ próximos de um dos doadores.
 
 ### Mixup informado pela população
 
-Como extensão do experimento histórico, a Etapa 7 substitui a grade de `alpha`
+Como extensão do experimento da Etapa 6, a Etapa 7 substitui a grade de `alpha`
 por um único parâmetro estimado a partir da relação entre a variabilidade
 genômica e a variabilidade residual da população analítica. A calibração é
 explicitamente tratada como **population-informed/oracle**, porque utiliza os
@@ -124,7 +124,7 @@ Sem aumento de dados, T75 foi a menor amostra real equivalente a T100:
 827 indivíduos reais ≈ 1.103 indivíduos reais
 ```
 
-No experimento histórico, nenhuma configuração de Mixup tornou T25 ou T50
+Na Etapa 6, nenhuma configuração de Mixup tornou T25 ou T50
 equivalente a T100. Com a parametrização population-informed, T25, T50 e T75
 não foram equivalentes a T100 simultaneamente nas análises principal e de
 sensibilidade.
